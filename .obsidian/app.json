@@ -1,0 +1,12 @@
+{
+  "alwaysUpdateLinks": true,
+  "newLinkFormat": "relative",
+  "useMarkdownLinks": true,
+  "attachmentFolderPath": "attachments",
+  "userIgnoreFilters": [
+    ".git/",
+    "node_modules",
+    "/obj/",
+    "build/"
+  ]
+}

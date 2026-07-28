@@ -1,0 +1,67 @@
+# GSS platform — repo manifest (source of truth for assembling the workspace).
+#
+# Consumed by:
+#   sync.sh          — clone-or-pull every repo in a workspace group into `base`
+#   gen-workspace.sh — generate the Claude .claude-workspaces/<name> config from this
+#
+# `branch` is the branch sync tracks. It defaults to each repo's origin default branch;
+# adjust to your team's integration branch where they differ (noted inline).
+# SSH URLs use the `github-gss` host alias (see ~/.ssh/config); launchpad uses HTTPS.
+
+base: ~/workbench          # repos are cloned as siblings under here
+
+repos:
+  - name: architecture
+    url: git@github-gss:GlobalShopSolutions-Limited/architecture.git
+    branch: main
+    description: System-level source of record for the GSS cloud platform
+  - name: global-shop-solutions
+    url: git@github-gss:GlobalShopSolutions-Limited/global-shop-solutions.git
+    branch: main
+    description: Modular DDD ERP platform — .NET 8 API + React SPA + polyglot module host
+  - name: identity
+    url: git@github-gss:GlobalShopSolutions-Limited/identity.git
+    branch: main            # actively developed on: dev
+    description: Canonical identity graph (organizationId / userId / companyId) and IAM
+  - name: platform
+    url: git@github-gss:GlobalShopSolutions-Limited/platform.git
+    branch: main            # actively developed on: dev
+    description: Shared platform services and libraries
+  - name: .github
+    url: git@github-gss:GlobalShopSolutions-Limited/.github.git
+    branch: main
+    description: Reusable org-wide CI/CD workflows
+  - name: infrastructure-as-code
+    url: git@github-gss:GlobalShopSolutions-Limited/infrastructure-as-code.git
+    branch: master          # note: default is master, not main
+    description: Infrastructure-as-code for the cloud platform
+  - name: gitops
+    url: git@github-gss:GlobalShopSolutions-Limited/gitops.git
+    branch: main
+    description: GitOps / ArgoCD config for the Kubernetes clusters
+  - name: docs
+    url: git@github-gss:globalshopsolutions-internaltools/docs.git
+    branch: main
+    description: Docusaurus documentation site
+  - name: ops-tools
+    url: git@github-gss:GlobalShopSolutions-limited/ops-tools.git
+    branch: main
+    description: Internal operational-tools monorepo
+  - name: launchpad
+    url: https://github.com/GlobalShopSolutions-InternalTools/launchpad.git
+    branch: main            # actively developed on: staging
+    description: Internal app-provisioning service for GlobalShopSolutions-InternalTools
+
+# Named working sets. A workspace is just an ordered list of repo names above.
+workspaces:
+  globalshopsolutions:
+    - architecture
+    - global-shop-solutions
+    - identity
+    - platform
+    - .github
+    - infrastructure-as-code
+    - gitops
+    - docs
+    - ops-tools
+    - launchpad
