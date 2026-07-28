@@ -61,6 +61,24 @@ Run inside a derivation. Reads `.template.lock`:
   path, against the cache checkout.
 - VERSION is a plain integer; comparison uses `sort -n`.
 
+**Known caveat — structural moves in the managed set leave orphans.** `copy_managed_paths`
+only ever *adds/overwrites* the exact paths named in the **upstream's current**
+manifest; it never diffs against the paths named in an *older* manifest, so it can't
+know a path was retired. When a template version moves content rather than just
+editing it in place (e.g. v8's skills-under-`.agents` refactor, which retired the old
+`.claude/skills/<name>/**` directory entries in favor of `.agents/skills/<name>/**` +
+single-file `.claude/skills/<name>/SKILL.md` stubs), `update` copies the new paths in
+correctly but leaves the old files that are no longer in the manifest sitting on disk
+untouched — e.g. the pre-v8 `.claude/skills/<name>/*.sh` scripts survive as orphaned
+duplicates alongside the new canonical copies under `.agents/skills/`. **After any
+`update` that crosses a structural move like this, check the release notes for the
+new version and manually remove anything the old manifest managed that the new one
+doesn't** — `workflow-agents-sync`'s skill-stub check (`DRIFT ... non-stub file under
+.claude/skills`) will flag exactly this case for the skills package specifically, but
+the general problem (arbitrary managed-path renames) has no automated cleanup yet.
+Filed as a real limitation, not fixed as of v8 — a future version could add a
+"retired paths" list to `template-manifest.yaml` that `update` deletes explicitly.
+
 ### Remote upstreams
 A URL `upstream` is resolved through a cache checkout at
 `${XDG_CACHE_HOME:-$HOME/.cache}/workflow-template-sync/<sha1 of the url>`:
