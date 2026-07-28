@@ -2,17 +2,23 @@
 name: workflow-manage
 description: >-
   Administer this workflow: add, remove, or edit standing binds in binds.yaml (kind +
-  why), clone a standing bind's repo if it's absent from disk, or review the bind
-  registry. Use when asked to register a related repo, change why/how a repo relates to
-  this workflow, mark a bind as default, or list what this workflow stands next to.
+  why), assemble or refresh the substrate those binds describe (clone missing repos,
+  fast-forward clean ones — sync-binds.sh), or review the bind registry. Use when asked
+  to register a related repo, change why/how a repo relates to this workflow, mark a
+  bind as default, sync/refresh standing-bind repos on disk, or list what this workflow
+  stands next to.
 ---
 
 # workflow-manage
 
 Standing binds (`binds.yaml`) are a **registry**, not a session state — see
-`AGENTS.CORE.md` ("Bind law"). This skill is instructions for editing that registry with
-`yq`; there's no separate CLI. `/workflow-bind` is the companion skill that actually
-attaches repos to a session.
+`AGENTS.CORE.md` ("Bind law"). This skill owns two things: editing that registry with
+`yq`, and assembling the substrate it describes onto disk (`sync-binds.sh`). Both are
+managed capabilities — see AGENTS.CORE.md's categorical rule: the template defines
+`binds.yaml`'s shape, so the template owns every operation on it; a derivation
+contributes only its entries (data) and its judgment about them (doctrine), never
+hand-rolled tooling. `/workflow-bind` is the companion skill that actually attaches
+repos to a session.
 
 ## Review binds
 ```sh
@@ -29,7 +35,7 @@ yq -r '.standing[] | .repo + "  [" + .kind + "]  default=" + (.default // false 
    yq -i '.standing += [{"repo": "NAME", "kind": "KIND", "why": "WHY", "default": false}]' binds.yaml
    yq -i '.standing |= sort_by(.repo)' binds.yaml
    ```
-   Add `"url"` / `"branch"` keys too if the repo should be clone-if-absent capable.
+   Add `"url"` / `"branch"` keys too if the repo should be `sync-binds.sh` capable.
 4. If this repo should be attached automatically by `/workflow-bind`, set
    `"default": true` instead of `false` above (or edit it after the fact — see below).
 
@@ -46,13 +52,46 @@ yq -i 'del(.standing[] | select(.repo == "NAME"))' binds.yaml
 Removing a standing bind is a registry change only — it does not delete anything on
 disk, and does not affect any repo already session-bound right now.
 
-## Clone-if-absent
+## Sync binds (substrate assembly)
 ```sh
-.claude/skills/workflow-manage/clone-if-absent.sh <repo-name>
+.claude/skills/workflow-manage/sync-binds.sh                # every standing bind with a url
+.claude/skills/workflow-manage/sync-binds.sh <repo> [...]   # only the named ones
 ```
-No-ops if the repo is already present under `base` (never touches an existing
-checkout); otherwise clones it using the bind's `url`/`branch`. Errors clearly if the
-bind has no `url` — add one first, or clone it manually.
+This is the one tool for bringing every standing bind with a `url` onto disk under
+`base` and keeping it current — clone-if-absent and ongoing refresh are the same
+operation, not two. For each targeted bind:
+- **Missing on disk** → clones it (`--branch` if `binds.yaml` sets one, else the
+  remote's default branch).
+- **Present, clean, on the tracked branch** → fetches and fast-forwards.
+- **Present but dirty, on a different branch, or diverged from origin** → fetches (so
+  the report is current) and is reported **skipped**, never forced. This tool never
+  clobbers local work — that's the whole safety case for letting it run unattended.
+- **Clone or fetch failure** → reported **failed**.
+
+Ends with a summary line — `N ok, M skipped, K failed` — and exits nonzero iff
+`failed > 0`. An empty or example-only `binds.yaml` (no `standing:` entries, or none
+with a `url` — the template's own schema example) is a clean no-op: `no standing binds
+with a url in binds.yaml — nothing to sync`.
+
+Override the binds file for testing with `BINDS_FILE=/path/to/binds.yaml`.
+
+### When to run it
+- Before starting work that touches a standing bind, to make sure it's present and
+  current.
+- Routinely, as part of drift watch (a good pairing with `/workflow-agents-sync`).
+- After registering a new standing bind with a `url` (below), to actually bring it
+  onto disk rather than leaving the registry entry aspirational.
+
+### Reading the report
+- `cloning` / `up to date` — healthy, no action needed.
+- `~ dirty working tree — fetch only` — someone's in-flight work; leave it. Note it in
+  the journal only if it's been dirty a long time (that's drift, not activity).
+- `~ on <X> (binds.yaml tracks <Y>)` — expected for active feature work; only worth
+  flagging if it's stale.
+- `~ diverged — resolve manually` — always surface to the repo's owner and journal it.
+  Never force a resolution.
+- `! clone/fetch failed` — auth or registry rot; fix the cause (credentials, a stale
+  URL), not the symptom.
 
 ## After any edit
 Run `/workflow-agents-sync --check` — it scans every standing bind present on disk for

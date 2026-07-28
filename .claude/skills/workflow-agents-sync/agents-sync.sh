@@ -80,7 +80,7 @@ if [ -f "$BINDS" ] && command -v yq >/dev/null; then
     while IFS= read -r name; do
       [ -n "$name" ] || continue
       repo="$BASE/$name"
-      [ -e "$repo/.git" ] || continue   # not on disk; workflow-manage's clone-if-absent handles presence
+      [ -e "$repo/.git" ] || continue   # not on disk; workflow-manage's sync-binds.sh handles presence
       check_dir "$repo" "$name"
     done < <(yq -r '.standing[].repo' "$BINDS")
   fi

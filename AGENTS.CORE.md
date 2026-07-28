@@ -106,6 +106,17 @@ else added later. A derivation may eject from the template relationship entirely
 time (delete `.template.lock`) and is supported for the full lifetime of its project
 either way, linked or not.
 
+**The categorical rule.** The template defines the shapes; the template owns every
+operation on those shapes, shipped as managed skills. Derivations contribute data and
+doctrine only. If you find yourself writing tooling for a template concept inside a
+derivation, that tooling belongs upstream — contribute it to the template. `binds.yaml`
+is the recurring example: the template defines its shape (the standing-bind schema), so
+the template — not any one derivation — owns every operation on it (registry edits,
+substrate assembly/refresh) as a managed `workflow-manage` capability. A derivation's own
+`binds.yaml` entries are its data; a derivation's judgment about *which* repos to bind
+and *why* is its doctrine. Neither is a license to hand-roll a parallel tool for
+something the template already ships.
+
 ## Tiers (RBAC)
 
 This repo's `AGENTS.md` declares `tier:` in frontmatter — the roles/credentials its
@@ -125,7 +136,8 @@ procedures presume (e.g. `dev`, `ops`, `admin`). Enforcement is real, not cosmet
 - `/workflow-template-sync` — the upstream link: `derive` a new workflow repo from a
   template copy, `update` a derivation's managed set from upstream, `--check` report
   drift.
-- `/workflow-manage` — administer this workflow: add/remove/edit standing binds,
-  clone-if-absent their repos, review the registry.
+- `/workflow-manage` — administer this workflow: add/remove/edit standing binds, review
+  the registry, and assemble/refresh the substrate those binds describe (`sync-binds.sh`
+  — clone missing repos, fast-forward clean ones, never clobber local work).
 - `/workflow-bind` — bind a session: attach default standing binds (and any requested
   extras) via `/add-dir`, per the bind law above.

@@ -8,7 +8,7 @@
 #                    attaches every standing bind marked `default: true`, plus
 #                    anything else requested.
 #
-# `/workflow-manage` administers this file (add/remove/edit entries, clone-if-absent).
+# `/workflow-manage` administers this file (add/remove/edit entries, sync-binds.sh).
 # `/workflow-agents-sync` scope 2 checks every standing bind present on disk under
 # `base` for a conforming AGENTS.md/CLAUDE.md bridge.
 
@@ -20,5 +20,5 @@ standing: []
 #     kind: reference                                  # reference | co-change | stewarded | upstream | downstream
 #     why: Canonical identity graph this workflow's procedures read but never write.
 #     default: false                                   # true = /workflow-bind attaches it automatically
-#     url: git@github-example:example-org/identity.git # optional — enables clone-if-absent
+#     url: git@github-example:example-org/identity.git # optional — enables sync-binds.sh
 #     branch: main                                     # optional — branch to track/clone

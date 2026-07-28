@@ -26,7 +26,7 @@ session itself (`/add-dir`), which a helper process can't do on your behalf.
    - Look up `base` in `binds.yaml` (defaults to `~/workbench`); a named standing bind
      resolves to `<base>/<repo>`.
    - If it isn't on disk yet and has a `url`, offer `/workflow-manage`'s
-     `clone-if-absent.sh <repo-name>` before binding (or ask the user first — cloning
+     `sync-binds.sh <repo-name>` before binding (or ask the user first — cloning
      is a real side effect, unlike attaching an existing dir).
 3. **Attach each resolved path** with `/add-dir <path>` (already in a running session)
    — or, if this is guidance for launching a *new* session, tell the user to pass

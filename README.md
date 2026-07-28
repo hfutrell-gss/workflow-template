@@ -57,7 +57,7 @@ To pull forward later improvements to the managed set:
 | `/workflow-init` | Install/verify required tooling (yq, Obsidian, codegraph); writes per-machine `init.lock` |
 | `/workflow-agents-sync` | Enforce the AGENTS-canonical format here and across standing-bind repos present on disk |
 | `/workflow-template-sync` | The upstream link: `derive` a new workflow, `update` a derivation's managed set, `--check` report drift |
-| `/workflow-manage` | Administer this workflow: add/remove/edit standing binds, clone-if-absent their repos |
+| `/workflow-manage` | Administer this workflow: add/remove/edit standing binds, assemble/refresh the substrate (`sync-binds.sh`) |
 | `/workflow-bind` | Bind a session: attach default standing binds (and anything else asked for) via `/add-dir` |
 
 ## Standing binds vs session binds

@@ -43,5 +43,5 @@ description: >-
 ## Scope
 1. This repo's own root (`AGENTS.CORE.md` + `AGENTS.md` + the two-import `CLAUDE.md`).
 2. Every standing bind declared in `binds.yaml` that is present on disk under `base`
-   (absent repos are `/workflow-manage`'s clone-if-absent concern, not format drift).
+   (absent repos are `/workflow-manage`'s `sync-binds.sh` concern, not format drift).
    An empty or example-only `binds.yaml` (no `standing:` entries) is a clean no-op here.
