@@ -10,7 +10,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 MANIFEST="$ROOT/manifest.yaml"
-command -v yq >/dev/null || { echo "error: yq (mikefarah v4) is required" >&2; exit 1; }
+command -v yq >/dev/null || { echo "error: yq (mikefarah v4) is required — run /workflows-init (.claude/skills/workflows-init/init.sh) first" >&2; exit 1; }
 
 base_raw="$(yq -r '.base' "$MANIFEST")"
 BASE="${base_raw/#\~/$HOME}"
@@ -27,10 +27,18 @@ wfname="$1"; shift
 WFDIR="$ROOT/$wfname"
 [ -f "$WFDIR/CLAUDE.md" ] || { echo "error: unknown workflow '$wfname' (wf --list)" >&2; exit 1; }
 
+# Parse --dry-run out of the arg list FIRST, in its own pass, before any target is
+# looked at. A dry run must never have side effects (in particular: never `git clone`),
+# and that only holds if `dry` is fully known before the target loop below runs — doing
+# both in one pass let a --dry-run appearing after a target clone for real first.
 dry=0
-args=()
+targets=()
 for t in "$@"; do
-  [ "$t" = "--dry-run" ] && { dry=1; continue; }
+  if [ "$t" = "--dry-run" ]; then dry=1; else targets+=("$t"); fi
+done
+
+args=()
+for t in "${targets[@]+"${targets[@]}"}"; do
   case "$t" in
     /*) dir="$t" ;;                 # absolute path target: bind as-is
     *)  dir="$BASE/$t"
@@ -38,8 +46,12 @@ for t in "$@"; do
           url="$(yq -r ".repos[] | select(.name == \"$t\") | .url" "$MANIFEST")"
           branch="$(yq -r ".repos[] | select(.name == \"$t\") | .branch" "$MANIFEST")"
           if [ -n "$url" ] && [ "$url" != "null" ]; then
-            echo "binding: cloning $t ($branch) into $BASE" >&2
-            git clone --branch "$branch" "$url" "$dir" >&2
+            if [ "$dry" -eq 1 ]; then
+              echo "would clone $t ($branch) from $url" >&2
+            else
+              echo "binding: cloning $t ($branch) into $BASE" >&2
+              git clone --branch "$branch" "$url" "$dir" >&2
+            fi
           elif [ ! -d "$dir" ]; then
             echo "error: target '$t' not on disk and not in manifest.yaml" >&2; exit 1
           fi

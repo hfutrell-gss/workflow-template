@@ -13,7 +13,7 @@ set -euo pipefail
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
 MANIFEST="${GSS_MANIFEST:-$HERE/../../manifest.yaml}"   # monorepo root; override for testing
-command -v yq >/dev/null || { echo "error: yq (mikefarah v4) is required" >&2; exit 1; }
+command -v yq >/dev/null || { echo "error: yq (mikefarah v4) is required — run /workflows-init (.claude/skills/workflows-init/init.sh) first" >&2; exit 1; }
 
 base_raw="$(yq -r '.base' "$MANIFEST")"
 BASE="${base_raw/#\~/$HOME}"
