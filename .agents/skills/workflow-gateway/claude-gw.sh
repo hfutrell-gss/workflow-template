@@ -6,8 +6,10 @@
 # this implements.
 #
 # Usage: claude-gw.sh [claude args...]  — every argument is passed straight through to
-# claude, e.g.:
+# claude, including --model, slash-command prompts, and streaming flags, e.g.:
 #   claude-gw.sh -p "..."
+#   claude-gw.sh -p --model claude-ocx-native--gpt-5.6-sol "..."
+#   claude-gw.sh -p --verbose --output-format stream-json "/workflow-agents-sync"
 #   claude-gw.sh --add-dir /some/repo
 #
 # Preferred path: delegate to `ocx claude` — opencodex's own wired launcher (see
@@ -77,10 +79,19 @@ require_ocx
 if ocx claude --help >/dev/null 2>&1; then
   # Preferred: opencodex's own launcher — ensures the proxy AND wires the fuller env
   # (base URL, auth token, gateway model discovery) than the fallback below.
+  if [ "${ANTHROPIC_API_KEY:-}" = "oauth-placeholder" ]; then
+    # OpenCode agent tool subprocesses may inject this sentinel. Claude Code treats any
+    # ANTHROPIC_API_KEY as higher precedence than the user's claude.ai login, so remove
+    # only the known non-secret placeholder before launching the inner Claude harness.
+    exec env -u ANTHROPIC_API_KEY ocx claude "$@"
+  fi
   exec ocx claude "$@"
 fi
 
 # Fallback: ocx is installed but its `claude` subcommand isn't available/behaving.
 ensure_gateway
 port="$(resolve_port)"
+if [ "${ANTHROPIC_API_KEY:-}" = "oauth-placeholder" ]; then
+  exec env -u ANTHROPIC_API_KEY ANTHROPIC_BASE_URL="http://127.0.0.1:${port}" claude "$@"
+fi
 exec env ANTHROPIC_BASE_URL="http://127.0.0.1:${port}" claude "$@"

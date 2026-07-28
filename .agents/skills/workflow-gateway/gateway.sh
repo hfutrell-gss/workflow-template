@@ -12,7 +12,7 @@
 # into a shell rc file, ~/.claude config, or any other place that would make it apply by
 # default. See SKILL.md for the full doctrine.
 #
-# Usage: gateway.sh status | start | stop | env
+# Usage: gateway.sh status | start | stop | env | models
 set -euo pipefail
 
 CONFIG="$HOME/.opencodex/config.json"
@@ -113,10 +113,41 @@ cmd_env() {
   echo "export ANTHROPIC_BASE_URL=http://127.0.0.1:$port"
 }
 
+# Print the model identifiers to pass to Claude Code's --model when using
+# claude-gw.sh/ocx claude. Prefer Claude Code's gateway discovery cache because it
+# contains the exact routed IDs Claude accepts (including context-window variants such
+# as [1m]); fall back to the live gateway /v1/models endpoint if the cache is absent.
+cmd_models() {
+  require_ocx
+  local cache="$HOME/.claude/cache/gateway-models.json"
+  if [ -f "$cache" ] && have yq; then
+    echo "Claude Code gateway models from $cache:"
+    yq -r '.models[] | "  " + .id + "\t" + .display_name' "$cache"
+    return 0
+  fi
+
+  have curl || {
+    echo "error: curl is required to query the live gateway when $cache is unavailable" >&2
+    exit 1
+  }
+  have yq || {
+    echo "error: yq is required to parse gateway model output" >&2
+    exit 1
+  }
+
+  ocx ensure >&2 || true
+  local port
+  port="$(resolve_port)"
+  echo "Claude Code model IDs inferred from live gateway http://127.0.0.1:$port/v1/models:"
+  curl -fsS --max-time 3 "http://127.0.0.1:$port/v1/models" \
+    | yq -r '.data[] | "  claude-ocx-native--" + .id + "\t" + .owned_by'
+}
+
 case "${1:-}" in
   status) cmd_status ;;
   start)  cmd_start ;;
   stop)   cmd_stop ;;
   env)    cmd_env ;;
-  *) echo "usage: gateway.sh status|start|stop|env" >&2; exit 1 ;;
+  models) cmd_models ;;
+  *) echo "usage: gateway.sh status|start|stop|env|models" >&2; exit 1 ;;
 esac

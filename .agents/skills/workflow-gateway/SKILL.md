@@ -71,6 +71,8 @@ process's traffic, the rule is:
 
 ```sh
 .agents/skills/workflow-gateway/claude-gw.sh -p "..."
+.agents/skills/workflow-gateway/claude-gw.sh -p --model claude-ocx-native--gpt-5.6-sol "..."
+.agents/skills/workflow-gateway/claude-gw.sh -p --verbose --output-format stream-json "/workflow-agents-sync"
 .agents/skills/workflow-gateway/claude-gw.sh --add-dir /some/repo
 ```
 
@@ -87,6 +89,36 @@ shell.
 Note: OpenCode reads `AGENTS.md` natively, so an OpenCode session working inside a
 workflow repo (or a repo bound to one) already sees this doctrine without any extra
 wiring — it's the same file this skill's own doctrine lives beside.
+
+### Model selection and slash-command runs
+
+For an outer agent launching Claude Code as an inner harness, use `claude-gw.sh` for
+both ordinary prompts and workflow slash commands. Pass model selection and streaming
+flags straight through to Claude Code:
+
+```sh
+.agents/skills/workflow-gateway/claude-gw.sh \
+  -p --model claude-ocx-native--gpt-5.6-sol \
+  --verbose --output-format stream-json \
+  "/workflow-agents-sync"
+```
+
+To see the current routed model IDs Claude Code should accept via `--model`, run:
+
+```sh
+.agents/skills/workflow-gateway/gateway.sh models
+```
+
+This prefers Claude Code's gateway discovery cache at
+`~/.claude/cache/gateway-models.json` because it contains the exact `claude-ocx-*`
+model identifiers, including any context-window variants. If that cache is absent, it
+falls back to the live opencodex `/v1/models` endpoint and prints inferred Claude Code
+IDs.
+
+When an outer harness injects `ANTHROPIC_API_KEY=oauth-placeholder`, `claude-gw.sh`
+removes only that known sentinel for the inner Claude process. That prevents the
+placeholder from taking precedence over the user's existing `claude.ai` login while
+leaving any real API key untouched.
 
 ## Running the gateway as a persistent service
 
@@ -130,6 +162,7 @@ This is how you confirm a launched sub-harness's requests actually reached the g
 .agents/skills/workflow-gateway/gateway.sh start    # start it in the background, idempotent
 .agents/skills/workflow-gateway/gateway.sh stop     # stop it
 .agents/skills/workflow-gateway/gateway.sh env      # print the exact opt-in export line
+.agents/skills/workflow-gateway/gateway.sh models   # print routed Claude --model IDs
 .agents/skills/workflow-gateway/claude-gw.sh [args] # launch claude as a routed/tracked
                                                      # sub-harness — see the section above
 ```
@@ -152,6 +185,9 @@ This is how you confirm a launched sub-harness's requests actually reached the g
   case for a fresh local install), and only requires `OPENCODEX_API_AUTH_TOKEN` if you
   bind the gateway beyond loopback (`hostname: "0.0.0.0"` in its config) — a
   configuration this skill's `start` never does for you.
+- **`models`** — prints the routed Claude Code model IDs to pass to `--model`, preferring
+  the exact IDs from `~/.claude/cache/gateway-models.json` and falling back to live
+  gateway discovery when that cache is absent.
 
 ## Configuring providers
 
