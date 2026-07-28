@@ -35,7 +35,7 @@ copy_managed_paths() {
   local path
   while IFS= read -r path; do
     [ -n "$path" ] || continue
-    if [[ "$path" == */** ]]; then
+    if [[ "$path" == *'/**' ]]; then
       local dirpath="${path%/**}"
       mkdir -p "$(dirname "$dst/$dirpath")"
       rm -rf "$dst/$dirpath"

@@ -83,8 +83,11 @@ same-repo ancestor path to bridge with a symlink. Same-directory imports only.)
 
 This file (`AGENTS.CORE.md`) and the `workflow-*` skills under `.claude/skills/` are
 **managed by the upstream template** (this repo, or wherever a derivation was cloned
-from). A derivation records the relationship in `.template.lock` at its root:
-`template_version`, `upstream` (path or URL), `derived` (date), and `pinned`.
+from). The `workflow-*` skill namespace is reserved for the template; name
+derivation-local skills anything else, or a future `update` may clobber them. A
+derivation records the relationship in `.template.lock` at its root: `template_version`,
+`upstream` (a local path today — URL support is a future extension, not yet
+implemented), `derived` (date), and `pinned`.
 
 - `pinned: false` (default) — `workflow-template-sync update` may copy forward changes
   to the managed set (see `template-manifest.yaml`) when the upstream's `VERSION` is

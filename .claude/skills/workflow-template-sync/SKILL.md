@@ -48,6 +48,11 @@ Run inside a derivation. Reads `.template.lock`:
   `playbooks/`, `journal/`, anything else — is never touched, by construction (the
   copy step only ever reads paths named in the manifest).
 - Currently supports a **local path** upstream only (no remote fetch yet).
+- VERSION is a plain integer; comparison uses `sort -n`.
+
+### Repointing upstream
+`upstream` is a local path today. If the template repo moves (or gains a URL later),
+edit `upstream:` in `.template.lock` by hand — that is the supported repoint procedure.
 
 ### `--check` — report drift
 Prints `template_version`, `upstream`, the upstream's current version, and `pinned`.

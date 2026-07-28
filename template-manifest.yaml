@@ -10,6 +10,7 @@
 # lets a future template version add or retire a managed path in every derivation.
 
 version: 1   # mirrors this repo's VERSION at the time this manifest last changed
+             # VERSION is a plain integer; comparison uses sort -n.
 
 managed:
   - AGENTS.CORE.md
