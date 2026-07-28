@@ -1,4 +1,4 @@
-# per-machine init record (see /workflows-init)
+# per-machine init record (see /workflow-init)
 init.lock
 
 # Obsidian per-user / volatile state (app.json stays committed as the shared baseline)

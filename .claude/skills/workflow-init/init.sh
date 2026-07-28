@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# workflows-init — install/verify the tooling this monorepo's procedures assume,
-# then record the init version in <repo-root>/init.lock (per-machine, gitignored).
+# workflow-init — install/verify the tooling this repo's procedures assume, then
+# record the init version in <repo-root>/init.lock (per-machine, gitignored).
 #
 # Usage: init.sh          # ensure everything, write init.lock
 #        init.sh --check  # verify only: exit 0 if lock matches VERSION and tools present
@@ -28,12 +28,13 @@ check_yq()       { have yq && yq --version 2>/dev/null | grep -o 'v[0-9][0-9.]*'
 check_obsidian() { have obsidian && echo present; }
 check_codegraph(){ have codegraph && (codegraph --version 2>/dev/null || echo present) | head -1; }
 
-# git is special: on this machine's history, `git` was aliased/PATH-resolved to
-# the Windows binary (/mnt/c/.../Git/bin/git.exe) with core.symlinks=false in
-# this repo — which silently turns committed symlinks (.constitution.md ->
-# AGENTS.md) into plain files with no error. check_git must catch both halves
-# of that trap: a non-native git resolving on PATH, and core.symlinks=false
-# here. GIT_BIN=/path/to/git is an escape hatch to force a specific binary.
+# git is special: on this machine's history, `git` was aliased/PATH-resolved to the
+# Windows binary (/mnt/c/.../Git/bin/git.exe), which behaves differently enough from
+# native git (line endings, permissions, and historically: silently mishandling
+# committed symlinks when core.symlinks=false) that AGENTS.CORE.md mandates native
+# git explicitly for every git operation in this repo and its derivations. check_git
+# must catch both halves of that trap: a non-native git resolving on PATH, and
+# core.symlinks=false here. GIT_BIN=/path/to/git is an escape hatch to force a binary.
 is_windows_git() { case "$1" in /mnt/c/*|*.exe) return 0 ;; *) return 1 ;; esac; }
 
 # Prints a usable native git binary path on stdout, or nothing (exit 1) if
@@ -64,7 +65,7 @@ warn_windows_git_alias() {
     [ -f "$rc" ] || continue
     hit="$(grep -nE 'alias[[:space:]]+git=.*(\.exe|/mnt/c)' "$rc" 2>/dev/null | head -1 || true)"
     if [ -n "$hit" ]; then
-      echo "WARNING: 'git' is aliased to a Windows binary at $rc:${hit%%:*} — this shadows native git in interactive shells (this script itself is unaffected; bash doesn't source $rc). Symptoms if you hit this in a shell: phantom 'typechange' on .constitution.md, or 'git diff' failing with \"Function not implemented\". Always invoke /usr/bin/git explicitly for this repo, or fix/guard the alias in $rc." >&2
+      echo "WARNING: 'git' is aliased to a Windows binary at $rc:${hit%%:*} — this shadows native git in interactive shells (this script itself is unaffected; bash doesn't source $rc). Always invoke /usr/bin/git explicitly for this repo, or fix/guard the alias in $rc." >&2
     fi
   done
   path_git="$(command -v git 2>/dev/null || true)"
@@ -126,10 +127,8 @@ install_git() {
     if [ -x /usr/bin/git ]; then
       cat >&2 <<EOF
 error: 'git' on PATH resolves to the Windows binary ($path_git), while a
-native Linux git is available at /usr/bin/git. This repo relies on
-committed symlinks (.constitution.md -> AGENTS.md) that the Windows binary
-silently mishandles (especially combined with core.symlinks=false) — that
-exact trap broke symlinks earlier in this repo's history.
+native Linux git is available at /usr/bin/git. AGENTS.CORE.md mandates
+native git explicitly for this repo and its derivations.
 
 This is a human-fixable shell misconfiguration, not something init.sh can
 install, so it will not attempt to install anything. To fix:
@@ -150,9 +149,9 @@ EOF
   fi
 
   # Only remaining case check_git would have flagged: a native git is present,
-  # but core.symlinks is false in this repo. That one IS safe to fix directly.
+  # but core.symlinks is false in this repo. Fix it directly — cheap and safe.
   bin="${path_git:-/usr/bin/git}"
-  echo "core.symlinks is false in this repo (breaks committed symlinks like .constitution.md); fixing with 'git config core.symlinks true' ..." >&2
+  echo "core.symlinks is false in this repo; fixing with 'git config core.symlinks true' ..." >&2
   "$bin" -C "$ROOT" config core.symlinks true
 }
 

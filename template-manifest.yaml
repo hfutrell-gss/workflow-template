@@ -1,0 +1,22 @@
+# template-manifest.yaml — the managed set.
+#
+# Exactly the paths `workflow-template-sync` owns in a derivation. `update` copies ONLY
+# these paths forward from upstream when the upstream's VERSION is ahead of a
+# derivation's `.template.lock` `template_version` (and never touches anything outside
+# this list, in this file or elsewhere). `derive` writes `.template.lock` pointing back
+# at wherever this file's repo was copied/cloned from.
+#
+# This file is itself managed: a derivation gets it kept in sync too, and it's what
+# lets a future template version add or retire a managed path in every derivation.
+
+version: 1   # mirrors this repo's VERSION at the time this manifest last changed
+
+managed:
+  - AGENTS.CORE.md
+  - CLAUDE.md
+  - template-manifest.yaml
+  - .claude/skills/workflow-init/**
+  - .claude/skills/workflow-agents-sync/**
+  - .claude/skills/workflow-template-sync/**
+  - .claude/skills/workflow-manage/**
+  - .claude/skills/workflow-bind/**

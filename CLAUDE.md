@@ -1,4 +1,5 @@
 # CLAUDE.md
-<!-- managed by /workflows-agents-sync — no content here; AGENTS.md is canonical -->
+<!-- managed by /workflow-agents-sync — no content here; AGENTS.CORE.md + AGENTS.md are canonical -->
 
+@AGENTS.CORE.md
 @AGENTS.md

@@ -1,0 +1,24 @@
+# binds.yaml — this workflow's bind registry.
+#
+# Two bind types (see AGENTS.CORE.md "Bind law"):
+#   standing binds — repos related to this workflow, declared below with the
+#                    relationship (kind + why). A registry, not a session state.
+#   session binds  — repos actually attached to the *current* session, via
+#                    `/add-dir` or `claude --add-dir` at launch. `/workflow-bind`
+#                    attaches every standing bind marked `default: true`, plus
+#                    anything else requested.
+#
+# `/workflow-manage` administers this file (add/remove/edit entries, clone-if-absent).
+# `/workflow-agents-sync` scope 2 checks every standing bind present on disk under
+# `base` for a conforming AGENTS.md/CLAUDE.md bridge.
+
+base: ~/workbench          # standing-bind repos are expected as siblings under here
+
+standing: []
+# standing:
+#   - repo: identity                                  # directory name under `base`
+#     kind: reference                                  # reference | co-change | stewarded | upstream | downstream
+#     why: Canonical identity graph this workflow's procedures read but never write.
+#     default: false                                   # true = /workflow-bind attaches it automatically
+#     url: git@github-example:example-org/identity.git # optional — enables clone-if-absent
+#     branch: main                                     # optional — branch to track/clone
