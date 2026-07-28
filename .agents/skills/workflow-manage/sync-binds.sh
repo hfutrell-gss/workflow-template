@@ -25,8 +25,17 @@ BINDS="${BINDS_FILE:-$ROOT/binds.yaml}"
 command -v yq >/dev/null || { echo "error: yq (mikefarah v4) is required — run /workflow-init first" >&2; exit 1; }
 [ -f "$BINDS" ] || { echo "error: binds file not found: $BINDS" >&2; exit 1; }
 
-base_raw="$(yq -r '.base // "~/workbench"' "$BINDS")"
-BASE="${base_raw/#\~/$HOME}"
+# Path resolution rule (shared with workflow-agents-sync's scope-2 scan): `base`
+# starting with `/` or `~` is absolute/home-relative (legacy, still supported);
+# anything else is resolved RELATIVE TO THIS WORKFLOW REPO'S ROOT (the dir containing
+# binds.yaml) — the norm, since a workflow manages its own substrate workspace rather
+# than reaching into the user's personal checkouts. Default: `./workspace`.
+base_raw="$(yq -r '.base // "./workspace"' "$BINDS")"
+case "$base_raw" in
+  /*) BASE="$base_raw" ;;
+  \~*) BASE="${base_raw/#\~/$HOME}" ;;
+  *) BASE="$ROOT/${base_raw#./}" ;;
+esac
 
 all_names="$(yq -r '.standing[]? | select(.url != null) | .repo' "$BINDS")"
 

@@ -154,7 +154,16 @@ check_dir "$ROOT" "root" 1
 
 # ---- scope 2: standing-bind repos from binds.yaml ----------------------------
 if [ -f "$BINDS" ] && command -v yq >/dev/null; then
-  base_raw="$(yq -r '.base // "~/workbench"' "$BINDS")"; BASE="${base_raw/#\~/$HOME}"
+  # Same path-resolution rule as workflow-manage/sync-binds.sh: `base` starting with
+  # `/` or `~` is absolute/home-relative (legacy); anything else resolves relative to
+  # this workflow repo's root. Default: `./workspace`.
+  base_raw="$(yq -r '.base // "./workspace"' "$BINDS")"
+  case "$base_raw" in
+    /*) BASE="$base_raw" ;;
+    \~*) BASE="${base_raw/#\~/$HOME}" ;;
+    *) BASE="$ROOT/${base_raw#./}" ;;
+  esac
+  mkdir -p "$BASE"
   count="$(yq -r '(.standing // []) | length' "$BINDS" 2>/dev/null || echo 0)"
   if [ "${count:-0}" -gt 0 ] 2>/dev/null; then
     while IFS= read -r name; do

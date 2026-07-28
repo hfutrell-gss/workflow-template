@@ -44,7 +44,8 @@ To pull forward later improvements to the managed set:
 | `AGENTS.CORE.md` | The constitution — TEMPLATE-MANAGED, never hand-edited in a derivation |
 | `AGENTS.md` | This workflow's own doctrine — entirely yours, a skeleton until you write it |
 | `CLAUDE.md` | Bridge importing `@AGENTS.CORE.md` then `@AGENTS.md` |
-| `binds.yaml` | Standing binds: repos related to this workflow (kind + why) |
+| `binds.yaml` | Standing binds: repos related to this workflow (kind + why); `base` (default `./workspace`) says where they live on disk |
+| `workspace/` | This workflow's own substrate workspace — gitignored, per-machine; where standing binds get cloned and cross-repo work happens. Never committed, never the user's personal checkouts. |
 | `template-manifest.yaml` | The exact managed-set path list `workflow-template-sync` owns |
 | `VERSION` | This template's own version (absent in a derivation — see `.template.lock` there instead) |
 | `playbooks/` | Step-by-step procedures for this workflow's area of work |
@@ -82,6 +83,13 @@ failure, only an informational note pointing at how to opt in.
 - **Session binds** — repos actually attached to the *current* session, via `/add-dir`
   once running, or `claude --add-dir <path>` (repeatable) at launch. `/workflow-bind`
   attaches every `default: true` standing bind plus anything else asked for.
+
+Standing binds live on disk in this workflow's own **workspace** (`workspace/` at the
+repo root, gitignored, per-machine) — `binds.yaml`'s `base` (default `./workspace`)
+resolves relative to the repo root unless given as an absolute or `~`-prefixed path.
+`/workflow-manage`'s `sync-binds.sh` populates it. A workflow manages its own repos
+there; it never resolves standing binds into checkouts it doesn't own, including the
+user's personal working copies.
 
 ## Prerequisite
 

@@ -1,6 +1,10 @@
 # per-machine init record (see /workflow-init)
 init.lock
 
+# per-machine substrate workspace (see AGENTS.CORE.md "The workspace") — standing
+# binds get cloned here; never committed, never shared across machines.
+workspace/
+
 # Obsidian per-user / volatile state (app.json stays committed as the shared baseline)
 .obsidian/workspace.json
 .obsidian/workspace-mobile.json

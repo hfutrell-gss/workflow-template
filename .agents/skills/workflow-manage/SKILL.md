@@ -59,7 +59,10 @@ disk, and does not affect any repo already session-bound right now.
 ```
 This is the one tool for bringing every standing bind with a `url` onto disk under
 `base` and keeping it current — clone-if-absent and ongoing refresh are the same
-operation, not two. For each targeted bind:
+operation, not two. `base` defaults to `./workspace`: this workflow's own substrate
+workspace (gitignored, per-machine, resolved relative to the repo root — see
+AGENTS.CORE.md "The workspace"). `sync-binds.sh` populates it; a workflow never
+resolves standing binds into the user's personal checkouts. For each targeted bind:
 - **Missing on disk** → clones it (`--branch` if `binds.yaml` sets one, else the
   remote's default branch).
 - **Present, clean, on the tracked branch** → fetches and fast-forwards.
@@ -96,3 +99,11 @@ Override the binds file for testing with `BINDS_FILE=/path/to/binds.yaml`.
 ## After any edit
 Run `/workflow-agents-sync --check` — it scans every standing bind present on disk for
 a conforming `AGENTS.md`/`CLAUDE.md` bridge.
+
+## Cross-repo changes, inside the workspace
+
+When a task needs a branch or a commit in a standing bind, do it inside
+`workspace/<repo>` (per the resolved `base`), never in a checkout this workflow doesn't
+own. Once there, that repo's own git and its own `AGENTS.md` law apply — branch,
+commit, and push per *that* repo's conventions, same as you would in any checkout of
+it. The workspace only changes *where* the clone lives, not what governs working in it.

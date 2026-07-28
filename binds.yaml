@@ -12,7 +12,17 @@
 # `/workflow-agents-sync` scope 2 checks every standing bind present on disk under
 # `base` for a conforming AGENTS.md/CLAUDE.md bridge.
 
-base: ~/workbench          # standing-bind repos are expected as siblings under here
+base: ./workspace
+# The substrate workspace: where standing-bind repos actually get cloned/refreshed on
+# disk (see AGENTS.CORE.md "The workspace"). Resolution rule:
+#   - starts with `/` or `~`  → absolute / home-relative path (legacy form, still
+#     supported) — this means operating on repos wherever that path points, which is
+#     discouraged unless you specifically mean a shared checkout outside this repo.
+#   - anything else            → resolved RELATIVE TO THIS WORKFLOW REPO'S ROOT (the
+#     directory containing this binds.yaml). `./workspace` is the norm: a per-machine,
+#     gitignored directory this workflow owns and clones its standing binds into. A
+#     workflow should manage its own repos here, never reach into the user's personal
+#     checkouts.
 
 standing: []
 # standing:

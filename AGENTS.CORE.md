@@ -70,6 +70,17 @@ Rules that apply to every bind, standing or session:
 2. **Surface, don't suppress** — the universal principle, same as every repo: report
    drift, conflicts, and anomalies rather than silently resolving or hiding them.
 
+## The workspace
+
+Every workflow owns `workspace/` at its root — a per-machine working area, gitignored
+(nested substrate clones must never appear in the workflow's own `git status`), where
+its standing binds actually get cloned (`binds.yaml`'s `base`, default `./workspace`)
+and where cross-repo changes happen. A workflow manages its own repos here: pull,
+organize, and branch inside `workspace/<repo>` — it never operates on checkouts it
+doesn't own, including the user's own personal working copies elsewhere on disk. Inside
+`workspace/<repo>`, that repo's own git and its own law (`AGENTS.md`) apply — the
+workspace only changes where the clone lives, not what governs working in it.
+
 ## Journal discipline
 
 Keep `journal/` — one dated file per run/decision (`YYYY-MM-DD-slug.md`), never a

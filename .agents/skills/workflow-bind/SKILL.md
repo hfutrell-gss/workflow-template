@@ -23,8 +23,11 @@ session itself (`/add-dir`), which a helper process can't do on your behalf.
    ```
 2. **Resolve each repo to bind** — every `default: true` standing bind, plus any repo
    the user asked for on top (by name, if it's a standing bind; by path otherwise).
-   - Look up `base` in `binds.yaml` (defaults to `~/workbench`); a named standing bind
-     resolves to `<base>/<repo>`.
+   - Look up `base` in `binds.yaml` (defaults to `./workspace` — this workflow's own
+     substrate workspace, gitignored, resolved relative to the repo root; an absolute
+     or `~`-prefixed `base` is the legacy, discouraged form that points at a shared
+     checkout instead). A named standing bind resolves to `<resolved base>/<repo>` —
+     e.g. `workspace/<repo>` in the normal case.
    - If it isn't on disk yet and has a `url`, offer `/workflow-manage`'s
      `sync-binds.sh <repo-name>` before binding (or ask the user first — cloning
      is a real side effect, unlike attaching an existing dir).
