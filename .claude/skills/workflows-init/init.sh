@@ -11,6 +11,16 @@ ROOT="$(cd "$HERE/../../.." && pwd)"
 VERSION="$(tr -d '[:space:]' < "$HERE/VERSION")"
 LOCK="$ROOT/init.lock"
 
+# ---- platform gate ------------------------------------------------------------
+# init.sh's install_* functions (yq/obsidian/codegraph binaries, WSLg wrapper) are
+# only written/vetted for Linux x86_64 (incl. WSL2). Fail loudly before attempting
+# any install on anything else, rather than partially installing the wrong arch.
+_os="$(uname -s)"; _arch="$(uname -m)"
+if [ "$_os-$_arch" != "Linux-x86_64" ]; then
+  echo "error: init currently supports Linux x86_64 / WSL2 only (detected: $_os-$_arch); extend init.sh for this platform." >&2
+  exit 1
+fi
+
 # ---- tool checks ------------------------------------------------------------
 have() { command -v "$1" >/dev/null 2>&1; }
 
@@ -40,6 +50,28 @@ resolve_git_bin() {
     printf '%s\n' /usr/bin/git; return 0
   fi
   return 1
+}
+
+# Loudly warn (read-only, non-fatal) about the Windows-git trap even when check_git
+# itself passes — this script runs under bash, which never sources ~/.zshenv or
+# ~/.zshrc, so a human's interactive `git` can still be shadowed by a `git=...exe`
+# alias there while this script's own `command -v git` resolves fine. Grubs both
+# rc files (read-only grep, no sourcing) and this script's own PATH resolution.
+# Called unconditionally so both --check and a normal run print it.
+warn_windows_git_alias() {
+  local rc hit path_git
+  for rc in "$HOME/.zshenv" "$HOME/.zshrc"; do
+    [ -f "$rc" ] || continue
+    hit="$(grep -nE 'alias[[:space:]]+git=.*(\.exe|/mnt/c)' "$rc" 2>/dev/null | head -1 || true)"
+    if [ -n "$hit" ]; then
+      echo "WARNING: 'git' is aliased to a Windows binary at $rc:${hit%%:*} — this shadows native git in interactive shells (this script itself is unaffected; bash doesn't source $rc). Symptoms if you hit this in a shell: phantom 'typechange' on .constitution.md, or 'git diff' failing with \"Function not implemented\". Always invoke /usr/bin/git explicitly for this repo, or fix/guard the alias in $rc." >&2
+    fi
+  done
+  path_git="$(command -v git 2>/dev/null || true)"
+  if [ -n "$path_git" ] && is_windows_git "$path_git"; then
+    echo "WARNING: the first 'git' on this script's PATH resolves to a Windows binary ($path_git). Use /usr/bin/git explicitly for this repo, or set GIT_BIN=/usr/bin/git." >&2
+  fi
+  return 0
 }
 
 check_git() {
@@ -134,12 +166,33 @@ install_codegraph() {
   # `@colbymchenry/codegraph-<platform>` bundles are NOT this — the scoped
   # `@colbymchenry/codegraph` meta-package (README's npm alternative) is the only
   # other officially sanctioned channel. Override via CODEGRAPH_INSTALL if needed.
-  local cmd="${CODEGRAPH_INSTALL:-curl -fsSL https://raw.githubusercontent.com/colbymchenry/codegraph/main/install.sh | sh}"
+  #
+  # Pinned to the v1.5.0 tag (the release vetted 2026-07-27) rather than `main`, so a
+  # future push to main can't silently swap in unvetted install logic. Verified this
+  # exact tag path resolves (curl -fsI -> 200) before fetching it.
+  local pin="v1.5.0"
+  local url="https://raw.githubusercontent.com/colbymchenry/codegraph/${pin}/install.sh"
+  if ! curl -fsSI "$url" >/dev/null 2>&1; then
+    echo "error: pinned codegraph installer not found at $url (tag '$pin' missing/moved?). Not falling back to 'main' — set CODEGRAPH_INSTALL to override." >&2
+    return 1
+  fi
+  # install.sh (inspected at this tag) DOES support a version pin: CODEGRAPH_VERSION
+  # (defaults to resolving GitHub's "latest" release otherwise). Pin the binary release
+  # to match the installer source, so both halves of "codegraph v1.5.0" refer to the
+  # same vetted artifact. Residual risk: the release DOES publish a SHA256SUMS asset
+  # (github.com/colbymchenry/codegraph/releases/tag/v1.5.0), but install.sh does not
+  # verify the downloaded tarball against it, and reimplementing that check here would
+  # mean re-downloading the tarball ourselves outside the vendored installer flow —
+  # deferred rather than forking their script. Transport is at least TLS-pinned GitHub
+  # Releases, not an arbitrary mirror.
+  local cmd="${CODEGRAPH_INSTALL:-curl -fsSL $url | CODEGRAPH_VERSION=$pin sh}"
   echo "installing codegraph via: $cmd" >&2
   eval "$cmd"
 }
 
 # ---- run --------------------------------------------------------------------
+warn_windows_git_alias   # loud, read-only, non-fatal — runs in --check and normal runs alike
+
 declare -A got
 missing=()
 for tool in yq obsidian codegraph git; do

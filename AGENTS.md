@@ -43,6 +43,18 @@ wf <workflow> [target-repo ...]     # bin/wf — cd into the workflow, claude --
 - Targets are any repos, resolved (and cloned if absent) via `manifest.yaml`.
 - A workflow is target-agnostic: same doctrine, different substrate each checkout.
 
+## Git discipline
+
+This repo contains committed symlinks (`.constitution.md` in each workflow dir). **Always
+use native git — `/usr/bin/git` explicitly — for every git operation here**, never a bare
+`git` that might resolve to a Windows binary. A common WSL trap: a `git=...git.exe` alias
+in `~/.zshenv` (or `~/.zshrc`) shadows native git on PATH. Symptoms if you're hit by it:
+a phantom `typechange` on `.constitution.md` in `git status`/`git diff`, or `git diff`
+failing outright with `"Function not implemented"`. **Never run
+`git checkout -- .constitution.md`-style commands through Windows git** — it silently
+converts the symlink to a plain file with no error, corrupting the checkout.
+`/workflows-init`'s `--check` warns if such an alias is detected (see `init.sh`).
+
 ## Binding law (applies to every workflow)
 
 1. **On binding a target, read its `AGENTS.md` before operating in it**, and honor its

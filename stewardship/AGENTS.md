@@ -2,6 +2,15 @@
 tier: dev
 ---
 
+## Constitution check
+
+This session must ALSO have loaded the root constitution (imported via
+`@.constitution.md` — it opens with "MANDATORY FIRST — verify initialization"). If you
+did not see that section, this clone's symlinks are broken (Windows git /
+`core.symlinks=false`) — fail closed: stop, run
+`.claude/skills/workflows-agents-sync/agents-sync.sh --check` and `/workflows-init`, and
+fix the clone before any work.
+
 # Stewardship — doctrine
 
 Area of work: **the working environment itself.** Keeping the substrate healthy — repos

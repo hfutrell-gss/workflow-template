@@ -8,6 +8,7 @@ law, journal discipline, and tiers. `AGENTS.md` files are canonical; `CLAUDE.md`
 header bridges only (enforced by `/workflows-agents-sync`).
 
 ## Checkout
+Prerequisite: Linux x86_64 (including WSL2) — `/workflows-init` supports no other platform.
 ```sh
 bin/wf --list                      # what workflows exist
 bin/wf stewardship                 # doctrine-only session

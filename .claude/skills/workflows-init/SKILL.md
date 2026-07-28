@@ -19,6 +19,9 @@ match `.claude/skills/workflows-init/VERSION`. This skill makes that true.
 ```
 Run from the repo root (or use the absolute path). The script is idempotent.
 
+**Prerequisite:** Linux x86_64 (including WSL2) only — `init.sh` exits early with a clear
+message on any other platform (macOS/arm64, native Windows, etc.).
+
 ## What it ensures
 - **git** — must resolve to a native Linux binary, not a Windows one (e.g.
   `/mnt/c/.../Git/bin/git.exe` via a WSL PATH/alias trap), and `core.symlinks` must not
@@ -35,10 +38,11 @@ Run from the repo root (or use the absolute path). The script is idempotent.
   `~/.local/opt/obsidian` with the WSLg `--disable-gpu` wrapper at `~/.local/bin/obsidian`.
 - **codegraph** — defaults to the official install method from
   https://github.com/colbymchenry/codegraph's own README (its `install.sh`, user-scoped,
-  no sudo, symlinks into `~/.local/bin`). Several unrelated public packages share the
-  bare name `codegraph`; this default is scoped to that repo specifically. Override with
-  `CODEGRAPH_INSTALL="<command>" .claude/skills/workflows-init/init.sh` if a different
-  install method is ever needed.
+  no sudo, symlinks into `~/.local/bin`), pinned to vetted v1.5.0 (both the installer
+  source and the `CODEGRAPH_VERSION` release it fetches). Several unrelated public
+  packages share the bare name `codegraph`; this default is scoped to that repo
+  specifically. Override with `CODEGRAPH_INSTALL="<command>" .claude/skills/workflows-init/init.sh`
+  if a different install method is ever needed.
 
 ## Versioning
 `VERSION` is bumped when the init procedure changes (new tool, changed install). Bumping
