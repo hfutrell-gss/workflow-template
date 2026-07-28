@@ -20,6 +20,15 @@ match `.claude/skills/workflows-init/VERSION`. This skill makes that true.
 Run from the repo root (or use the absolute path). The script is idempotent.
 
 ## What it ensures
+- **git** — must resolve to a native Linux binary, not a Windows one (e.g.
+  `/mnt/c/.../Git/bin/git.exe` via a WSL PATH/alias trap), and `core.symlinks` must not
+  be `false` in this repo. This repo relies on committed symlinks
+  (`.constitution.md -> AGENTS.md`); Windows git + `core.symlinks=false` silently
+  turns those into plain files with no error. If PATH resolves to Windows git but a
+  native `/usr/bin/git` exists, this is a human-fixable shell misconfiguration —
+  init.sh fails loudly with remediation instead of trying to "install" anything (an
+  explicit `GIT_BIN=/path/to/git` escape hatch is honored). If `core.symlinks` is
+  merely `false` with a native git otherwise fine, init.sh fixes it directly.
 - **yq** (mikefarah v4) — required by `bin/wf` and stewardship's `sync.sh`. Installs from
   GitHub releases into `~/.local/bin` if missing.
 - **Obsidian** — the vault lens over this repo. Installs the AppImage into
