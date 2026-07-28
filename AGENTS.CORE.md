@@ -126,6 +126,13 @@ substrate assembly/refresh) as a managed `workflow-manage` capability. A derivat
 and *why* is its doctrine. Neither is a license to hand-roll a parallel tool for
 something the template already ships.
 
+## Tool tiers
+
+`/workflow-init` distinguishes REQUIRED tools (git, yq — every procedure here assumes
+them) from RECOMMENDED tools (Obsidian, codegraph, opencodex — useful, but installed
+only on an explicit per-machine decision recorded in `init.lock`, never silently). See
+`/workflow-init`'s SKILL.md for the decision flow (`init.sh decide <tool> install|skip`).
+
 ## Tiers (RBAC)
 
 This repo's `AGENTS.md` declares `tier:` in frontmatter — the roles/credentials its
@@ -138,7 +145,8 @@ procedures presume (e.g. `dev`, `ops`, `admin`). Enforcement is real, not cosmet
 
 ## Baked-in skills
 
-- `/workflow-init` — install/verify required tooling (yq, Obsidian, codegraph); writes
+- `/workflow-init` — install/verify required tooling (git, yq) and record per-machine
+  decisions about recommended tooling (Obsidian, codegraph, opencodex); writes
   `init.lock`.
 - `/workflow-agents-sync` — enforce the canonical-format invariant here and across
   standing-bind repos present on disk.
@@ -150,3 +158,6 @@ procedures presume (e.g. `dev`, `ops`, `admin`). Enforcement is real, not cosmet
   — clone missing repos, fast-forward clean ones, never clobber local work).
 - `/workflow-bind` — bind a session: attach default standing binds (and any requested
   extras) via `/add-dir`, per the bind law above.
+- `/workflow-gateway` — manage the local opencodex model gateway (start/stop/status)
+  and the **strictly opt-in, per-session** `ANTHROPIC_BASE_URL` override for routing
+  Claude Code through it. Never set globally or by default — see its SKILL.md.

@@ -2,8 +2,21 @@
 # workflow-init — install/verify the tooling this repo's procedures assume, then
 # record the init version in <repo-root>/init.lock (per-machine, gitignored).
 #
-# Usage: init.sh          # ensure everything, write init.lock
-#        init.sh --check  # verify only: exit 0 if lock matches VERSION and tools present
+# Usage: init.sh                         # ensure required + decided-install recommended
+#                                         # tools, write init.lock
+#        init.sh --check                 # verify only (see exit-code rules below)
+#        init.sh decide <tool> <install|skip>
+#                                         # record this machine's per-tool decision into
+#                                         # init.lock's decisions: section
+#
+# ---- tool tiers ---------------------------------------------------------------
+# REQUIRED  — every procedure in this repo assumes these; missing = hard failure.
+# RECOMMENDED — useful, but opt-in per machine via `decide`. A recommended tool with
+#   no decision (or decision=skip) is never installed by a plain run and never fails
+#   --check; it only prints an informational NOTE. A recommended tool decided
+#   "install" but not actually present IS a failure (the decision was made; this
+#   machine isn't honoring it) — both for --check and for a plain run's own install
+#   attempt.
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -11,10 +24,14 @@ ROOT="$(cd "$HERE/../../.." && pwd)"
 VERSION="$(tr -d '[:space:]' < "$HERE/VERSION")"
 LOCK="$ROOT/init.lock"
 
+REQUIRED=(git yq)
+RECOMMENDED=(obsidian codegraph opencodex)
+
 # ---- platform gate ------------------------------------------------------------
-# init.sh's install_* functions (yq/obsidian/codegraph binaries, WSLg wrapper) are
-# only written/vetted for Linux x86_64 (incl. WSL2). Fail loudly before attempting
-# any install on anything else, rather than partially installing the wrong arch.
+# init.sh's install_* functions (yq/obsidian/codegraph/opencodex binaries, WSLg
+# wrapper) are only written/vetted for Linux x86_64 (incl. WSL2). Fail loudly before
+# attempting any install on anything else, rather than partially installing the wrong
+# arch.
 _os="$(uname -s)"; _arch="$(uname -m)"
 if [ "$_os-$_arch" != "Linux-x86_64" ]; then
   echo "error: init currently supports Linux x86_64 / WSL2 only (detected: $_os-$_arch); extend init.sh for this platform." >&2
@@ -27,6 +44,7 @@ have() { command -v "$1" >/dev/null 2>&1; }
 check_yq()       { have yq && yq --version 2>/dev/null | grep -o 'v[0-9][0-9.]*' | head -1; }
 check_obsidian() { have obsidian && echo present; }
 check_codegraph(){ have codegraph && (codegraph --version 2>/dev/null || echo present) | head -1; }
+check_opencodex(){ have ocx && (ocx --version 2>/dev/null || echo present) | head -1; }
 
 # git is special: on this machine's history, `git` was aliased/PATH-resolved to the
 # Windows binary (/mnt/c/.../Git/bin/git.exe), which behaves differently enough from
@@ -189,35 +207,217 @@ install_codegraph() {
   eval "$cmd"
 }
 
+install_opencodex() {
+  # opencodex (https://github.com/lidge-jun/opencodex, npm @bitkyc08/opencodex) — a
+  # local model-gateway proxy (Codex/Claude Code/Claude Desktop -> 40+ providers).
+  # Vetted 2026-07-28: MIT license, ~5.5k GitHub stars, actively released (npm
+  # dist-tag "latest" resolved to 2.7.42 on the vetting date). PROVENANCE NOTE: this
+  # is an individual-maintainer project (bitkyc08/lidge-jun) whose whole purpose is
+  # to sit directly in the path of every LLM request a routed session makes — that is
+  # a materially different trust posture than yq/Obsidian/codegraph. It is
+  # RECOMMENDED-tier, never auto-installed: this function only runs when this
+  # machine's init.lock decisions: section says `opencodex: install` (see
+  # `init.sh decide opencodex install`). See workflow-gateway's SKILL.md for the
+  # opt-in-per-session usage doctrine once installed.
+  #
+  # Pinned to the exact version verified above rather than "latest", so a future
+  # publish can't silently swap in unvetted code.
+  #
+  # User-scoped, never sudo: this repo's other installers (yq, Obsidian, codegraph)
+  # all land in ~/.local/{bin,opt} with no root required, and a system-package npm
+  # (e.g. Debian/Ubuntu's) commonly defaults its global prefix to a root-owned path
+  # like /usr/lib/node_modules — a bare `npm install -g` there fails EACCES for a
+  # non-root user. Use an explicit user-owned --prefix instead, and symlink the
+  # resulting binaries into ~/.local/bin (same landing spot as codegraph) so
+  # check_opencodex's `have ocx` finds them the same way every other tool here does.
+  local pin="2.7.42"
+  local prefix="$HOME/.local/share/npm-global"
+  command -v npm >/dev/null 2>&1 || { echo "error: npm not found — opencodex requires Node 18+ (npm on PATH). Install Node first." >&2; return 1; }
+  mkdir -p "$prefix" "$HOME/.local/bin"
+  echo "installing opencodex (pinned @bitkyc08/opencodex@$pin) via 'npm install -g --prefix $prefix' ..." >&2
+  npm install -g --prefix "$prefix" "@bitkyc08/opencodex@$pin"
+  local bin
+  for bin in ocx opencodex; do
+    [ -e "$prefix/bin/$bin" ] && ln -sf "$prefix/bin/$bin" "$HOME/.local/bin/$bin"
+  done
+}
+
+# ---- decisions (recommended-tier, per-machine, stored in init.lock) ----------
+# init.lock's `decisions:` section maps a RECOMMENDED tool to install|skip, each line
+# formatted `  <tool>: <install|skip>  # <date>`. Parsed with awk/sed only — yq itself
+# is a required tool this script may still be bootstrapping, so the lock format can't
+# depend on it.
+
+has_decisions_section() { [ -f "$LOCK" ] && grep -q '^decisions:' "$LOCK"; }
+
+# Prints the tool's decisions: line verbatim (minus the "  <tool>: " prefix), e.g.
+# "install  # 2026-07-27" — or nothing if the tool has no recorded decision.
+get_decision_raw() {
+  local tool="$1"
+  [ -f "$LOCK" ] || return 0
+  awk -v pfx="  $tool:" '
+    /^decisions:/ { indec=1; next }
+    indec && /^[^[:space:]]/ { indec=0 }
+    indec && index($0, pfx) == 1 {
+      line = substr($0, length(pfx) + 1)
+      sub(/^[[:space:]]+/, "", line)
+      print line
+      exit
+    }
+  ' "$LOCK" 2>/dev/null || true
+}
+
+# Prints just the value (install/skip), trailing comment stripped.
+get_decision_value() {
+  get_decision_raw "$1" | sed -E 's/^[[:space:]]*//; s/[[:space:]]*#.*$//'
+}
+
+# init.sh decide <tool> <install|skip> — records/updates this machine's decision for
+# a recommended tool directly in init.lock (creating it if absent). Does not itself
+# install/uninstall anything or touch the tools: section — run init.sh afterward to
+# apply.
+cmd_decide() {
+  local tool="${1:-}" value="${2:-}"
+  case "$tool" in
+    obsidian|codegraph|opencodex) ;;
+    "") echo "usage: init.sh decide <tool> <install|skip>  (tools: ${RECOMMENDED[*]})" >&2; exit 1 ;;
+    *) echo "error: '$tool' is not a recommended tool (choices: ${RECOMMENDED[*]}) — required tools (${REQUIRED[*]}) aren't decided, they're mandatory" >&2; exit 1 ;;
+  esac
+  case "$value" in
+    install|skip) ;;
+    *) echo "error: decision must be 'install' or 'skip' (got '${value:-<empty>}')" >&2; exit 1 ;;
+  esac
+
+  local today tmp
+  today="$(date -I)"
+  tmp="$(mktemp)"
+  if [ -f "$LOCK" ]; then cp "$LOCK" "$tmp"; else : > "$tmp"; fi
+
+  if grep -q '^decisions:' "$tmp"; then
+    # Drop any existing line for this tool, then re-insert right after the header.
+    grep -vE "^  $tool: " "$tmp" > "$tmp.2" && mv "$tmp.2" "$tmp"
+    awk -v t="$tool" -v v="$value" -v d="$today" '
+      { print }
+      /^decisions:/ && !done { print "  " t ": " v "  # " d; done=1 }
+    ' "$tmp" > "$tmp.2" && mv "$tmp.2" "$tmp"
+  else
+    {
+      echo "decisions:"
+      echo "  $tool: $value  # $today"
+    } >> "$tmp"
+  fi
+
+  mv "$tmp" "$LOCK"
+  echo "recorded decision: $tool = $value ($today) in $LOCK"
+  echo "next: run '.agents/skills/workflow-init/init.sh' to apply it"
+}
+
+# ---- dispatch: decide subcommand ---------------------------------------------
+if [ "${1:-}" = "decide" ]; then
+  shift
+  cmd_decide "$@"
+  exit 0
+fi
+
 # ---- run --------------------------------------------------------------------
 warn_windows_git_alias   # loud, read-only, non-fatal — runs in --check and normal runs alike
 
 declare -A got
-missing=()
-for tool in yq obsidian codegraph git; do
+declare -A decision       # tool -> "install"/"skip"/"" (recommended tools only)
+declare -A decision_raw   # tool -> exact existing "value  # date" line, if one exists
+missing_required=()
+recommended_decided_missing=()   # decided install, but check_$tool failed
+
+for tool in "${REQUIRED[@]}"; do
   v="$("check_$tool" || true)"
-  if [ -n "$v" ]; then got[$tool]="$v"; else missing+=("$tool"); fi
+  if [ -n "$v" ]; then got[$tool]="$v"; else missing_required+=("$tool"); fi
+done
+
+for tool in "${RECOMMENDED[@]}"; do
+  v="$("check_$tool" || true)"
+  [ -n "$v" ] && got[$tool]="$v"
+
+  raw="$(get_decision_raw "$tool")"
+  if [ -n "$raw" ]; then
+    decision_raw[$tool]="$raw"
+    decision[$tool]="$(printf '%s\n' "$raw" | sed -E 's/^[[:space:]]*//; s/[[:space:]]*#.*$//')"
+  elif [ -f "$LOCK" ] && ! has_decisions_section && { [ "$tool" = "obsidian" ] || [ "$tool" = "codegraph" ]; } && [ -n "$v" ]; then
+    # Migration: a pre-v4 init.lock that EXISTS but has no decisions: section at all
+    # implicitly ran these two tools unconditionally. Grandfather this machine as
+    # having decided "install" for whichever of the two are already present, rather
+    # than silently dropping tools a prior init already installed. Guarded on
+    # [ -f "$LOCK" ] so a genuinely fresh machine (no lock at all yet) is NOT
+    # grandfathered — it starts undecided like opencodex, which is never
+    # grandfathered under any circumstance (it's new; there is no prior init.sh run
+    # to inherit a decision from).
+    decision[$tool]="install"
+  fi
+
+  if [ -z "${got[$tool]:-}" ] && [ "${decision[$tool]:-}" = "install" ]; then
+    recommended_decided_missing+=("$tool")
+  fi
 done
 
 if [ "${1:-}" = "--check" ]; then
+  ok=1
   lockv="$( [ -f "$LOCK" ] && grep -m1 '^version:' "$LOCK" | awk '{print $2}' || echo none)"
-  [ "$lockv" = "$VERSION" ] && [ "${#missing[@]}" -eq 0 ] \
-    && { echo "init ok (version $VERSION; tools: ${!got[*]})"; exit 0; }
-  [ "$lockv" != "$VERSION" ] && echo "init.lock version '$lockv' != required '$VERSION'"
-  [ "${#missing[@]}" -gt 0 ] && echo "missing tools: ${missing[*]}"
+  if [ "$lockv" != "$VERSION" ]; then
+    echo "init.lock version '$lockv' != required '$VERSION'"
+    ok=0
+  fi
+  if [ "${#missing_required[@]}" -gt 0 ]; then
+    echo "missing required tools: ${missing_required[*]}"
+    ok=0
+  fi
+  if [ "${#recommended_decided_missing[@]}" -gt 0 ]; then
+    echo "recommended tools decided 'install' but not present on this machine: ${recommended_decided_missing[*]} (the decision was made; this machine isn't honoring it — run init.sh)"
+    ok=0
+  fi
+  for tool in "${RECOMMENDED[@]}"; do
+    [ -n "${got[$tool]:-}" ] && continue
+    d="${decision[$tool]:-}"
+    [ "$d" = "install" ] && continue   # already reported above as a failure
+    echo "NOTE: recommended tool '$tool' not installed (decision: ${d:-undecided}) — informational only. Opt in with: init.sh decide $tool install && init.sh"
+  done
+  if [ "$ok" -eq 1 ]; then
+    echo "init ok (version $VERSION; present: ${!got[*]})"
+    exit 0
+  fi
   exit 1
 fi
 
-for tool in "${missing[@]+"${missing[@]}"}"; do
+for tool in "${missing_required[@]+"${missing_required[@]}"}"; do
   "install_$tool"
   v="$("check_$tool" || true)"
   [ -n "$v" ] && got[$tool]="$v" || { echo "error: $tool still unavailable after install" >&2; exit 1; }
+done
+
+for tool in "${RECOMMENDED[@]}"; do
+  [ -n "${got[$tool]:-}" ] && continue   # already present, nothing to do
+  d="${decision[$tool]:-}"
+  if [ "$d" = "install" ]; then
+    "install_$tool"
+    v="$("check_$tool" || true)"
+    [ -n "$v" ] && got[$tool]="$v" || { echo "error: $tool still unavailable after install (decision: install)" >&2; exit 1; }
+  else
+    echo "NOTE: recommended tool '$tool' not installed (decision: ${d:-undecided}) — opt in with: init.sh decide $tool install && init.sh"
+  fi
 done
 
 {
   echo "version: $VERSION"
   echo "date: $(date -I)"
   echo "tools:"
-  for tool in yq obsidian codegraph git; do echo "  $tool: ${got[$tool]}"; done
+  for tool in "${REQUIRED[@]}" "${RECOMMENDED[@]}"; do
+    [ -n "${got[$tool]:-}" ] && echo "  $tool: ${got[$tool]}"
+  done
+  echo "decisions:"
+  for tool in "${RECOMMENDED[@]}"; do
+    if [ -n "${decision_raw[$tool]:-}" ]; then
+      echo "  $tool: ${decision_raw[$tool]}"
+    elif [ -n "${decision[$tool]:-}" ]; then
+      echo "  $tool: ${decision[$tool]}  # $(date -I) (grandfathered)"
+    fi
+  done
 } > "$LOCK"
 echo "init complete — wrote $LOCK (version $VERSION)"

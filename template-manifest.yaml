@@ -9,7 +9,7 @@
 # This file is itself managed: a derivation gets it kept in sync too, and it's what
 # lets a future template version add or retire a managed path in every derivation.
 
-version: 8   # mirrors this repo's VERSION at the time this manifest last changed
+version: 9   # mirrors this repo's VERSION at the time this manifest last changed
              # VERSION is a plain integer; comparison uses sort -n.
 
 managed:
@@ -22,6 +22,7 @@ managed:
   - .agents/skills/workflow-template-sync/**
   - .agents/skills/workflow-manage/**
   - .agents/skills/workflow-bind/**
+  - .agents/skills/workflow-gateway/**
   # Discovery-frontmatter proxy stubs — Claude Code needs these under .claude/skills/
   # to find each skill; each stub's body only points at its canonical file above.
   - .claude/skills/workflow-init/SKILL.md
@@ -29,3 +30,4 @@ managed:
   - .claude/skills/workflow-template-sync/SKILL.md
   - .claude/skills/workflow-manage/SKILL.md
   - .claude/skills/workflow-bind/SKILL.md
+  - .claude/skills/workflow-gateway/SKILL.md
