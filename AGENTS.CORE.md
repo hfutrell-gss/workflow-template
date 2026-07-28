@@ -8,7 +8,7 @@
 
 Before any other work in any session under this repo:
 
-1. Read `init.lock` at this repo root and `.claude/skills/workflow-init/VERSION`.
+1. Read `init.lock` at this repo root and `.agents/skills/workflow-init/VERSION`.
 2. If `init.lock` is missing, or its `version:` differs from `VERSION` → **run
    `/workflow-init` now** (it installs/verifies the required tooling and writes
    `init.lock`).
@@ -32,6 +32,15 @@ every bound repo.** `CLAUDE.md` files are at most a header with an import of the
 sibling `AGENTS.md` (and, at repo root, of `AGENTS.CORE.md` too); they carry no content
 of their own. `/workflow-agents-sync` enforces this invariant (creates missing bridges,
 reports non-conforming files). Never author doctrine in a `CLAUDE.md`.
+
+**The proxy rule, in full: `.claude` is a proxy for `.agents`.** Anything with a
+canonical form lives under `.agents` (`AGENTS.md` files, `.agents/skills` bodies and
+scripts) and is referenced from `.claude`; the `.claude` side keeps only what tooling
+mechanically requires (`CLAUDE.md` bridge headers, skill discovery frontmatter). This
+applies to skills too: a skill's full doctrine and any scripts live at
+`.agents/skills/<name>/SKILL.md` (+ scripts); `.claude/skills/<name>/SKILL.md` is a
+proxy stub — the frontmatter Claude Code needs for discovery, plus a body that only
+points at the canonical file. Nothing executable lives under `.claude`.
 
 At this repo's root specifically, the law is split in two files, both canonical:
 `AGENTS.CORE.md` (this file — the managed constitution) and `AGENTS.md` (this
@@ -81,7 +90,7 @@ same-repo ancestor path to bridge with a symlink. Same-directory imports only.)
 
 ## Template link — how this repo relates to a derivation
 
-This file (`AGENTS.CORE.md`) and the `workflow-*` skills under `.claude/skills/` are
+This file (`AGENTS.CORE.md`) and the `workflow-*` skills under `.agents/skills/` are
 **managed by the upstream template** (this repo, or wherever a derivation was cloned
 from). The `workflow-*` skill namespace is reserved for the template; name
 derivation-local skills anything else, or a future `update` may clobber them. A

@@ -24,7 +24,7 @@ supported for the full lifetime of the project it belongs to.
 ```sh
 cp -r workflow-template my-new-workflow   # or: git clone workflow-template my-new-workflow
 cd my-new-workflow
-.claude/skills/workflow-template-sync/template-sync.sh derive
+.agents/skills/workflow-template-sync/template-sync.sh derive
 ```
 `derive` asks nothing: it clears template-only example content, drops the root
 `VERSION` file (that describes the *template's* version, not a derivation's), and
@@ -34,7 +34,7 @@ purpose) and start filling in `binds.yaml`, `playbooks/`, and `journal/`.
 
 To pull forward later improvements to the managed set:
 ```sh
-.claude/skills/workflow-template-sync/template-sync.sh update    # or --check to preview
+.agents/skills/workflow-template-sync/template-sync.sh update    # or --check to preview
 ```
 
 ## What's in the box
@@ -49,8 +49,14 @@ To pull forward later improvements to the managed set:
 | `VERSION` | This template's own version (absent in a derivation — see `.template.lock` there instead) |
 | `playbooks/` | Step-by-step procedures for this workflow's area of work |
 | `journal/` | One dated file per run/decision — never a single growing file |
+| `.agents/skills/` | Canonical skill bodies + scripts (the five `workflow-*` skills) |
+| `.claude/skills/` | Proxy stubs only — discovery frontmatter + a pointer to the canonical file in `.agents/skills/`. Nothing executable lives here. |
 
 ## Skills package
+
+**`.claude` is a proxy for `.agents`**: each skill's full doctrine and scripts live at
+`.agents/skills/<name>/SKILL.md` (+ scripts); `.claude/skills/<name>/SKILL.md` is a
+thin stub Claude Code needs for discovery.
 
 | Skill | Purpose |
 |-------|---------|

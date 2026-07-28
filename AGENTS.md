@@ -23,7 +23,8 @@ Area of work: **<one sentence: what whole area this workflow owns>.**
 
 ## Procedures
 - [playbooks/<name>.md](playbooks/) — <when to use it>
-<!-- executable procedures go in .claude/skills/<name>/SKILL.md (scoped: "<area>:<name>") -->
+<!-- executable procedures go in .agents/skills/<name>/SKILL.md (scoped: "<area>:<name>"),
+     with a .claude/skills/<name>/SKILL.md proxy stub for Claude Code discovery -->
 
 ## Typical checkouts
 ```sh
