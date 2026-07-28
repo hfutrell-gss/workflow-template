@@ -11,12 +11,15 @@
 #
 # `derive` asks nothing interactively. The upstream location defaults to
 # $WORKFLOW_TEMPLATE_UPSTREAM if set, else $HOME/workbench/workflow-template, else
-# --upstream PATH. Only a local path upstream is supported for now — no remote exists.
+# --upstream PATH. `upstream` (in .template.lock, or --upstream here) may be a local
+# path or a git URL (https://, git@..., ssh://, file://) — a URL upstream is fetched
+# into a cached shallow clone under ${XDG_CACHE_HOME:-$HOME/.cache}/workflow-template-sync/.
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$HERE/../../.." && pwd)"
 LOCK="$ROOT/.template.lock"
+GIT=/usr/bin/git
 
 command -v yq >/dev/null || { echo "error: yq (mikefarah v4) is required — run /workflow-init first" >&2; exit 1; }
 
@@ -25,6 +28,84 @@ default_upstream() { printf '%s\n' "${WORKFLOW_TEMPLATE_UPSTREAM:-$HOME/workbenc
 lock_get() { # lock_get <key> [file]
   local key="$1" file="${2:-$LOCK}"
   [ -f "$file" ] && yq -r ".$key" "$file" 2>/dev/null | grep -v '^null$' || true
+}
+
+# --- remote upstream support -------------------------------------------------
+# An `upstream` value is either a local path (existing behavior) or a git URL. These
+# helpers resolve either kind to a local directory that VERSION/template-manifest.yaml/
+# the managed set can be read from exactly the same way — callers never branch on kind
+# beyond this point.
+
+is_url_upstream() { # is_url_upstream <upstream>
+  case "$1" in
+    https://*|http://*|git@*|ssh://*|file://*) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+cache_dir_for() { # cache_dir_for <url> -> prints the cache checkout path for that url
+  local url="$1" base sha
+  base="${XDG_CACHE_HOME:-$HOME/.cache}/workflow-template-sync"
+  if command -v sha1sum >/dev/null; then
+    sha="$(printf '%s' "$url" | sha1sum | cut -d' ' -f1)"
+  else
+    sha="$(printf '%s' "$url" | shasum -a 1 | cut -d' ' -f1)"
+  fi
+  printf '%s/%s\n' "$base" "$sha"
+}
+
+resolve_default_branch() { # resolve_default_branch <cache-dir> -> prints branch name (no "origin/")
+  local cache="$1" ref
+  ref="$("$GIT" -C "$cache" symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null || true)"
+  if [ -z "$ref" ]; then
+    "$GIT" -C "$cache" remote set-head origin -a >/dev/null 2>&1 || true
+    ref="$("$GIT" -C "$cache" symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null || true)"
+  fi
+  printf '%s\n' "${ref#origin/}"
+}
+
+# Refreshes (cloning if absent, else fetch+hard-reset) the cache checkout for a remote
+# upstream. Never half-updates: on failure with no cache present it's a hard error; on
+# failure with a cache present it's a loud warning and the stale cache is kept as-is.
+refresh_remote_cache() { # refresh_remote_cache <url> <cache-dir>
+  local url="$1" cache="$2"
+  mkdir -p "$(dirname "$cache")"
+
+  if [ ! -d "$cache" ]; then
+    echo "workflow-template-sync: cloning remote upstream '$url' into cache ($cache)..."
+    if ! "$GIT" clone --depth 1 "$url" "$cache"; then
+      rm -rf "$cache"
+      echo "error: failed to clone remote upstream '$url' and no cache exists — cannot proceed offline" >&2
+      exit 1
+    fi
+    "$GIT" -C "$cache" remote set-head origin -a >/dev/null 2>&1 || true
+    return 0
+  fi
+
+  if ! "$GIT" -C "$cache" fetch --depth 1 origin; then
+    local last_refresh
+    last_refresh="$(date -r "$cache/.git/FETCH_HEAD" '+%Y-%m-%d %H:%M:%S' 2>/dev/null || echo unknown)"
+    echo "WARNING: fetch failed for remote upstream '$url' — proceeding with STALE cache at $cache (last refreshed: $last_refresh)" >&2
+    return 0
+  fi
+
+  local default_branch
+  default_branch="$(resolve_default_branch "$cache")"
+  [ -n "$default_branch" ] || { echo "error: could not resolve default branch for remote upstream '$url'" >&2; exit 1; }
+  "$GIT" -C "$cache" reset --hard "origin/$default_branch"
+}
+
+resolve_upstream_root() { # resolve_upstream_root <upstream-string> -> prints local root to read from
+  local upstream="$1"
+  if is_url_upstream "$upstream"; then
+    local cache
+    cache="$(cache_dir_for "$upstream")"
+    refresh_remote_cache "$upstream" "$cache" 1>&2
+    printf '%s\n' "$cache"
+  else
+    [ -d "$upstream" ] || { echo "error: upstream '$upstream' (from .template.lock) not found" >&2; exit 1; }
+    printf '%s\n' "$upstream"
+  fi
 }
 
 # Copies every path in a template-manifest.yaml's `managed:` list from $1 (source repo
@@ -87,14 +168,14 @@ cmd_derive() {
 
 cmd_update() {
   [ -f "$LOCK" ] || { echo "error: no $LOCK — this doesn't look like a derivation (run 'derive' first, in a template copy)" >&2; exit 1; }
-  local pinned upstream template_version upstream_version derived
+  local pinned upstream upstream_root template_version upstream_version derived
   pinned="$(lock_get pinned)"
   upstream="$(lock_get upstream)"
   template_version="$(lock_get template_version)"
   derived="$(lock_get derived)"   # read BEFORE the lock file is rewritten below
-  [ -d "$upstream" ] || { echo "error: upstream '$upstream' (from .template.lock) not found — only a local path upstream is supported" >&2; exit 1; }
-  [ -f "$upstream/VERSION" ] || { echo "error: no VERSION file at upstream '$upstream'" >&2; exit 1; }
-  upstream_version="$(tr -d '[:space:]' < "$upstream/VERSION")"
+  upstream_root="$(resolve_upstream_root "$upstream")"
+  [ -f "$upstream_root/VERSION" ] || { echo "error: no VERSION file at upstream root '$upstream_root' (upstream: $upstream)" >&2; exit 1; }
+  upstream_version="$(tr -d '[:space:]' < "$upstream_root/VERSION")"
 
   if [ "$pinned" = "true" ]; then
     echo "pinned: true — not updating. template_version=$template_version, upstream available=$upstream_version"
@@ -113,7 +194,7 @@ cmd_update() {
   fi
 
   echo "updating managed set: template_version $template_version -> $upstream_version"
-  copy_managed_paths "$upstream" "$ROOT" "$upstream/template-manifest.yaml"
+  copy_managed_paths "$upstream_root" "$ROOT" "$upstream_root/template-manifest.yaml"
 
   # Rewrite the lock preserving upstream/derived/pinned, only template_version changes.
   {
@@ -127,13 +208,13 @@ cmd_update() {
 
 cmd_check() {
   [ -f "$LOCK" ] || { echo "error: no $LOCK — this doesn't look like a derivation" >&2; exit 1; }
-  local pinned upstream template_version upstream_version
+  local pinned upstream upstream_root template_version upstream_version
   pinned="$(lock_get pinned)"
   upstream="$(lock_get upstream)"
   template_version="$(lock_get template_version)"
-  [ -d "$upstream" ] || { echo "error: upstream '$upstream' (from .template.lock) not found" >&2; exit 1; }
-  [ -f "$upstream/VERSION" ] || { echo "error: no VERSION file at upstream '$upstream'" >&2; exit 1; }
-  upstream_version="$(tr -d '[:space:]' < "$upstream/VERSION")"
+  upstream_root="$(resolve_upstream_root "$upstream")"
+  [ -f "$upstream_root/VERSION" ] || { echo "error: no VERSION file at upstream root '$upstream_root' (upstream: $upstream)" >&2; exit 1; }
+  upstream_version="$(tr -d '[:space:]' < "$upstream_root/VERSION")"
 
   echo "template_version: $template_version"
   echo "upstream:         $upstream"

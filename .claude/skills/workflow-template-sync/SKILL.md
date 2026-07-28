@@ -47,12 +47,33 @@ Run inside a derivation. Reads `.template.lock`:
   Everything outside the managed set — this workflow's `AGENTS.md`, `binds.yaml`,
   `playbooks/`, `journal/`, anything else — is never touched, by construction (the
   copy step only ever reads paths named in the manifest).
-- Currently supports a **local path** upstream only (no remote fetch yet).
+- `upstream` may be a **local path or a git URL** (`https://`, `git@...`, `ssh://`,
+  `file://`). A URL upstream is fetched into a cached shallow clone (see "Remote
+  upstreams" below); everything downstream of that — reading `VERSION`, reading
+  `template-manifest.yaml`, copying the managed set — works identically to a local
+  path, against the cache checkout.
 - VERSION is a plain integer; comparison uses `sort -n`.
 
+### Remote upstreams
+A URL `upstream` is resolved through a cache checkout at
+`${XDG_CACHE_HOME:-$HOME/.cache}/workflow-template-sync/<sha1 of the url>`:
+- **No cache yet** → `git clone --depth 1 <url> <cache>`.
+- **Cache exists** → `git fetch --depth 1 origin`, then hard-reset to the remote's
+  default branch (resolved via `origin/HEAD`, set with `git remote set-head origin -a`
+  if that symref isn't there yet).
+- **Fetch/clone fails and a cache already exists** → a loud `WARNING` to stderr, then
+  `update`/`--check` proceed against the **stale cache**, noting its last-refresh time.
+  Offline runs against a previously-synced remote upstream keep working this way.
+- **Fetch/clone fails and no cache exists** → a clear error, nonzero exit. Never a
+  half-update.
+
+All git operations use `/usr/bin/git` explicitly (see `AGENTS.CORE.md`'s git
+discipline).
+
 ### Repointing upstream
-`upstream` is a local path today. If the template repo moves (or gains a URL later),
-edit `upstream:` in `.template.lock` by hand — that is the supported repoint procedure.
+Edit `upstream:` in `.template.lock` by hand — that is the supported repoint
+procedure, whether moving to a different local path or switching to a URL (or back).
+No re-derive needed.
 
 ### `--check` — report drift
 Prints `template_version`, `upstream`, the upstream's current version, and `pinned`.

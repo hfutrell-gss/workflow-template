@@ -86,8 +86,11 @@ This file (`AGENTS.CORE.md`) and the `workflow-*` skills under `.claude/skills/`
 from). The `workflow-*` skill namespace is reserved for the template; name
 derivation-local skills anything else, or a future `update` may clobber them. A
 derivation records the relationship in `.template.lock` at its root: `template_version`,
-`upstream` (a local path today — URL support is a future extension, not yet
-implemented), `derived` (date), and `pinned`.
+`upstream` (a local path **or a git URL** — `https://`, `git@...`, `ssh://`, `file://`;
+a URL upstream is synced through a cached shallow clone under
+`${XDG_CACHE_HOME:-$HOME/.cache}/workflow-template-sync/`, degrading to the stale cache
+with a loud warning if offline rather than failing outright), `derived` (date), and
+`pinned`.
 
 - `pinned: false` (default) — `workflow-template-sync update` may copy forward changes
   to the managed set (see `template-manifest.yaml`) when the upstream's `VERSION` is
