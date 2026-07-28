@@ -28,9 +28,16 @@ Run this **inside a fresh copy or clone of workflow-template** — nothing else.
 2. Clears any template-only example content out of `journal/` and `playbooks/`.
 3. Removes the root `VERSION` file — that describes the *template's* own version;
    a derivation's relationship to it lives entirely in `.template.lock` instead.
-4. Writes `.template.lock`: `template_version`, `upstream` (path — defaults to
-   `$WORKFLOW_TEMPLATE_UPSTREAM` or `~/workbench/workflow-template`, override with
-   `--upstream`), `derived` (today's date), `pinned: false`.
+4. Writes `.template.lock`: `template_version`, `upstream`, `derived` (today's date),
+   `pinned: false`. `upstream` is resolved by precedence: `--upstream PATH` >
+   `$WORKFLOW_TEMPLATE_UPSTREAM` env var > this checkout's own `origin` remote URL
+   (`git -C <dir> remote get-url origin`), if one exists > hardcoded fallback
+   `~/workbench/workflow-template`. The `origin`-remote step is what makes `derive`
+   correct when run inside a fresh `git clone` of the published template — the
+   canonical create path — instead of silently writing the local hardcoded path; a
+   plain `cp -r` copy has no `.git/origin` and falls through to the next step exactly
+   as before. When the `origin` remote is what's chosen, `derive` echoes it so the
+   inference is visible rather than silent.
 5. Leaves `AGENTS.md` exactly as the template's carveout skeleton — write this
    workflow's actual doctrine into it next; that's the one thing derive never touches.
 

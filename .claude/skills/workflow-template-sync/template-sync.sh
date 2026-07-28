@@ -9,11 +9,16 @@
 #   template-sync.sh --check                    # report current vs upstream version;
 #                                                # exit 1 if behind
 #
-# `derive` asks nothing interactively. The upstream location defaults to
-# $WORKFLOW_TEMPLATE_UPSTREAM if set, else $HOME/workbench/workflow-template, else
-# --upstream PATH. `upstream` (in .template.lock, or --upstream here) may be a local
-# path or a git URL (https://, git@..., ssh://, file://) — a URL upstream is fetched
-# into a cached shallow clone under ${XDG_CACHE_HOME:-$HOME/.cache}/workflow-template-sync/.
+# `derive` asks nothing interactively. The upstream location is resolved by
+# precedence: --upstream PATH > $WORKFLOW_TEMPLATE_UPSTREAM env var > this checkout's
+# own 'origin' remote URL (git -C <dir> remote get-url origin), if one exists > else
+# hardcoded fallback $HOME/workbench/workflow-template. The origin-remote step means
+# deriving inside a `git clone` of the published template correctly links back to that
+# remote instead of silently falling through to the local hardcoded path; a plain `cp
+# -r` copy has no .git/origin and falls through as before. `upstream` (in
+# .template.lock, or --upstream here) may be a local path or a git URL (https://,
+# git@..., ssh://, file://) — a URL upstream is fetched into a cached shallow clone
+# under ${XDG_CACHE_HOME:-$HOME/.cache}/workflow-template-sync/.
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -23,7 +28,23 @@ GIT=/usr/bin/git
 
 command -v yq >/dev/null || { echo "error: yq (mikefarah v4) is required — run /workflow-init first" >&2; exit 1; }
 
-default_upstream() { printf '%s\n' "${WORKFLOW_TEMPLATE_UPSTREAM:-$HOME/workbench/workflow-template}"; }
+default_upstream() { # default_upstream <root-dir> -> resolves upstream when --upstream
+  # wasn't given, by precedence: WORKFLOW_TEMPLATE_UPSTREAM env > this checkout's own
+  # 'origin' remote (if any — tolerates a plain `cp` copy with no .git) > hardcoded
+  # fallback.
+  local root="$1" origin
+  if [ -n "${WORKFLOW_TEMPLATE_UPSTREAM:-}" ]; then
+    printf '%s\n' "$WORKFLOW_TEMPLATE_UPSTREAM"
+    return
+  fi
+  origin="$("$GIT" -C "$root" remote get-url origin 2>/dev/null || true)"
+  if [ -n "$origin" ]; then
+    echo "derive: no --upstream given and WORKFLOW_TEMPLATE_UPSTREAM unset — inferring upstream from this checkout's 'origin' remote: $origin" >&2
+    printf '%s\n' "$origin"
+    return
+  fi
+  printf '%s\n' "$HOME/workbench/workflow-template"
+}
 
 lock_get() { # lock_get <key> [file]
   local key="$1" file="${2:-$LOCK}"
@@ -137,7 +158,7 @@ cmd_derive() {
       *) echo "error: unknown derive argument '$1'" >&2; exit 1 ;;
     esac
   done
-  [ -n "$upstream" ] || upstream="$(default_upstream)"
+  [ -n "$upstream" ] || upstream="$(default_upstream "$ROOT")"
 
   [ -f "$LOCK" ] && { echo "error: $LOCK already exists — this is already a derivation (delete it first to re-derive)" >&2; exit 1; }
   [ -f "$ROOT/VERSION" ] || { echo "error: no VERSION file at $ROOT — this doesn't look like a template checkout" >&2; exit 1; }
