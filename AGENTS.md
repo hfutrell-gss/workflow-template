@@ -26,6 +26,17 @@ Area of work: **<one sentence: what whole area this workflow owns>.**
 <!-- executable procedures go in .agents/skills/<name>/SKILL.md (scoped: "<area>:<name>"),
      with a .claude/skills/<name>/SKILL.md proxy stub for Claude Code discovery -->
 
+## Craft defaults
+<!-- Scaffold — this section is yours: keep, edit, or delete it. It exists because a skill
+     that never fires is worth nothing, and nothing else nudges the craft-* skills into
+     play. Deliberately a suggestion here rather than a rule in AGENTS.CORE.md: a
+     mandatory always-loaded trigger would re-create the static-context cost these skills
+     exist to avoid. -->
+Before writing or changing production code in bound substrate, invoke `/craft-tdd` and
+`/craft-code-quality`. Override their defaults for this workflow in
+`.agents/craft/tdd.local.md` and `.agents/craft/code-quality.local.md` — a bound repo's
+own law still wins inside its boundaries.
+
 ## Typical checkouts
 ```sh
 claude --add-dir <standing-bind-repo> [--add-dir <standing-bind-repo> ...]

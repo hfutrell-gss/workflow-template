@@ -9,7 +9,7 @@
 # This file is itself managed: a derivation gets it kept in sync too, and it's what
 # lets a future template version add or retire a managed path in every derivation.
 
-version: 13  # mirrors this repo's VERSION at the time this manifest last changed
+version: 14  # mirrors this repo's VERSION at the time this manifest last changed
              # VERSION is a plain integer; comparison uses sort -n.
 
 managed:
@@ -24,6 +24,11 @@ managed:
   - .agents/skills/workflow-manage/**
   - .agents/skills/workflow-bind/**
   - .agents/skills/workflow-gateway/**
+  # Engineering doctrine (craft-*): defaults for work done ON substrate. Managed, but
+  # every craft-* skill defers to a bound repo's own law and to a derivation's unmanaged
+  # overlay at .agents/craft/<skill>.local.md — see AGENTS.CORE.md "Craft overlays".
+  - .agents/skills/craft-tdd/**
+  - .agents/skills/craft-code-quality/**
   # Discovery-frontmatter proxy stubs — Claude Code needs these under .claude/skills/
   # to find each skill; each stub's body only points at its canonical file above.
   - .claude/skills/workflow-init/SKILL.md
@@ -32,3 +37,5 @@ managed:
   - .claude/skills/workflow-manage/SKILL.md
   - .claude/skills/workflow-bind/SKILL.md
   - .claude/skills/workflow-gateway/SKILL.md
+  - .claude/skills/craft-tdd/SKILL.md
+  - .claude/skills/craft-code-quality/SKILL.md

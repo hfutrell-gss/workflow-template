@@ -51,7 +51,8 @@ To pull forward later improvements to the managed set:
 | `VERSION` | This template's own version (absent in a derivation — see `.template.lock` there instead) |
 | `playbooks/` | Step-by-step procedures for this workflow's area of work |
 | `journal/` | One dated file per run/decision — never a single growing file |
-| `.agents/skills/` | Canonical skill bodies + scripts (the six `workflow-*` skills) |
+| `.agents/skills/` | Canonical skill bodies + scripts (`workflow-*` machinery, `craft-*` engineering doctrine) |
+| `.agents/craft/` | Optional, derivation-owned overlays (`<skill>.local.md`) that override `craft-*` defaults — unmanaged, never touched by `update` |
 | `.claude/skills/` | Proxy stubs only — discovery frontmatter + a pointer to the canonical file in `.agents/skills/`. Nothing executable lives here. |
 
 ## Skills package
@@ -68,6 +69,22 @@ thin stub Claude Code needs for discovery.
 | `/workflow-manage` | Administer this workflow: add/remove/edit standing binds, assemble/refresh the substrate (`sync-binds.sh`) |
 | `/workflow-bind` | Bind a session: attach default standing binds (and anything else asked for) via `/add-dir` |
 | `/workflow-gateway` | Manage the local opencodex model gateway (start/stop/status) and print the strictly opt-in, per-session `ANTHROPIC_BASE_URL` override |
+| `/craft-tdd` | Test-first protocol: failing test before production code, integration focus, seams at every EUD, never mock business logic |
+| `/craft-code-quality` | Module size budgets, mandatory lint/static analysis, ports and adapters, pragmatic SOLID/DDD, no implicit fallbacks, required observability |
+
+Two prefixes are reserved for the template: **`workflow-*`** (machinery that operates on
+template shapes) and **`craft-*`** (engineering doctrine for work done *on* substrate).
+Name derivation-local skills outside both, or a future `update` may clobber them.
+
+### Craft overlays
+
+`craft-*` skills ship opinion — size budgets, architecture defaults, a test protocol —
+into derivations whose area of work the template cannot know. Each one declares a
+precedence ladder: **a bound repo's own law wins inside its boundaries → then this
+workflow's overlay → then the skill's defaults.** To change a default, write
+`.agents/craft/<skill-name>.local.md` (e.g. `.agents/craft/code-quality.local.md`); it is
+unmanaged, so `update` never touches it, and where it conflicts with the skill it wins.
+No pinning, no ejecting, no drift.
 
 ### Required vs recommended tools
 

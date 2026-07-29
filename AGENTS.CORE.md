@@ -101,10 +101,11 @@ same-repo ancestor path to bridge with a symlink. Same-directory imports only.)
 
 ## Template link — how this repo relates to a derivation
 
-This file (`AGENTS.CORE.md`) and the `workflow-*` skills under `.agents/skills/` are
+This file (`AGENTS.CORE.md`) and the managed skills under `.agents/skills/` are
 **managed by the upstream template** (this repo, or wherever a derivation was cloned
-from). The `workflow-*` skill namespace is reserved for the template; name
-derivation-local skills anything else, or a future `update` may clobber them. A
+from). **Two skill namespaces are reserved for the template: `workflow-*` (workflow
+machinery) and `craft-*` (engineering doctrine).** Name derivation-local skills outside
+both prefixes, or a future `update` may clobber them. A
 derivation records the relationship in `.template.lock` at its root: `template_version`,
 `upstream` (a local path **or a git URL** — `https://`, `git@...`, `ssh://`, `file://`;
 a URL upstream is synced through a cached shallow clone under
@@ -136,6 +137,27 @@ substrate assembly/refresh) as a managed `workflow-manage` capability. A derivat
 `binds.yaml` entries are its data; a derivation's judgment about *which* repos to bind
 and *why* is its doctrine. Neither is a license to hand-roll a parallel tool for
 something the template already ships.
+
+**Craft overlays — how managed doctrine stays constitutional.** The `craft-*` skills ship
+*engineering opinion* (size budgets, architecture defaults, test protocol) into
+derivations whose areas of work the template cannot know. Two mechanisms keep that
+facilitating rather than constraining:
+
+1. **A precedence ladder, declared at the top of every `craft-*` skill.** A bound repo's
+   own law wins inside its boundaries → then this workflow's overlay → then the skill's
+   defaults, which apply in full force only where the first two are silent. A `craft-*`
+   skill never claims authority over substrate it does not own; it converts
+   world-assertions into duties — detect the repo's standard and apply it, or surface its
+   absence as a finding. Never silently proceed as though a missing standard did not
+   matter.
+2. **A derivation-owned overlay slot: `.agents/craft/<skill-name>.local.md`.** Unmanaged,
+   committed by the derivation, never touched by `update`. A `craft-*` skill reads its
+   overlay on invocation; where the overlay conflicts with the skill, **the overlay
+   wins.** This is the categorical rule applied correctly — the template owns the shape
+   (the skill and the overlay slot), the derivation owns the doctrine-data that fills it.
+   Because of this slot, "managed" does not mean "unmodifiable": a derivation changes a
+   default by writing its overlay, not by pinning, ejecting, or eating drift on every
+   `update`.
 
 ## Tool tiers
 
@@ -177,3 +199,11 @@ bodies, and PR descriptions.
 - `/workflow-gateway` — manage the local opencodex model gateway (start/stop/status)
   and the **strictly opt-in, per-session** `ANTHROPIC_BASE_URL` override for routing
   Claude Code through it. Never set globally or by default — see its SKILL.md.
+
+Engineering doctrine (`craft-*`) — defaults for work done *on* substrate, governed by the
+precedence ladder and overlay slot above:
+
+- `/craft-tdd` — test-first protocol: failing test before production code, integration
+  focus, seams at every external unmanaged dependency, never mock business logic.
+- `/craft-code-quality` — module size budgets, mandatory lint/static analysis, ports and
+  adapters, pragmatic SOLID/DDD, no implicit fallbacks, required observability.
