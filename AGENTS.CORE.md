@@ -206,4 +206,5 @@ precedence ladder and overlay slot above:
 - `/craft-tdd` — test-first protocol: failing test before production code, integration
   focus, seams at every external unmanaged dependency, never mock business logic.
 - `/craft-code-quality` — module size budgets, mandatory lint/static analysis, ports and
-  adapters, pragmatic SOLID/DDD, no implicit fallbacks, required observability.
+  adapters, pragmatic SOLID/DDD, no implicit fallbacks, required observability; plus the
+  ratchet for substrate that starts nowhere near any of it.

@@ -4,10 +4,12 @@ description: >-
   Production code-quality doctrine: small cohesive modules with per-language LOC budgets,
   mandatory lint and static analysis, ports-and-adapters architecture with seams at every
   external dependency, pragmatic SOLID and DDD, no implicit fallbacks, and required
-  observability (structured logs, telemetry, domain events, audit trails). Use when writing
-  or refactoring production code, reviewing a diff or PR, deciding where a module boundary
-  goes, judging whether a file or function is too large, or checking whether a change is
-  done.
+  observability (structured logs, telemetry, domain events, audit trails). Includes a
+  ratcheting path for repos that start far from these standards — no static analysis, thin
+  tests, oversized files — tightening enforcement pass by pass instead of in one heroic
+  sweep. Use when writing or refactoring production code, reviewing a diff or PR, deciding
+  where a module boundary goes, judging whether a file or function is too large, planning how
+  to raise quality in a repo with little or no tooling, or checking whether a change is done.
 ---
 
 # craft-code-quality
@@ -47,6 +49,42 @@ Loaded on demand — read the one the task needs, not all of them:
 | File | Read when |
 | --- | --- |
 | [references/loc-budgets.md](references/loc-budgets.md) | checking concrete size limits for a specific language, or wiring lint/static-analysis tooling — per-language soft/hard maxima, required tooling, rule mappings |
+| [references/ratchet.md](references/ratchet.md) | the repo is far from these standards — no static analysis, thin tests, oversized files. The pass ladder, the per-language baseline mechanisms, and how to hold a gain once made |
+
+## Ratcheting — when the repo is nowhere near these standards
+
+Assume it isn't. Zero static analysis, thin tests, a 5k LOC file doing six jobs — that is
+the normal starting state, not an exception. **The standards in this file are the
+destination, not the entry fee.** Declaring a repo non-compliant and stopping there is
+worth nothing; and satisfying them in one heroic pass produces an unreviewable diff that
+gets reverted.
+
+So arrive by ratchet: **baseline the current state, freeze it, then tighten each pass** until
+the real budgets are met. Full procedure, the pass ladder, and per-language baseline
+mechanisms are in [references/ratchet.md](references/ratchet.md). Four invariants govern
+every turn:
+
+1. **Machine-enforced, never remembered.** Each turn lands in committed config — a baseline
+   file, a frozen warning count, a threshold value — so CI holds the line. A ratchet that
+   lives in someone's memory, a TODO, or a journal entry has already slipped.
+2. **Monotone.** Thresholds and baselines move toward the mandate and never away.
+   Regenerating a baseline to make a red build green is the defining failure of this
+   technique — it converts a ratchet into a suppression file. If a build fails on a
+   regression, fix the regression.
+3. **New code meets the mandate now; old code only improves.** Diff-scoped enforcement is
+   what makes full strictness safe on day one. Never let the repo's current state become the
+   standard for code being written today.
+4. **The ratchet must actually turn.** Each pass tightens something, and the gap gets
+   reported so progress is visible. A baseline that never shrinks is technical debt with
+   better branding.
+
+One turn per commit. Never bundle a threshold tightening with a feature change — when they
+break, you need to know which one did it. And never lower a standard the repo already meets:
+the ratchet is one-way by construction.
+
+**Exit criterion:** baseline files empty and deleted, thresholds equal to the budgets in
+`references/loc-budgets.md`, enforcement applying repo-wide rather than to the diff. At that
+point this section stops applying and the rest of this file applies plainly.
 
 ## Core standard
 
@@ -69,7 +107,9 @@ Loaded on demand — read the one the task needs, not all of them:
 - Hard max crossed → do not produce it. If circumstances force it, flag it as a violation
   with the plan to split, never as an accepted state.
 - New work must not grow an already-over-limit file without extracting at least one coherent
-  slice.
+  slice. This is the file-size ratchet: the oversized file's line count becomes a ceiling
+  that only ever decreases. Do not rewrite it wholesale — extract on touch
+  (`references/ratchet.md`).
 - Organize by behavior and domain boundary, not by arbitrary technical bucket.
 - Rare, explicit exceptions: generated code, migration snapshots, protocol schemas,
   framework-mandated glue.
@@ -90,6 +130,9 @@ configuration, choose the strict end.
 - **The build fails on lint violations.** In owned repos, wire it that way. In bound
   substrate, check whether the repo's build already enforces it — if it does not, that is a
   finding to surface, not a licence to ship violations past a green build.
+- If the repo carries too many existing violations to turn that on in one move, the build
+  still fails — on **regressions**, per `references/ratchet.md`. Existing debt is a reason to
+  ratchet, never a reason to leave the gate open.
 - Run linters pre-commit or pre-push for fast feedback; run the full suite in CI on every PR.
 - Where a tool cannot express a policy directly, enforce it with a custom rule or script.
 - Never silently write unlinted code. Never install tooling into a repo uninvited — that is
@@ -182,6 +225,11 @@ Any one of these is sufficient reason to stop adding and start extracting:
 - A new feature requires touching too many unrelated files.
 
 ## Done criteria
+
+In a repo still ratcheting, "done" is measured against the current ratchet position, not
+against the full mandate: the code you wrote or changed meets the standards, nothing
+regressed past the frozen baseline, and this pass's turn is committed. Full compliance is the
+exit criterion for the ratchet, not the bar for every individual change.
 
 - Sizes of touched files and functions respected against `references/loc-budgets.md`, or
   explicitly justified.

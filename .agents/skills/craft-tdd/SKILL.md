@@ -3,10 +3,11 @@ name: craft-tdd
 description: >-
   Test-first delivery discipline: write the failing test before the production code, prove
   hypotheses with reproducible tests, prefer integration tests against real infrastructure,
-  never mock business logic, mock only external unmanaged dependencies at their seams. Use
-  when a bug is reported, a feature is requested, before writing or changing production
-  code, when writing or fixing tests, when debugging behavior, or when validating
-  acceptance criteria.
+  never mock business logic, mock only external unmanaged dependencies at their seams. Covers
+  ratcheting into legacy code that has no suite, via characterization tests and diff-scoped
+  coverage. Use when a bug is reported, a feature is requested, before writing or changing
+  production code, when writing or fixing tests, when working in a repo with thin or no
+  tests, when debugging behavior, or when validating acceptance criteria.
 ---
 
 # craft-tdd
@@ -154,6 +155,32 @@ Where a polling service is used anyway, separate the concerns:
 
 Rules: pollers emit events; pollers are not tested directly; the **handling** of emitted
 events is what gets tested; a poller manages polling and nothing else.
+
+## Legacy substrate — no suite to build on
+
+Most repos this will be applied to have thin tests or none. The protocol above is not
+suspended by that, but it cannot retroactively cover what already exists. Ratchet instead —
+see `craft-code-quality`'s ratcheting section and its `references/ratchet.md`.
+
+- **Test-first still governs new work.** A bug reported today gets a failing test today,
+  regardless of what the rest of the repo looks like. The absence of a suite is not a
+  licence; it is the reason the next test matters more than usual.
+- **Changing untested legacy → characterization tests first.** Write tests that capture what
+  the code *currently does*, including behavior you believe is wrong. They are not
+  correctness assertions; they are a tripwire that tells you whether a refactor changed
+  observable behavior. Once they pass, refactor safely — then fix the wrongness as its own
+  change, with its own failing test.
+- **This is not a contradiction of test-first.** For a bug or a new feature, the test fails
+  first. For a refactor of untested code, the characterization tests pass first — which is
+  exactly what "refactoring → cover the behavior before touching it" already means.
+- **Coverage ratchets on the diff, not the repo.** Changed lines meet the target; overall
+  coverage never decreases. Chasing a global percentage produces tests written to touch lines
+  rather than to prove behavior, which is worse than no test — it reports safety that is not
+  there.
+- **Testing legacy code usually requires a seam that does not exist yet.** Introducing it is
+  an architecture change, not a test change (`craft-code-quality`). If the only way to test
+  something is a visibility escape or probing internal state, that is a CODE FLAG below, not
+  a technique.
 
 ## Before committing
 

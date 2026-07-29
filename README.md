@@ -70,7 +70,7 @@ thin stub Claude Code needs for discovery.
 | `/workflow-bind` | Bind a session: attach default standing binds (and anything else asked for) via `/add-dir` |
 | `/workflow-gateway` | Manage the local opencodex model gateway (start/stop/status) and print the strictly opt-in, per-session `ANTHROPIC_BASE_URL` override |
 | `/craft-tdd` | Test-first protocol: failing test before production code, integration focus, seams at every EUD, never mock business logic |
-| `/craft-code-quality` | Module size budgets, mandatory lint/static analysis, ports and adapters, pragmatic SOLID/DDD, no implicit fallbacks, required observability |
+| `/craft-code-quality` | Module size budgets, mandatory lint/static analysis, ports and adapters, pragmatic SOLID/DDD, no implicit fallbacks, required observability — plus a ratcheting path for repos that start nowhere near any of it |
 
 Two prefixes are reserved for the template: **`workflow-*`** (machinery that operates on
 template shapes) and **`craft-*`** (engineering doctrine for work done *on* substrate).

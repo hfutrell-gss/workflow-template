@@ -29,6 +29,9 @@ boundaries. LOC budgets and lint rules are exactly that kind of law. Sequence:
      code, and do not install tooling without being asked.
    - Exception: in repos the workflow itself owns, missing lint config is a blocker —
      wire it before feature work.
+   - If the repo is far enough from these numbers that turning them on would fail
+     everywhere, do not skip them and do not weaken them — ratchet toward them. See
+     [ratchet.md](ratchet.md).
 4. **Crossing a hard max is never something to silently produce.** If circumstances
    force it, flag it explicitly as a violation with a decomposition plan — do not
    just write the file and move on.
