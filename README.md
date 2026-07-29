@@ -12,8 +12,8 @@ skills, and a live link back upstream so improvements to the core can flow forwa
 ## The covenant
 
 **The template facilitates, never constrains.** A derivation owns everything outside a
-small managed set (`AGENTS.CORE.md`, `CLAUDE.md`, `template-manifest.yaml`, and the
-`workflow-*` skills — see `template-manifest.yaml` for the exact list): its own
+small managed set (`AGENTS.CORE.md`, `VOICE.md`, `CLAUDE.md`, `template-manifest.yaml`,
+and the `workflow-*` skills — see `template-manifest.yaml` for the exact list): its own
 doctrine, its `binds.yaml`, its `playbooks/`, its `journal/`, anything it adds later.
 It can pin its core (`pinned: true` in `.template.lock`) to freeze it forever, or eject
 from the template relationship entirely (delete `.template.lock`) — either way, it's
@@ -42,6 +42,7 @@ To pull forward later improvements to the managed set:
 | Path | What it is |
 |------|------------|
 | `AGENTS.CORE.md` | The constitution — TEMPLATE-MANAGED, never hand-edited in a derivation |
+| `VOICE.md` | The reduced-voice contract for agent output — TEMPLATE-MANAGED |
 | `AGENTS.md` | This workflow's own doctrine — entirely yours, a skeleton until you write it |
 | `CLAUDE.md` | Bridge importing `@AGENTS.CORE.md` then `@AGENTS.md` |
 | `binds.yaml` | Standing binds: repos related to this workflow (kind + why); `base` (default `./workspace`) says where they live on disk |

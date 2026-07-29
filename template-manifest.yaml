@@ -9,11 +9,12 @@
 # This file is itself managed: a derivation gets it kept in sync too, and it's what
 # lets a future template version add or retire a managed path in every derivation.
 
-version: 10  # mirrors this repo's VERSION at the time this manifest last changed
+version: 13  # mirrors this repo's VERSION at the time this manifest last changed
              # VERSION is a plain integer; comparison uses sort -n.
 
 managed:
   - AGENTS.CORE.md
+  - VOICE.md
   - CLAUDE.md
   - template-manifest.yaml
   # Canonical skill bodies + scripts (proxy rule: .claude is a proxy for .agents).

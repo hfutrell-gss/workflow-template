@@ -154,6 +154,11 @@ procedures presume (e.g. `dev`, `ops`, `admin`). Enforcement is real, not cosmet
 - Reads are open by design: doctrine is transparent. Truly secret doctrine (rare)
   belongs in a separate restricted repo, never here.
 
+## Voice
+
+Agents adopt `VOICE.md`'s reduced voice for conversational output, reports, commit
+bodies, and PR descriptions.
+
 ## Baked-in skills
 
 - `/workflow-init` — install/verify required tooling (git, yq) and record per-machine
