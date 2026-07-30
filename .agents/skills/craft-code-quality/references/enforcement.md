@@ -92,11 +92,14 @@ That gap is the largest available win in this file.**
 | Domain core must not depend on framework, transport, UI, or persistence | ENFORCED | layer/dependency rule |
 | Dependency direction points inward | ENFORCED | layer rule |
 | Adapters confined to the edge | ENFORCED | layer rule |
-| UI segregated from the core API boundary | ENFORCED | layer rule |
+| UI/domain dependency direction | ENFORCED | layer rule: forbid UI packages from importing or type-referencing domain/core packages, and forbid domain/core dependencies on UI |
+| UI contract leakage | PARTIAL | forbid domain types in UI-facing signatures, controller/presenter outputs, route payloads, and shared UI-contract packages; generated, reflective, and runtime-shaped paths still need review |
 | Domain logic not in controllers/UI/adapters | PARTIAL | layer rules plus LOC budgets on adapter types catch the bulk; "is this logic domain logic" is REVIEW at the margin |
 | Every EUD has a seam | PARTIAL | ban the concrete external types (HTTP clients, DB connections, vendor SDKs) outside adapter packages — that is the enforceable proxy for "a port exists" |
 | Cross-boundary translation explicit (DTOs, not leakage) | PARTIAL | forbid domain types appearing in transport-layer signatures where the tool can inspect signatures |
 | Wire dependencies in composition roots | PARTIAL | ban container/registration APIs outside a designated composition-root package |
+| Repository port at the domain/application boundary; implementation in infrastructure | PARTIAL | dependency rules can require the port package to remain inward and adapters to implement it from infrastructure; whether an interface is a meaningful aggregate-level persistence port is REVIEW |
+| No concrete database connection, context, session, query builder, ORM entity, or framework annotation in domain | ENFORCED | layer/dependency rule plus banned-symbol rules for the concrete persistence APIs and annotations |
 | Ports are well-designed abstractions | REVIEW | — |
 | Do not over-abstract | REVIEW | the counter-rule to "every EUD has a seam"; deliberately judgment, and no tool should be trusted to arbitrate it |
 | Modular monolith, one deployable core | REVIEW | a deployment-topology decision |
@@ -133,10 +136,10 @@ That gap is the largest available win in this file.**
 
 | Rule | Class | Mechanism |
 | --- | --- | --- |
-| Coverage on changed lines meets target | ENFORCED | diff coverage gate |
-| Overall coverage floor never drops | ENFORCED | total-coverage threshold |
+| 90/90 line and branch coverage on changed in-scope code | ENFORCED | diff coverage gate configured for both line and branch coverage; version-control the same narrow exclusions used by the floor |
+| 90/90 repo-wide line and branch coverage floor, ratcheted monotonically | ENFORCED | total-coverage thresholds for both measures; fail if either falls, and raise each threshold toward 90 rather than lowering it |
 | Domain/unit tests must not depend on the data layer | ENFORCED | layer rule applied to test packages |
-| Logic must not live in the UI | ENFORCED | layer rule + LOC budget |
+| Business logic must not live in the UI | REVIEW | a tool cannot reliably distinguish presentation behavior from business policy; review each conditional, calculation, and policy owner |
 | No test-only visibility escape | ENFORCED | banned-symbol / config gate |
 | Container-backed tests must not silently skip | ENFORCED | assert skipped-test count is zero in CI |
 | Tests run before commit | ENFORCED | hook running the same command as CI |
@@ -153,6 +156,13 @@ That gap is the largest available win in this file.**
 | Assertions not against magic values | REVIEW | — |
 | Test data randomized | REVIEW | — |
 | Run the suite once, analyze stored output | REVIEW | agent behavior, not a property of the code |
+
+### Application use-case boundaries
+
+| Rule | Class | Mechanism |
+| --- | --- | --- |
+| CQRS command/query separation | PARTIAL | separate command/query packages or types and dependency rules can forbid query paths from invoking command paths; whether a query mutates state or a command contains the right business behavior remains REVIEW |
+| Event sourcing is adopted only when temporal, audit, replay, or event-native requirements justify its full operational contract | REVIEW | an architecture and product decision; no static rule can establish that current-state persistence plus domain events is insufficient or that the team can operate ES |
 
 ## Reading the residue honestly
 

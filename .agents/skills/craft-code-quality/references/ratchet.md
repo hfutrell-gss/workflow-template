@@ -239,17 +239,22 @@ check the tool's baseline story *before* committing to a Pass 0 shape.
 
 ## Coverage, specifically
 
-The mandate is a target, not an entry condition. Ratchet it:
+The destination is stated in [coverage-destination.md](coverage-destination.md): authored
+non-UI production code reaches **at least 90% line coverage and 90% branch coverage**. Measure
+both over that reference's explicit in-scope denominator; neither substitutes for the other.
+Ratchet to it:
 
-- **Diff coverage first.** Changed lines must hit the target. This is enforceable from day one
-  in a repo at 4% coverage, and it is the only coverage number that reflects current work.
-- **Overall coverage must not decrease.** Freeze the current figure and raise the floor as it
-  rises naturally from diff coverage.
-- Raise the floor **as a consequence** of work done, not as a quota to be filled. A quota
+- **Day one: 90/90 diff coverage.** Every new or changed in-scope line and branch must meet
+  90% line / 90% branch coverage. This is enforceable from day one in a repo at 4% coverage,
+  and it is the coverage number that reflects current work.
+- **Overall floors never decrease.** Freeze the current line and branch figures separately.
+  Raise each floor monotonically as legacy code is recovered; calculate those floors over the
+  same in-scope population as the changed-code gate.
+- Raise the floors **as a consequence** of work done, not as quotas to be filled. A quota
   produces coverage theatre.
-- Where a specific figure is the stated target (for example 90% line / 90% branch), it is the
-  ratchet's exit criterion — the number the floor is walking toward, not the bar for the next
-  commit.
+- The ratchet exits only when the **repo-wide non-UI denominator** reaches 90% line and 90%
+  branch coverage. Until then, changed-code 90/90 and non-decreasing overall floors are
+  complementary gates, not alternatives.
 
 The two gates are complementary, not alternatives — every ecosystem surveyed needs both:
 

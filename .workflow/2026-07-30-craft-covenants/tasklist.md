@@ -29,26 +29,30 @@ zero violations. `[-]` requires `why:` and a user `signoff:`.
 
 ## Tasks
 
-- [~] T001 · fleet · deps:- · Define the 90/90 coverage destination scope
+- [x] T001 · fleet · deps:- · Define the 90/90 coverage destination scope
       accept: reference states line+branch 90/90 for authored non-UI production code; lists included layers, exclusions (UI, generated, migrations, declarative glue), and denominator rules
-      agent: fleet-T001 (dispatched 2026-07-30)
-- [ ] T002 · fleet · deps:T001 · Strengthen coverage ratchet to match destination
+      evidence: references/coverage-destination.md — 90/90 line+branch; domain/app/adapters included; UI/generated/migrations/schemas/glue excluded; day-one + exit + monotone floors; notes/T001-coverage-destination.md
+- [~] T002 · fleet · deps:T001 · Strengthen coverage ratchet to match destination
       accept: ratchet.md + related body text require changed-code 90/90 day one, non-decreasing overall floors, and 90/90 as repo-wide exit for non-UI — consistent with T001
-- [~] T003 · fleet · deps:- · Codify UI view-model vs domain-model boundaries
+      agent: b91d62ce-c875-4c21-b591-5ef2f5acc25e (dispatched 2026-07-30)
+- [x] T003 · fleet · deps:- · Codify UI view-model vs domain-model boundaries
       accept: on-demand reference states view-model ownership in UI, domain models in core, explicit translation, forbid domain leakage into UI contracts; business rules out of views/presenters/controllers
-      agent: fleet-T003 (dispatched 2026-07-30)
-- [~] T004 · fleet · deps:- · Codify repository covenants
+      evidence: references/ui-model-boundary.md — VM vs domain ownership, explicit mappers, ENFORCED/PARTIAL/REVIEW table; notes/T003-ui-model-boundary.md
+- [x] T004 · fleet · deps:- · Codify repository covenants
       accept: reference defines repositories as persistence ports when aggregate storage/query warrants them; forbids mandatory generic CRUD wrappers; places adapters correctly
-      agent: fleet-T004 (dispatched 2026-07-30)
-- [~] T005 · fleet · deps:- · Define MVP Model CQRS[/ES] doctrine
+      evidence: references/repositories.md — ports when warranted, no IRepository<T> ceremony, adapters + banned symbols; notes/T004-repositories.md
+- [x] T005 · fleet · deps:- · Define MVP Model CQRS[/ES] doctrine
       accept: on-demand reference requires command/query separation at application/use-case boundary without mandating a mediator framework; ES is opt-in with explicit domain criteria
-      agent: fleet-T005 (dispatched 2026-07-30)
-- [ ] T006 · fleet · deps:T001,T003,T004,T005 · Update enforcement classifications for new covenants
+      evidence: references/mvp-cqrs.md — lightweight CQRS at use-case boundary; ES opt-in criteria; no mediator mandate; notes/T005-mvp-cqrs.md
+- [~] T006 · fleet · deps:T001,T003,T004,T005 · Update enforcement classifications for new covenants
       accept: every new covenant in enforcement.md is ENFORCED, PARTIAL, or REVIEW with honest tool mapping; no overstated automation
-- [ ] T007 · fleet · deps:T003,T004 · Strengthen architecture-test examples for UI/domain/persistence
+      agent: 7475181f-ed24-480a-b3b3-8d2fd3ee7cfa (dispatched 2026-07-30)
+- [~] T007 · fleet · deps:T003,T004 · Strengthen architecture-test examples for UI/domain/persistence
       accept: at least one supported-stack arch-test asset demonstrably encodes forbidden UI↔domain or domain↔persistence dependency; README notes how to prove it fails
-- [ ] T008 · fleet · deps:T001,T003 · Synchronize craft-tdd with coverage and UI flags
+      agent: fbceb2b0-c27c-4eb7-a7e5-95f1a07ab50b (dispatched 2026-07-30)
+- [~] T008 · fleet · deps:T001,T003 · Synchronize craft-tdd with coverage and UI flags
       accept: craft-tdd SKILL.md agrees with 90/90 scope/gates and sharpens logic-in-UI CODE FLAG to match T003
+      agent: 5fb212c8-90e7-4f73-885b-5d20b97d0aa4 (dispatched 2026-07-30)
 - [ ] T009 · fleet · deps:T001,T002,T003,T004,T005,T006 · Wire new refs into craft-code-quality SKILL body
       accept: SKILL.md links the new/updated refs; standing expectation that every production-code turn holds the ratchet and reports the gap; no new skill invented
 - [ ] T010 · fleet · deps:T007,T008,T009 · Package managed release (VERSION + manifest)
@@ -65,3 +69,6 @@ zero violations. `[-]` requires `why:` and a user `signoff:`.
   ship managed assets only; leave AGENTS.md alone. Notes: notes/intake-consultation.md.
 - 2026-07-30: decomposed T001–T010; reorganize = write refs in parallel (T001,T003,T004,T005),
   then integrate (T002,T006–T009), then package (T010). No second consult — ordering obvious.
+- 2026-07-30: verified T001 ([coverage](dfa21372-88eb-43f5-9d38-a3c92e5eda6c)); also verified
+  T003–T005 deliverables already on disk from concurrent fleet; marked [x]. Dispatched
+  T002,T006,T007,T008.
