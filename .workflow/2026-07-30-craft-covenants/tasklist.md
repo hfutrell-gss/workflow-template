@@ -29,16 +29,20 @@ zero violations. `[-]` requires `why:` and a user `signoff:`.
 
 ## Tasks
 
-- [ ] T001 · fleet · deps:- · Define the 90/90 coverage destination scope
+- [~] T001 · fleet · deps:- · Define the 90/90 coverage destination scope
       accept: reference states line+branch 90/90 for authored non-UI production code; lists included layers, exclusions (UI, generated, migrations, declarative glue), and denominator rules
+      agent: fleet-T001 (dispatched 2026-07-30)
 - [ ] T002 · fleet · deps:T001 · Strengthen coverage ratchet to match destination
       accept: ratchet.md + related body text require changed-code 90/90 day one, non-decreasing overall floors, and 90/90 as repo-wide exit for non-UI — consistent with T001
-- [ ] T003 · fleet · deps:- · Codify UI view-model vs domain-model boundaries
+- [~] T003 · fleet · deps:- · Codify UI view-model vs domain-model boundaries
       accept: on-demand reference states view-model ownership in UI, domain models in core, explicit translation, forbid domain leakage into UI contracts; business rules out of views/presenters/controllers
-- [ ] T004 · fleet · deps:- · Codify repository covenants
+      agent: fleet-T003 (dispatched 2026-07-30)
+- [~] T004 · fleet · deps:- · Codify repository covenants
       accept: reference defines repositories as persistence ports when aggregate storage/query warrants them; forbids mandatory generic CRUD wrappers; places adapters correctly
-- [ ] T005 · fleet · deps:- · Define MVP Model CQRS[/ES] doctrine
+      agent: fleet-T004 (dispatched 2026-07-30)
+- [~] T005 · fleet · deps:- · Define MVP Model CQRS[/ES] doctrine
       accept: on-demand reference requires command/query separation at application/use-case boundary without mandating a mediator framework; ES is opt-in with explicit domain criteria
+      agent: fleet-T005 (dispatched 2026-07-30)
 - [ ] T006 · fleet · deps:T001,T003,T004,T005 · Update enforcement classifications for new covenants
       accept: every new covenant in enforcement.md is ENFORCED, PARTIAL, or REVIEW with honest tool mapping; no overstated automation
 - [ ] T007 · fleet · deps:T003,T004 · Strengthen architecture-test examples for UI/domain/persistence
