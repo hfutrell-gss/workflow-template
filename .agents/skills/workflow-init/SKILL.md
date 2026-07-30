@@ -37,12 +37,49 @@ message on any other platform (macOS/arm64, native Windows, etc.).
   honoring it (both a plain run's own install attempt and `--check` treat this as an
   error, not a note).
 
+## Derivation-owned tools (`.agents/init/tools.local.d/`)
+
+A derivation needs tools the template cannot know about — its area of work decides them.
+The categorical rule says tool installation is a *template shape* (tiers, per-machine
+decisions, `init.lock`), so a derivation must not fork `init.sh` (an `update` overwrites
+it) and must not hand-roll a parallel installer (the same violation with extra steps).
+
+Instead it drops `.agents/init/tools.local.d/<tool>.sh`, unmanaged and never touched by
+`update` — the same overlay bargain as `.agents/craft/<skill>.local.md` and
+`.agents/orchestrate/roster.local.yaml`. `init.sh` sources every `*.sh` there at startup.
+See `example-tool.sh.example` in that directory for the annotated contract:
+
+| Function | | Contract |
+| --- | --- | --- |
+| `check_<tool>()` | required | print a version or `present` and return 0 when installed; non-zero/empty when not |
+| `install_<tool>()` | required | install it; non-zero on failure |
+| `unsupported_reason_<tool>()` | optional | print why *this machine* can't host it and return 0; return 1 when it can |
+| `register_tool <tool>` | required | appends the tool to the RECOMMENDED tier |
+
+Overlay tools are **always RECOMMENDED** — opt-in per machine, never automatic. A
+derivation cannot make its own tool mandatory: `--check` failing on a tool the template
+never heard of would make the constitution's init mandate unsatisfiable for anyone
+lacking it. A registered tool missing its `check_`/`install_` function is a hard error at
+startup, so a half-written overlay fails loudly instead of mysteriously mid-install.
+
+### Platform-limited tools
+
+Some tools are viable only on a subset of the platforms that clear the Linux-x86_64 gate
+(needing WSL/Windows interop, say). Because `init.lock` decisions are shared across
+machines, one `decide <tool> install` would otherwise make `--check` fail *forever* on
+every machine that cannot run it. So a tool decided `install` on a machine that cannot
+host it is **not drift**: the decision is honored as far as the machine allows, and the
+shortfall prints as a `NOTE` in both a plain run and `--check`. Opt in by defining
+`unsupported_reason_<tool>()`. Surface, don't suppress — but don't manufacture failures
+either.
+
 ## Recording a decision
 ```sh
 .agents/skills/workflow-init/init.sh decide <tool> install   # or: skip
 ```
-`<tool>` must be one of the RECOMMENDED tools (`obsidian`, `codegraph`, `opencodex`) —
-required tools aren't decided, they're mandatory. This only records the decision into
+`<tool>` must be one of the RECOMMENDED tools — `obsidian`, `codegraph`, `opencodex`, plus
+anything a derivation registered in `.agents/init/tools.local.d/` (see above). Required
+tools aren't decided, they're mandatory. This only records the decision into
 `init.lock`'s `decisions:` section (creating the file if it doesn't exist yet); it does
 not itself install or remove anything. Follow it with a plain `init.sh` run to apply.
 
@@ -91,6 +128,13 @@ Typical opt-in flow for a recommended tool:
   decide opencodex install`). Once installed, see `/workflow-gateway` for the
   strictly-opt-in-per-session usage doctrine — installing the tool is not the same as
   routing any traffic through it.
+
+## Migration note (v4 → v5)
+
+v5 adds `.agents/init/tools.local.d/` and the platform-limited carve-out. Purely additive:
+a derivation with no overlay directory behaves exactly as v4 did. Bumping to 5 invalidates
+every machine's `init.lock`, so each re-runs init once — which is also when a derivation's
+newly added tools first get offered.
 
 ## Migration note (v3 → v4)
 

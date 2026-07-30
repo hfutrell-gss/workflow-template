@@ -27,6 +27,56 @@ LOCK="$ROOT/init.lock"
 REQUIRED=(git yq)
 RECOMMENDED=(obsidian codegraph opencodex)
 
+# ---- derivation-owned tool overlays ------------------------------------------
+# The categorical rule: the template defines the shapes and owns every operation on
+# them; derivations contribute data. Tool installation is a template shape (tiers,
+# per-machine decisions, init.lock), so a derivation must NOT fork this script to add
+# a tool of its own — an `update` would overwrite it. Instead it drops a definition
+# into .agents/init/tools.local.d/<tool>.sh, which is unmanaged and never touched by
+# `update`, exactly like .agents/craft/<skill>.local.md and
+# .agents/orchestrate/roster.local.yaml.
+#
+# Each overlay file defines, for a tool named <tool>:
+#   check_<tool>()              REQUIRED. Print a version/"present" on stdout and
+#                               return 0 when installed; return non-zero (or print
+#                               nothing) when not.
+#   install_<tool>()            REQUIRED. Install it. Return non-zero on failure.
+#   unsupported_reason_<tool>() OPTIONAL. Print why THIS machine cannot host the tool
+#                               and return 0; return 1 when the machine is fine. Used
+#                               for platform-limited tools — see tool_unsupported_reason.
+# and declares itself with:
+#   register_tool <tool>        appends <tool> to the RECOMMENDED tier.
+#
+# Overlay tools are always RECOMMENDED: a derivation cannot make its own tool mandatory
+# for a machine, because `--check` failing on a tool the template never heard of would
+# make the constitution's init mandate unsatisfiable for anyone without it.
+# The overlay directory is sourced further down, AFTER this script's own helpers and
+# check_/install_ functions exist — an overlay may legitimately want `have` or
+# resolve_git_bin, and validation of the registered set has to run once everything is
+# defined. See "derivation tool overlays" below.
+TOOLS_OVERLAY_DIR="$ROOT/.agents/init/tools.local.d"
+OVERLAY_TOOLS=()          # names registered by overlays (not the template's own tools)
+
+register_tool() {
+  local t="$1"
+  case "$t" in
+    ''|*[!a-z0-9_-]*)
+      echo "error: register_tool: '$t' is not a valid tool name (lowercase letters, digits, '_' and '-' only)" >&2
+      return 1 ;;
+  esac
+  # A required tool's name is reserved — silently shadowing git or yq would be a
+  # spectacular way for a derivation to break its own bootstrap.
+  local r
+  for r in "${REQUIRED[@]}"; do
+    [ "$t" = "$r" ] && { echo "error: register_tool: '$t' is a REQUIRED tool name and cannot be redefined by an overlay" >&2; return 1; }
+  done
+  for r in "${RECOMMENDED[@]}"; do
+    [ "$t" = "$r" ] && return 0   # already registered (template's own, or a re-source)
+  done
+  RECOMMENDED+=("$t")
+  OVERLAY_TOOLS+=("$t")
+}
+
 # ---- platform gate ------------------------------------------------------------
 # init.sh's install_* functions (yq/obsidian/codegraph/opencodex binaries, WSLg
 # wrapper) are only written/vetted for Linux x86_64 (incl. WSL2). Fail loudly before
@@ -242,6 +292,32 @@ install_opencodex() {
   done
 }
 
+# ---- source derivation tool overlays ----------------------------------------
+# Deliberately here, not up beside the tier declaration: everything above is now
+# defined, so an overlay may use `have`/`resolve_git_bin`, and the validation below can
+# check the registered set once all functions exist.
+if [ -d "$TOOLS_OVERLAY_DIR" ]; then
+  for _overlay in "$TOOLS_OVERLAY_DIR"/*.sh; do
+    [ -f "$_overlay" ] || continue          # unmatched glob
+    # shellcheck source=/dev/null
+    . "$_overlay" || { echo "error: failed to source tool overlay $_overlay" >&2; exit 1; }
+  done
+  unset _overlay
+  # Validate only what the overlays registered — the template's own tools are defined
+  # in this file and need no proof. Fail loudly on a half-written overlay here, rather
+  # than at the point of use where a missing install_ would surface as a mysterious
+  # "command not found" partway through an install.
+  for _t in "${OVERLAY_TOOLS[@]+"${OVERLAY_TOOLS[@]}"}"; do
+    for _fn in "check_$_t" "install_$_t"; do
+      declare -F "$_fn" >/dev/null || {
+        echo "error: tool '$_t' is registered but $_fn() is not defined — check $TOOLS_OVERLAY_DIR/$_t.sh" >&2
+        exit 1
+      }
+    done
+  done
+  unset _t _fn
+fi
+
 # ---- decisions (recommended-tier, per-machine, stored in init.lock) ----------
 # init.lock's `decisions:` section maps a RECOMMENDED tool to install|skip, each line
 # formatted `  <tool>: <install|skip>  # <date>`. Parsed with awk/sed only — yq itself
@@ -278,11 +354,15 @@ get_decision_value() {
 # apply.
 cmd_decide() {
   local tool="${1:-}" value="${2:-}"
-  case "$tool" in
-    obsidian|codegraph|opencodex) ;;
-    "") echo "usage: init.sh decide <tool> <install|skip>  (tools: ${RECOMMENDED[*]})" >&2; exit 1 ;;
-    *) echo "error: '$tool' is not a recommended tool (choices: ${RECOMMENDED[*]}) — required tools (${REQUIRED[*]}) aren't decided, they're mandatory" >&2; exit 1 ;;
-  esac
+  [ -n "$tool" ] || { echo "usage: init.sh decide <tool> <install|skip>  (tools: ${RECOMMENDED[*]})" >&2; exit 1; }
+  # Validate against the RECOMMENDED array rather than a hardcoded list, so tools
+  # registered by a derivation's overlay are decidable too.
+  local known=0 r
+  for r in "${RECOMMENDED[@]}"; do [ "$tool" = "$r" ] && { known=1; break; }; done
+  [ "$known" -eq 1 ] || {
+    echo "error: '$tool' is not a recommended tool (choices: ${RECOMMENDED[*]}) — required tools (${REQUIRED[*]}) aren't decided, they're mandatory" >&2
+    exit 1
+  }
   case "$value" in
     install|skip) ;;
     *) echo "error: decision must be 'install' or 'skip' (got '${value:-<empty>}')" >&2; exit 1 ;;
@@ -327,6 +407,23 @@ declare -A decision       # tool -> "install"/"skip"/"" (recommended tools only)
 declare -A decision_raw   # tool -> exact existing "value  # date" line, if one exists
 missing_required=()
 recommended_decided_missing=()   # decided install, but check_$tool failed
+recommended_unsupported=()       # decided install, but this platform can't host it
+declare -A unsupported_reason    # tool -> why this platform can't host it
+
+# A tool may be viable only on a subset of the platforms that clear the Linux-x86_64
+# gate above (e.g. one needing WSL/Windows interop). A tool decided `install` on a
+# machine that physically cannot host it is NOT drift to fail on: the decision is
+# honored as far as the machine allows, and the shortfall is reported as a NOTE.
+# Without this, a single `decide <tool> install` shared through init.lock would make
+# --check fail forever on every machine that cannot run it.
+#
+# Opt in by defining unsupported_reason_<tool>() in the tool's overlay: print the
+# reason and return 0 when this machine can't host it, return 1 when it can.
+tool_unsupported_reason() {
+  local fn="unsupported_reason_$1"
+  declare -F "$fn" >/dev/null || return 1
+  "$fn"
+}
 
 for tool in "${REQUIRED[@]}"; do
   v="$("check_$tool" || true)"
@@ -354,7 +451,12 @@ for tool in "${RECOMMENDED[@]}"; do
   fi
 
   if [ -z "${got[$tool]:-}" ] && [ "${decision[$tool]:-}" = "install" ]; then
-    recommended_decided_missing+=("$tool")
+    if reason="$(tool_unsupported_reason "$tool")"; then
+      recommended_unsupported+=("$tool")
+      unsupported_reason[$tool]="$reason"
+    else
+      recommended_decided_missing+=("$tool")
+    fi
   fi
 done
 
@@ -373,10 +475,13 @@ if [ "${1:-}" = "--check" ]; then
     echo "recommended tools decided 'install' but not present on this machine: ${recommended_decided_missing[*]} (the decision was made; this machine isn't honoring it — run init.sh)"
     ok=0
   fi
+  for tool in "${recommended_unsupported[@]+"${recommended_unsupported[@]}"}"; do
+    echo "NOTE: recommended tool '$tool' — decision 'install' cannot be honored on this platform (${unsupported_reason[$tool]}); informational only, not drift."
+  done
   for tool in "${RECOMMENDED[@]}"; do
     [ -n "${got[$tool]:-}" ] && continue
     d="${decision[$tool]:-}"
-    [ "$d" = "install" ] && continue   # already reported above as a failure
+    [ "$d" = "install" ] && continue   # already reported above (failure, or unsupported NOTE)
     echo "NOTE: recommended tool '$tool' not installed (decision: ${d:-undecided}) — informational only. Opt in with: init.sh decide $tool install && init.sh"
   done
   if [ "$ok" -eq 1 ]; then
@@ -396,6 +501,10 @@ for tool in "${RECOMMENDED[@]}"; do
   [ -n "${got[$tool]:-}" ] && continue   # already present, nothing to do
   d="${decision[$tool]:-}"
   if [ "$d" = "install" ]; then
+    if reason="$(tool_unsupported_reason "$tool")"; then
+      echo "NOTE: recommended tool '$tool' decided 'install', but this platform can't host it — $reason. Skipping (not an error)." >&2
+      continue
+    fi
     "install_$tool"
     v="$("check_$tool" || true)"
     [ -n "$v" ] && got[$tool]="$v" || { echo "error: $tool still unavailable after install (decision: install)" >&2; exit 1; }

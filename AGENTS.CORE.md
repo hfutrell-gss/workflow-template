@@ -174,6 +174,38 @@ them) from RECOMMENDED tools (Obsidian, codegraph, opencodex — useful, but ins
 only on an explicit per-machine decision recorded in `init.lock`, never silently). See
 `/workflow-init`'s SKILL.md for the decision flow (`init.sh decide <tool> install|skip`).
 
+**A derivation's own tools go in `.agents/init/tools.local.d/<tool>.sh`** — unmanaged,
+never touched by `update`, sourced by `init.sh` at startup, and thereby granted the whole
+mechanism (decide, install, `--check`, `init.lock`). This is the categorical rule applied
+to tooling: the template owns the shape (tiers, decisions, the lock), the derivation
+supplies the tool definition. Never fork `init.sh` to add a tool, and never hand-roll a
+parallel installer beside it — the first gets overwritten by `update`, the second is the
+same violation with extra steps. Overlay tools are always RECOMMENDED: a derivation cannot
+make its own tool mandatory for a machine, since `--check` failing on a tool the template
+never heard of would make the init mandate above unsatisfiable for anyone lacking it.
+
+Tools viable on only some platforms declare `unsupported_reason_<tool>()`. Because
+`init.lock` decisions travel between machines, a tool decided `install` on a machine that
+cannot host it is **not drift** — the decision is honored as far as the machine allows and
+the shortfall prints as a `NOTE`. Surface, don't suppress; don't manufacture failures
+either.
+
+## MCP servers
+
+A workflow that needs an MCP server registers it in a committed, project-scoped
+`.mcp.json` at its root — derivation-owned and unmanaged, like `binds.yaml`. Two rules
+keep a committed registration shareable across machines:
+
+- **No machine-specific paths in `.mcp.json`.** Point `command` at a fixed
+  `${HOME}/.local/bin/<name>` wrapper that the tool's `tools.local.d` installer generates,
+  and let the wrapper hold every variable part — install location, interop paths, and any
+  working directory the server requires. A server launched with a working directory it
+  can't use may fail *silently*, never answering `initialize`, so the wrapper is the right
+  place to pin one.
+- **A skipped tool is not a broken config.** A server whose backing tool was never opted
+  into simply shows as unconnected in `/mcp`. That is the intended resting state on a
+  machine with no use for it, not an error to chase.
+
 ## Tiers (RBAC)
 
 This repo's `AGENTS.md` declares `tier:` in frontmatter — the roles/credentials its

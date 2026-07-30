@@ -55,6 +55,8 @@ To pull forward later improvements to the managed set:
 | `.agents/skills/` | Canonical skill bodies + scripts (`workflow-*` machinery, `craft-*` engineering doctrine) |
 | `.agents/craft/` | Optional, derivation-owned overlays (`<skill>.local.md`) that override `craft-*` defaults — unmanaged, never touched by `update` |
 | `.agents/orchestrate/` | Optional, derivation-owned overlays for `/workflow-orchestrate`: `roster.local.yaml` (tier→lane preference, role→tier overrides) and `orchestrate.local.md` — unmanaged |
+| `.agents/init/tools.local.d/` | Optional, derivation-owned tool definitions (`<tool>.sh`) that `/workflow-init` sources, so a workflow's own tooling gets the full decide/install/`--check` mechanism — unmanaged. See `example-tool.sh.example` |
+| `.mcp.json` | Optional, derivation-owned MCP server registrations — unmanaged. Point `command` at a `${HOME}/.local/bin/<name>` wrapper so the committed file holds no machine-specific path |
 | `.claude/skills/` | Proxy stubs only — discovery frontmatter + a pointer to the canonical file in `.agents/skills/`. Nothing executable lives here. |
 
 ## Skills package
@@ -101,6 +103,14 @@ procedure here assumes, and **recommended** tools (Obsidian, codegraph, opencode
 are opt-in per machine — nothing recommended is installed until you explicitly decide so
 (`init.sh decide <tool> install`). An undecided or skipped recommended tool is never a
 failure, only an informational note pointing at how to opt in.
+
+A derivation adds **its own** tools by dropping `.agents/init/tools.local.d/<tool>.sh`
+(`check_`/`install_`/optional `unsupported_reason_` + `register_tool`), which `init.sh`
+sources — so the workflow's tooling inherits the whole mechanism without forking the
+script. Overlay tools are always recommended-tier, and a platform-limited one declaring
+`unsupported_reason_<tool>()` degrades to a note rather than drift on machines that can't
+host it. Never fork `init.sh` or hand-roll a parallel installer: the first is overwritten
+by `update`, the second is the same violation with extra steps.
 
 ## Standing binds vs session binds
 

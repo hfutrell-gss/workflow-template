@@ -1,0 +1,78 @@
+# .agents/init/tools.local.d/<tool>.sh — a derivation-owned tool definition.
+#
+# Copy this to `<tool>.sh` (drop the .example) in a DERIVATION to teach
+# /workflow-init about a tool that only this workflow's area of work needs.
+# Unmanaged: `workflow-template-sync update` never touches this directory, so your
+# tools survive every template update — the same overlay bargain as
+# .agents/craft/<skill>.local.md and .agents/orchestrate/roster.local.yaml.
+#
+# WHY THIS EXISTS. The categorical rule in AGENTS.CORE.md: the template defines the
+# shapes and owns every operation on them; derivations contribute data and doctrine.
+# Tool installation is a template shape (the tiers, the per-machine decisions,
+# init.lock). So do NOT fork init.sh to add a tool — an `update` would overwrite it —
+# and do NOT hand-roll a parallel installer script, which is the same violation with
+# extra steps. Drop a file here instead and you inherit the whole mechanism:
+# `init.sh decide <tool> install`, idempotent installs, `--check` verification, and a
+# recorded decision in init.lock.
+#
+# This file is sourced by init.sh, in the same shell. Consequences to respect:
+#   - Define functions; do not run install work at source time. Sourcing happens on
+#     EVERY init.sh invocation, including `--check`, which must stay read-only.
+#   - Don't `exit`. Don't clobber init.sh's own names (ROOT, LOCK, REQUIRED,
+#     RECOMMENDED, got, decision, have, ...). Prefix any globals you need.
+#   - You may use init.sh's helpers, e.g. `have <cmd>` and `resolve_git_bin`.
+#
+# Overlay tools are always RECOMMENDED tier — opt-in per machine, never automatic. A
+# derivation cannot make its own tool mandatory, because `--check` failing on a tool
+# the template never heard of would make the constitution's init mandate
+# unsatisfiable for anyone lacking it.
+
+# ---------------------------------------------------------------------------
+# REQUIRED: report whether the tool is installed.
+# Print a version (or the word "present") on stdout and return 0 when installed.
+# Return non-zero, or print nothing, when it is not.
+# Prefer checking the thing you actually need at USE time, not merely that some
+# installer ran — a half-installed tool should read as "not installed" so that a
+# re-run finishes the job instead of reporting success on something unusable.
+check_example_tool() {
+  have example-tool || return 1
+  (example-tool --version 2>/dev/null || echo present) | head -1
+}
+
+# ---------------------------------------------------------------------------
+# REQUIRED: install it. Return non-zero on failure.
+# Only called when this machine's init.lock decision is `install` and check_ failed.
+# House conventions: user-scoped, never sudo (land things in ~/.local/{bin,opt});
+# pin versions rather than tracking "latest"; check preconditions and fail with
+# remediation a human can act on rather than a stack trace.
+install_example_tool() {
+  echo "installing example-tool ..." >&2
+  have curl || { echo "error: curl is required to install example-tool" >&2; return 1; }
+  mkdir -p "$HOME/.local/bin"
+  # curl -fsSL -o "$HOME/.local/bin/example-tool" "https://.../v1.2.3/example-tool"
+  # chmod +x "$HOME/.local/bin/example-tool"
+}
+
+# ---------------------------------------------------------------------------
+# OPTIONAL: declare that THIS machine cannot host the tool at all.
+# Print the reason and return 0 when unhostable; return 1 when the machine is fine.
+#
+# Use this for platform-limited tools. init.sh then treats "decided install but
+# unhostable" as an informational NOTE rather than drift — because init.lock's
+# decisions are shared across machines, and without this one `decide <tool> install`
+# would make `--check` fail forever on every machine that cannot run it.
+# Surface, don't suppress; but don't manufacture failures either.
+unsupported_reason_example_tool() {
+  # Example: a tool that needs WSL/Windows interop.
+  # [ -d /mnt/c/Windows ] && have cmd.exe && return 1
+  # echo "Windows-only: needs WSL/Windows interop (/mnt/c/Windows + cmd.exe)"
+  # return 0
+  return 1
+}
+
+# ---------------------------------------------------------------------------
+# REQUIRED, and last: register the tool into the RECOMMENDED tier.
+# The name must match the check_/install_ suffixes above and may contain only
+# lowercase letters, digits, '_' and '-'. Registering a REQUIRED tool's name is
+# refused outright.
+register_tool example_tool
