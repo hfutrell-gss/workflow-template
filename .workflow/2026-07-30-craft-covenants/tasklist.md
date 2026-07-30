@@ -56,9 +56,9 @@ zero violations. `[-]` requires `why:` and a user `signoff:`.
 - [x] T009 · fleet · deps:T001,T002,T003,T004,T005,T006 · Wire new refs into craft-code-quality SKILL body
       accept: SKILL.md links the new/updated refs; standing expectation that every production-code turn holds the ratchet and reports the gap; no new skill invented
       evidence: SKILL.md refs table + standing 90/90 expectation + architecture pointers; notes/T009-skill-body.md
-- [~] T010 · fleet · deps:T007,T008,T009 · Package managed release (VERSION + manifest)
+- [x] T010 · fleet · deps:T007,T008,T009 · Package managed release (VERSION + manifest)
       accept: VERSION bumped; template-manifest.yaml version mirrors it; managed paths cover all new files; derivation-owned AGENTS.md unchanged; orchestrate.sh status clean after task markers updated
-      agent: 435721ff-3f5e-4149-ac43-8c89caa02f93 (dispatched 2026-07-30)
+      evidence: VERSION=18; template-manifest version:18; craft-code-quality/** covers new refs; AGENTS.md untouched; notes/T010-release.md
 
 ## Log
 
@@ -80,3 +80,5 @@ zero violations. `[-]` requires `why:` and a user `signoff:`.
   T008 ([craft-tdd](5fb212c8-90e7-4f73-885b-5d20b97d0aa4)). Late T003/T004/T005
   completion notices acknowledged (already [x]). Dispatched T009.
 - 2026-07-30: verified T009 ([skill-body](64bf59b4-685e-4f88-bcc0-03568af4dee1)). Dispatched T010.
+- 2026-07-30: verified T010 ([release](435721ff-3f5e-4149-ac43-8c89caa02f93)) — VERSION 18.
+  Session exhausted.
