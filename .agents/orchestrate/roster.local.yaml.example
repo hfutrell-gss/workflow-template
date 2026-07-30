@@ -1,0 +1,33 @@
+# .agents/orchestrate/roster.local.yaml — copy this file to that name to activate it.
+#
+# Derivation-owned and unmanaged: `workflow-template-sync update` never touches it, and
+# where it conflicts with /workflow-orchestrate's defaults, it wins. Schema and the
+# resolution order: .agents/skills/workflow-orchestrate/references/model-classes.md.
+
+# Which lane fills each tier, in order. First available lane wins.
+#   flagship  — hardest reasoning, adjudication. The consultant sits here.
+#   workhorse — balanced agentic default. The orchestrator sits here.
+#   fleet     — fast and cheap enough to run many at once. The workers sit here.
+prefer:
+  flagship:  [anthropic, ocx-openai]
+  workhorse: [anthropic]              # single lane = no fallback; fail loudly instead
+  fleet:     [ocx-openai, anthropic]  # e.g. run the fleet on the cheaper routed lane
+
+# Optional: re-point a role at a different tier. Defaults are
+# consultant→flagship, orchestrator→workhorse, worker→fleet.
+# roles:
+#   orchestrator: flagship            # this workflow's work is design-heavy
+
+# Optional: teach a lane this template has never heard of. `dispatch` says how the Agent
+# tool reaches it: `model` (native model argument) or `agentType` (a named subagent whose
+# real model is pinned in its own definition, ignoring `model:`).
+# lanes:
+#   vendor-x:
+#     dispatch: agentType
+#     tiers:
+#       flagship:  vendor-x-big
+#       workhorse: vendor-x-mid
+#       fleet:     [vendor-x-small, vendor-x-nano]
+
+# Classify a new model by the vendor's own published tier statement — never by its name,
+# version number, or a single benchmark. An unclassified model is not dispatched.

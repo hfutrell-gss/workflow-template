@@ -51,8 +51,10 @@ To pull forward later improvements to the managed set:
 | `VERSION` | This template's own version (absent in a derivation — see `.template.lock` there instead) |
 | `playbooks/` | Step-by-step procedures for this workflow's area of work |
 | `journal/` | One dated file per run/decision — never a single growing file |
+| `.workflow/` | Orchestration session state (`<session-slug>/tasklist.md` + `roster.md`) — **committed**, so a run resumes after a cold tick or on another machine. See `/workflow-orchestrate` |
 | `.agents/skills/` | Canonical skill bodies + scripts (`workflow-*` machinery, `craft-*` engineering doctrine) |
 | `.agents/craft/` | Optional, derivation-owned overlays (`<skill>.local.md`) that override `craft-*` defaults — unmanaged, never touched by `update` |
+| `.agents/orchestrate/` | Optional, derivation-owned overlays for `/workflow-orchestrate`: `roster.local.yaml` (tier→lane preference, role→tier overrides) and `orchestrate.local.md` — unmanaged |
 | `.claude/skills/` | Proxy stubs only — discovery frontmatter + a pointer to the canonical file in `.agents/skills/`. Nothing executable lives here. |
 
 ## Skills package
@@ -69,6 +71,7 @@ thin stub Claude Code needs for discovery.
 | `/workflow-manage` | Administer this workflow: add/remove/edit standing binds, assemble/refresh the substrate (`sync-binds.sh`) |
 | `/workflow-bind` | Bind a session: attach default standing binds (and anything else asked for) via `/add-dir` |
 | `/workflow-gateway` | Manage the local opencodex model gateway (start/stop/status) and print the strictly opt-in, per-session `ANTHROPIC_BASE_URL` override |
+| `/workflow-orchestrate` | Task-based orchestration: directive → committed task list (`.workflow/<session-slug>/tasklist.md`) → dispatch per model **tier** (`flagship` · `workhorse` · `fleet`, resolved from a lane roster, never a hardcoded model name) → loop until the list is exhausted |
 | `/craft-tdd` | Test-first protocol: failing test before production code, integration focus, seams at every EUD, never mock business logic |
 | `/craft-code-quality` | Module size budgets, mandatory lint/static analysis, ports and adapters, pragmatic SOLID/DDD, no implicit fallbacks, required observability — plus a ratcheting path for repos that start nowhere near any of it |
 
@@ -85,6 +88,11 @@ workflow's overlay → then the skill's defaults.** To change a default, write
 `.agents/craft/<skill-name>.local.md` (e.g. `.agents/craft/code-quality.local.md`); it is
 unmanaged, so `update` never touches it, and where it conflicts with the skill it wins.
 No pinning, no ejecting, no drift.
+
+The same mechanism serves `/workflow-orchestrate` outside `.agents/craft/`: put tier→lane
+preference and role→tier overrides in `.agents/orchestrate/roster.local.yaml`, further
+doctrine overrides in `.agents/orchestrate/orchestrate.local.md`. Both unmanaged, both win
+over the skill.
 
 ### Required vs recommended tools
 

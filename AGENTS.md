@@ -37,6 +37,12 @@ Before writing or changing production code in bound substrate, invoke `/craft-td
 `.agents/craft/tdd.local.md` and `.agents/craft/code-quality.local.md` — a bound repo's
 own law still wins inside its boundaries.
 
+## Orchestration
+For anything beyond a single step, invoke `/workflow-orchestrate`: the directive becomes a
+committed task list under `.workflow/<session-slug>/`, work is dispatched per model tier
+(`flagship` · `workhorse` · `fleet`), and the run is done only when the list is exhausted.
+Set this workflow's tier→lane preference in `.agents/orchestrate/roster.local.yaml`.
+
 ## Typical checkouts
 ```sh
 claude --add-dir <standing-bind-repo> [--add-dir <standing-bind-repo> ...]
