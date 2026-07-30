@@ -4,12 +4,13 @@ description: >-
   Production code-quality doctrine: small cohesive modules with per-language LOC budgets,
   mandatory lint and static analysis, ports-and-adapters architecture with seams at every
   external dependency, pragmatic SOLID and DDD, no implicit fallbacks, and required
-  observability (structured logs, telemetry, domain events, audit trails). Includes a
-  ratcheting path for repos that start far from these standards — no static analysis, thin
-  tests, oversized files — tightening enforcement pass by pass instead of in one heroic
-  sweep. Use when writing or refactoring production code, reviewing a diff or PR, deciding
-  where a module boundary goes, judging whether a file or function is too large, planning how
-  to raise quality in a repo with little or no tooling, or checking whether a change is done.
+  observability (structured logs, telemetry, domain events, audit trails), coverage
+  destination, and pragmatic MVP-CQRS. Includes a ratcheting path for repos that start far
+  from these standards — no static analysis, thin tests, oversized files — tightening
+  enforcement pass by pass instead of in one heroic sweep. Use when writing or refactoring
+  production code, reviewing a diff or PR, deciding where a module boundary goes, judging
+  whether a file or function is too large, planning how to raise quality in a repo with little
+  or no tooling, or checking whether a change is done.
 ---
 
 # craft-code-quality
@@ -50,6 +51,10 @@ Loaded on demand — read the one the task needs, not all of them:
 | --- | --- |
 | [references/loc-budgets.md](references/loc-budgets.md) | checking concrete size limits for a specific language, or wiring lint/static-analysis tooling — per-language soft/hard maxima, required tooling, rule mappings |
 | [references/ratchet.md](references/ratchet.md) | the repo is far from these standards — no static analysis, thin tests, oversized files. The pass ladder, the per-language baseline mechanisms, and how to hold a gain once made |
+| [references/coverage-destination.md](references/coverage-destination.md) | setting, measuring, or ratcheting coverage — the 90/90 non-UI changed-code destination and how to report the remaining gap |
+| [references/ui-model-boundary.md](references/ui-model-boundary.md) | designing or reviewing UI-to-core boundaries, view-model ownership, or dependency-direction rules |
+| [references/repositories.md](references/repositories.md) | deciding repository boundaries, aggregate persistence, or how domain/application code reaches storage |
+| [references/mvp-cqrs.md](references/mvp-cqrs.md) | shaping presentation and application flows with pragmatic MVP-CQRS, especially commands, queries, and presenter boundaries |
 | [references/enforcement.md](references/enforcement.md) | wiring the rules into the build — which mandates a machine can decide, which need review, the exact tool and rule for each, and how to prove a rule actually fires |
 
 ## Ratcheting — when the repo is nowhere near these standards
@@ -83,9 +88,16 @@ One turn per commit. Never bundle a threshold tightening with a feature change �
 break, you need to know which one did it. And never lower a standard the repo already meets:
 the ratchet is one-way by construction.
 
+**Standing expectation:** every production-code turn holds the current ratchet position,
+meets the day-one 90/90 changed-code coverage destination for in-scope non-UI code, reports
+the remaining gap toward the destination, and never lowers floors. See
+[references/coverage-destination.md](references/coverage-destination.md) and
+[references/ratchet.md](references/ratchet.md).
+
 **Exit criterion:** baseline files empty and deleted, thresholds equal to the budgets in
-`references/loc-budgets.md`, enforcement applying repo-wide rather than to the diff. At that
-point this section stops applying and the rest of this file applies plainly.
+`references/loc-budgets.md`, non-UI coverage at the 90/90 destination in
+`references/coverage-destination.md`, and enforcement applying repo-wide rather than to the
+diff. At that point this section stops applying and the rest of this file applies plainly.
 
 ## Enforcement — wired rules beat remembered rules
 
@@ -188,6 +200,8 @@ explicit internal module boundaries. One module or many, still one coherent mono
 **UI boundary is mandatory** regardless of deployment model. Always segregate UI from a core
 API boundary. That boundary may be HTTP, gRPC, or in-process public methods in a local
 assembly — transport changes must not require a domain rewrite.
+For UI model ownership and the exact boundary rules, read
+[references/ui-model-boundary.md](references/ui-model-boundary.md).
 
 ## SOLID, pragmatic
 
@@ -205,6 +219,11 @@ assembly — transport changes must not require a domain rewrite.
 - Domain logic lives in domain modules — not controllers, not UI, not adapters.
 - I/O, HTTP, database, and messaging concerns stay in adapter layers.
 - Cross-boundary translation is explicit (DTOs, mappers). Never implicit leakage.
+- Choose persistence abstractions and aggregate boundaries using
+  [references/repositories.md](references/repositories.md); keep repository concerns outside
+  the domain model.
+- For presentation/application flow, apply the pragmatic command-query and presenter guidance
+  in [references/mvp-cqrs.md](references/mvp-cqrs.md) without collapsing UI into domain code.
 
 ## No implicit fallbacks
 
@@ -263,6 +282,9 @@ exit criterion for the ratchet, not the bar for every individual change.
 
 - Sizes of touched files and functions respected against `references/loc-budgets.md`, or
   explicitly justified.
+- In-scope non-UI changed code meets the 90/90 coverage destination in
+  `references/coverage-destination.md`; report the remaining destination gap and never lower
+  an existing coverage floor.
 - Lint and static analysis located, run, and passing — or the gap surfaced as a finding.
 - Required tooling installed and **version-pinned**, with config in version control.
 - No policy-violation warnings remaining.
