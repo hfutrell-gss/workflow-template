@@ -203,8 +203,28 @@ work around it silently:
 
 Each means the seam is in the wrong place. Report it with the test that exposed it.
 
+## Which of these a machine can enforce
+
+Several rules above are machine-checkable and are worth wiring rather than remembering —
+coverage on changed lines, the overall coverage floor, domain tests not depending on the data
+layer, logic not living in the UI, container-backed tests not silently skipping, the thin-poller
+LOC budget, tests running before commit.
+
+Others are only *approximable*. "Never mock business logic" is enforceable as an import-boundary
+rule — forbid the mocking library from domain test packages — but no tool in any mainstream
+ecosystem inspects what type is passed to `mock()`. Wire it anyway; it catches the accidental
+case, which is the common one. Do not call it enforced.
+
+And some are permanently unenforceable: test-first ordering is a process property, and every
+static proxy for it is gameable. No tool detects assertions against magic values or
+non-randomized test data either — confirmed, not assumed.
+
+The full rule → tool → rule-id map, the honest enforced/partial/review split, and templates are
+in `craft-code-quality`'s `references/enforcement.md` and `assets/arch-tests/`.
+
 ## Related
 
 - `craft-code-quality` — the architecture rules that make code testable in the first place
   (ports and adapters, seams at every EUD, LOC budgets). Testability problems usually
-  surface there first.
+  surface there first. Its `references/enforcement.md` covers wiring these test rules into the
+  build; its `references/ratchet.md` covers arriving there in a repo with no suite.

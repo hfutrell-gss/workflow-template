@@ -50,6 +50,7 @@ Loaded on demand — read the one the task needs, not all of them:
 | --- | --- |
 | [references/loc-budgets.md](references/loc-budgets.md) | checking concrete size limits for a specific language, or wiring lint/static-analysis tooling — per-language soft/hard maxima, required tooling, rule mappings |
 | [references/ratchet.md](references/ratchet.md) | the repo is far from these standards — no static analysis, thin tests, oversized files. The pass ladder, the per-language baseline mechanisms, and how to hold a gain once made |
+| [references/enforcement.md](references/enforcement.md) | wiring the rules into the build — which mandates a machine can decide, which need review, the exact tool and rule for each, and how to prove a rule actually fires |
 
 ## Ratcheting — when the repo is nowhere near these standards
 
@@ -85,6 +86,35 @@ the ratchet is one-way by construction.
 **Exit criterion:** baseline files empty and deleted, thresholds equal to the budgets in
 `references/loc-budgets.md`, enforcement applying repo-wide rather than to the diff. At that
 point this section stops applying and the rest of this file applies plainly.
+
+## Enforcement — wired rules beat remembered rules
+
+A rule you read applies as often as someone remembers it. A rule in the analyzer applies
+whether anyone remembers it or not. So for every mandate here, **push it to the strongest
+mechanism the tooling allows**, and be explicit about what is left over. The full rule → tool
+→ rule-id map is in [references/enforcement.md](references/enforcement.md); three things from
+it belong in the body:
+
+- **Three classes, visibly distinguished.** ENFORCED (a machine decides it), PARTIAL (a machine
+  catches the mechanical case, a residue needs judgment), REVIEW (no mechanism exists). Never
+  let an enforced rule and a review-only rule look alike. A repo where both are prose and the
+  build is green has standards in name only, and no one can tell which is which without
+  reading the CI config.
+- **Most of the architecture block is enforceable and usually is not enforced.** Hexagonal
+  layering, the UI boundary, "domain tests must not touch the data layer" — these are
+  dependency-direction questions, which is exactly what architecture-test tools decide. If a
+  repo claims hexagonal architecture with no dependency rule wired, the claim is unverified.
+  Treat it as a finding. This is the largest available win in these skills.
+- **Prove every rule fires.** A rule that silently does not match is worse than no rule — it
+  manufactures confidence. On wiring: introduce the smallest possible violation, confirm the
+  check fails and names the right rule, revert. Never trust a green gate you have not seen go
+  red. Banned-symbol lists and layer rules fail *open* when misconfigured, which is why this
+  matters most exactly where the stakes are highest.
+
+Some rules are permanently unenforceable and should not be chased — "do not over-abstract" is
+the deliberate counterweight to "every EUD has a seam", and test-first ordering is a process
+property whose static proxies are all gameable. Raise those in review with a concrete instance.
+Do not invent a metric.
 
 ## Core standard
 

@@ -217,6 +217,26 @@ rather than papered over — it changes the Pass 0 recipe.
   diff-scoping. (PMD for Java has no baseline concept at all; do not confuse it with PHPMD,
   a different tool, which does.)
 
+### Architecture rules baseline separately — and one tool is built for it
+
+The table above covers *lint* baselines. Architecture and dependency rules are a different axis
+with different tooling, catalogued in [enforcement.md](enforcement.md). The one thing to know
+here, because it changes Pass 0:
+
+**ArchUnit's `FreezingArchRule.freeze(rule)` is purpose-built for this** — a persistent violation
+store where the first run always passes, later runs fail only on *new* violations, and fixed
+violations are auto-pruned. That is the ratchet, implemented by the tool. On the JVM you can
+therefore switch every architecture rule on in a single Pass 0 commit.
+
+dependency-cruiser (`--ignore-known`) and ESLint's `eslint-suppressions.json` are the next-best,
+genuinely automatic. golangci-lint gives diff-scoping rather than a store. **import-linter and
+go-arch-lint offer only hand-maintained allowlists, and NetArchTest, ArchUnitNET,
+BannedApiAnalyzers and Ruff's banned-api have no baseline at all** — there, scope the rule to
+already-clean directories and grow the scope, recording it in config so it cannot quietly shrink.
+
+Architecture rules produce the largest initial violation count of anything in these skills, so
+check the tool's baseline story *before* committing to a Pass 0 shape.
+
 ## Coverage, specifically
 
 The mandate is a target, not an entry condition. Ratchet it:
