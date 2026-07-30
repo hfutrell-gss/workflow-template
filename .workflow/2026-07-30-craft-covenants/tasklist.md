@@ -32,9 +32,9 @@ zero violations. `[-]` requires `why:` and a user `signoff:`.
 - [x] T001 · fleet · deps:- · Define the 90/90 coverage destination scope
       accept: reference states line+branch 90/90 for authored non-UI production code; lists included layers, exclusions (UI, generated, migrations, declarative glue), and denominator rules
       evidence: references/coverage-destination.md — 90/90 line+branch; domain/app/adapters included; UI/generated/migrations/schemas/glue excluded; day-one + exit + monotone floors; notes/T001-coverage-destination.md
-- [~] T002 · fleet · deps:T001 · Strengthen coverage ratchet to match destination
+- [x] T002 · fleet · deps:T001 · Strengthen coverage ratchet to match destination
       accept: ratchet.md + related body text require changed-code 90/90 day one, non-decreasing overall floors, and 90/90 as repo-wide exit for non-UI — consistent with T001
-      agent: b91d62ce-c875-4c21-b591-5ef2f5acc25e (dispatched 2026-07-30)
+      evidence: ratchet.md Coverage section cites coverage-destination.md; day-one 90/90; monotone floors; non-UI exit; notes/T002-ratchet.md
 - [x] T003 · fleet · deps:- · Codify UI view-model vs domain-model boundaries
       accept: on-demand reference states view-model ownership in UI, domain models in core, explicit translation, forbid domain leakage into UI contracts; business rules out of views/presenters/controllers
       evidence: references/ui-model-boundary.md — VM vs domain ownership, explicit mappers, ENFORCED/PARTIAL/REVIEW table; notes/T003-ui-model-boundary.md
@@ -44,17 +44,18 @@ zero violations. `[-]` requires `why:` and a user `signoff:`.
 - [x] T005 · fleet · deps:- · Define MVP Model CQRS[/ES] doctrine
       accept: on-demand reference requires command/query separation at application/use-case boundary without mandating a mediator framework; ES is opt-in with explicit domain criteria
       evidence: references/mvp-cqrs.md — lightweight CQRS at use-case boundary; ES opt-in criteria; no mediator mandate; notes/T005-mvp-cqrs.md
-- [~] T006 · fleet · deps:T001,T003,T004,T005 · Update enforcement classifications for new covenants
+- [x] T006 · fleet · deps:T001,T003,T004,T005 · Update enforcement classifications for new covenants
       accept: every new covenant in enforcement.md is ENFORCED, PARTIAL, or REVIEW with honest tool mapping; no overstated automation
-      agent: 7475181f-ed24-480a-b3b3-8d2fd3ee7cfa (dispatched 2026-07-30)
-- [~] T007 · fleet · deps:T003,T004 · Strengthen architecture-test examples for UI/domain/persistence
+      evidence: enforcement.md rows for coverage, UI, repos, CQRS/ES; notes/T006-enforcement.md
+- [x] T007 · fleet · deps:T003,T004 · Strengthen architecture-test examples for UI/domain/persistence
       accept: at least one supported-stack arch-test asset demonstrably encodes forbidden UI↔domain or domain↔persistence dependency; README notes how to prove it fails
-      agent: fbceb2b0-c27c-4eb7-a7e5-95f1a07ab50b (dispatched 2026-07-30)
-- [~] T008 · fleet · deps:T001,T003 · Synchronize craft-tdd with coverage and UI flags
+      evidence: ui-must-not-depend-on-domain in dependency-cruiser + README canary; notes/T007-arch-tests.md
+- [x] T008 · fleet · deps:T001,T003 · Synchronize craft-tdd with coverage and UI flags
       accept: craft-tdd SKILL.md agrees with 90/90 scope/gates and sharpens logic-in-UI CODE FLAG to match T003
-      agent: 5fb212c8-90e7-4f73-885b-5d20b97d0aa4 (dispatched 2026-07-30)
-- [ ] T009 · fleet · deps:T001,T002,T003,T004,T005,T006 · Wire new refs into craft-code-quality SKILL body
+      evidence: craft-tdd Coverage covenant + sharpened UI CODE FLAG; notes/T008-craft-tdd.md
+- [~] T009 · fleet · deps:T001,T002,T003,T004,T005,T006 · Wire new refs into craft-code-quality SKILL body
       accept: SKILL.md links the new/updated refs; standing expectation that every production-code turn holds the ratchet and reports the gap; no new skill invented
+      agent: 64bf59b4-685e-4f88-bcc0-03568af4dee1 (dispatched 2026-07-30)
 - [ ] T010 · fleet · deps:T007,T008,T009 · Package managed release (VERSION + manifest)
       accept: VERSION bumped; template-manifest.yaml version mirrors it; managed paths cover all new files; derivation-owned AGENTS.md unchanged; orchestrate.sh status clean after task markers updated
 
@@ -72,3 +73,8 @@ zero violations. `[-]` requires `why:` and a user `signoff:`.
 - 2026-07-30: verified T001 ([coverage](dfa21372-88eb-43f5-9d38-a3c92e5eda6c)); also verified
   T003–T005 deliverables already on disk from concurrent fleet; marked [x]. Dispatched
   T002,T006,T007,T008.
+- 2026-07-30: verified T002 ([ratchet](b91d62ce-c875-4c21-b591-5ef2f5acc25e)),
+  T006 ([enforcement](7475181f-ed24-480a-b3b3-8d2fd3ee7cfa)),
+  T007 ([arch-tests](fbceb2b0-c27c-4eb7-a7e5-95f1a07ab50b)),
+  T008 ([craft-tdd](5fb212c8-90e7-4f73-885b-5d20b97d0aa4)). Late T003/T004/T005
+  completion notices acknowledged (already [x]). Dispatched T009.

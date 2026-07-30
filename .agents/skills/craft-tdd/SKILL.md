@@ -173,14 +173,30 @@ see `craft-code-quality`'s ratcheting section and its `references/ratchet.md`.
 - **This is not a contradiction of test-first.** For a bug or a new feature, the test fails
   first. For a refactor of untested code, the characterization tests pass first — which is
   exactly what "refactoring → cover the behavior before touching it" already means.
-- **Coverage ratchets on the diff, not the repo.** Changed lines meet the target; overall
-  coverage never decreases. Chasing a global percentage produces tests written to touch lines
-  rather than to prove behavior, which is worse than no test — it reports safety that is not
-  there.
+- **Coverage ratchets on the diff, not the repo.** Every new or changed in-scope line **and
+  branch** meets 90% line and 90% branch coverage from day one. Overall floors never decrease;
+  raise them monotonically toward the 90/90 destination. Chasing a global percentage produces
+  tests written to touch lines rather than to prove behavior, which is worse than no test — it
+  reports safety that is not there.
 - **Testing legacy code usually requires a seam that does not exist yet.** Introducing it is
   an architecture change, not a test change (`craft-code-quality`). If the only way to test
   something is a visibility escape or probing internal state, that is a CODE FLAG below, not
   a technique.
+
+## Coverage covenant
+
+The destination and exit criterion is a repo-wide denominator of at least **90% line coverage
+and 90% branch coverage** for authored **non-UI production code**. Measure both; neither
+substitutes for the other. The denominator includes domain and application code plus meaningful
+backend adapter behavior. Views, components, presenters/controllers, view models, styling, and
+client-rendering glue — along with generated code, migration artifacts, schemas/IDL, and
+framework declarative glue with no business decision — are outside it.
+
+Do not exclude authored logic to improve a number. Extract business rules, transformations, and
+decisions from UI or declarative glue into covered non-UI code. Calculate repo-wide floors and
+changed-code coverage over the same explicit, narrow, version-controlled in-scope population;
+report exclusions with the result. Tests must prove observable behavior, decisions, outcomes, and
+failure paths. Merely executing a line is coverage theatre, not evidence.
 
 ## Before committing
 
@@ -199,16 +215,24 @@ work around it silently:
 - Widening an individual type's visibility in order to test it.
 - Probing internal state instead of using a spy.
 - Domain or unit tests that require the data layer.
-- Logic living in the UI.
+- **Business logic living in the UI.** Views render; presenters shape owned view models;
+  controllers translate and dispatch; UI-state containers hold presentation state. View models
+  are legitimate UI-owned presentation shapes, not renamed domain models. Eligibility,
+  authorization, pricing, lifecycle decisions, invariant enforcement, domain validation, and
+  domain calculations hidden in UI conditionals, selectors, reducers, effects, handlers, or
+  controller branches belong in a domain module or application use case, then flow through an
+  explicit mapper or DTO adapter.
 
 Each means the seam is in the wrong place. Report it with the test that exposed it.
 
 ## Which of these a machine can enforce
 
 Several rules above are machine-checkable and are worth wiring rather than remembering —
-coverage on changed lines, the overall coverage floor, domain tests not depending on the data
-layer, logic not living in the UI, container-backed tests not silently skipping, the thin-poller
-LOC budget, tests running before commit.
+90/90 line-and-branch coverage on changed in-scope code, monotone overall coverage floors, domain
+tests not depending on the data layer, UI packages not importing domain/core types,
+container-backed tests not silently skipping, the thin-poller LOC budget, tests running before
+commit. Whether a UI conditional is business policy remains a review judgment; do not pretend a
+coverage or import metric can decide it.
 
 Others are only *approximable*. "Never mock business logic" is enforceable as an import-boundary
 rule — forbid the mocking library from domain test packages — but no tool in any mainstream

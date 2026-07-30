@@ -15,6 +15,19 @@ ENFORCED/PARTIAL/REVIEW classification these implement.
 | `python-import-linter/` | Layered architecture (`.importlinter` `layers` contract), domain-tests-no-data-layer and no-mocking-in-domain-tests (`forbidden` contracts), plus Ruff banned-api (`ruff-banned-api-snippet.toml`) | `ignore_imports` — hand-maintained allowlist, no generate step; Ruff has none |
 | `go-depguard/` | Domain-package deny rules (`depguard`), banned concrete types (`forbidigo`), noted alternative `go-arch-lint` | No store — `--new`/`--new-from-rev`/`--new-from-merge-base` diff-scoping only |
 
+## Prove the TypeScript UI/domain rule fails
+
+After adapting `typescript-dependency-cruiser/.dependency-cruiser.js` to the target paths,
+temporarily add a resolvable import from `src/ui/` to `src/domain/`, then run:
+
+```sh
+npx depcruise src --config .dependency-cruiser.js
+```
+
+It must fail and name `ui-must-not-depend-on-domain`; remove the canary import and confirm
+the command passes again. UI code must consume application-owned DTOs or ports and map them
+to UI-owned view models, rather than importing domain models directly.
+
 ## Baseline-support ranking
 
 The axis that matters most for ratcheting into an existing repo (`ratchet.md`): can the

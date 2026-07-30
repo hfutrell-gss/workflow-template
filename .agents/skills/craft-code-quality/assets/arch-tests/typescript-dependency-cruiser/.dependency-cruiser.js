@@ -31,6 +31,15 @@ module.exports = {
       to: { path: '^src/(infrastructure|ui)' },
     },
     {
+      name: 'ui-must-not-depend-on-domain',
+      severity: 'error',
+      comment:
+        'UI must consume application-owned DTOs or ports, not domain models directly. ' +
+        'Translate explicitly at the UI/core boundary into UI-owned view models.',
+      from: { path: '^src/ui' },
+      to: { path: '^src/domain' },
+    },
+    {
       name: 'adapters-confined-to-the-edge',
       severity: 'error',
       comment:
