@@ -172,6 +172,12 @@ cmd_derive() {
   find "$ROOT/journal" -type f ! -name '.gitkeep' -delete 2>/dev/null || true
   find "$ROOT/playbooks" -type f -name '*example*' -delete 2>/dev/null || true
 
+  # Orchestration session state is identity too, and it is COMMITTED (unlike workspace/),
+  # so a derive-by-clone carries the template's own in-flight runs into the new workflow —
+  # task lists and notes for work that has nothing to do with it. Clear it for the same
+  # reason as journal/: a run belongs to the repo that performed it.
+  rm -rf "$ROOT/.workflow"/*/ 2>/dev/null || true
+
   # VERSION describes the TEMPLATE's own version, not a derivation's — the
   # derivation's relationship to it is tracked entirely in .template.lock instead.
   rm -f "$ROOT/VERSION"
