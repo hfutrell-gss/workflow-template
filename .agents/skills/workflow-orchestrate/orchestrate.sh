@@ -1,29 +1,38 @@
 #!/usr/bin/env bash
 # workflow-orchestrate — run mechanics.
 #
-# Two strata, never mixed:
-#   workflows/<workflow>/                  DURABLE — the procedure. Never pruned.
-#   workflows/<workflow>/<target>/tasks.md INSTANCE — one run. Disposable after harvest.
+# Four levels, never mixed (AGENTS.CORE.md "The shapes"):
+#   workflows/<workflow>/SKILL.md              TIMELESS — the TTPs. Never pruned.
+#   workflows/<workflow>/<app>/profile.md      DURABLE  — that application's particulars.
+#   workflows/<workflow>/<app>/tasks.md        CARRIED  — epics, deferred work. Crosses
+#                                                         sessions. Never a session list.
+#   workflows/<workflow>/<app>/<session>/tasks.md  SESSION — one run. Deleted after harvest.
 #
-# tasks.md (grammar + anti-cheat rules: references/tasklist.md) is the durable state of
-# a run for as long as the run is open. This script only scaffolds and reports; it
-# never marks a task done, because recording completion requires judgment about
-# evidence and a script that mutates markers invites marking work done without any.
+# A session tasks.md (grammar + anti-cheat rules: references/tasklist.md) is the durable
+# state of that session for as long as it is open. This script only scaffolds and
+# reports; it never marks a task done, because recording completion requires judgment
+# about evidence and a script that mutates markers invites marking work done without any.
 #
-# Legacy fallback: a run still at .workflow/<slug>/tasklist.md (pre-stratification
-# layout) keeps resolving here for one version — see references/tasklist.md "Legacy
-# layout". New runs never use it. `init` only ever writes the new layout.
+# Unfinished work never blocks a session forever. Promote it: mark the task [^] with a
+# carried: line naming its entry in <app>/tasks.md. [^] is not open, so the session can
+# reach exhaustion with the work preserved rather than abandoned or stalled.
+#
+# Legacy fallback: a session still at .workflow/<slug>/tasklist.md keeps resolving for
+# one version — see references/tasklist.md "Legacy layout". `init` only writes the
+# current layout.
 #
 # BEGIN-USAGE
 # Usage:
-#   orchestrate.sh init <workflow> <target>   scaffold workflows/<workflow>/<target>/
+#   orchestrate.sh init <workflow> <app> [<session>]
+#                                             scaffold workflows/<workflow>/<app>/<session>/
+#                                             (<session> defaults to today's date)
 #   orchestrate.sh status [<key>]             counts, violations, harvest, DoD verdict
 #   orchestrate.sh ready  [<key>]             tasks whose deps are all done
-#   orchestrate.sh list                       every run with its verdict
+#   orchestrate.sh list                       every session with its verdict
 #
-# <key> is <workflow>/<target> for a run in the current layout, or a bare slug for a
-# run still at the legacy .workflow/<slug>/ path. Omit it to resolve the only run
-# present, or the only one still open.
+# <key> is <workflow>/<app>/<session>, or a bare slug for a session still at the legacy
+# .workflow/<slug>/ path. Omit it to resolve the only session present, or the only one
+# still open.
 #
 # Exit codes (status/ready/list): 0 = exhausted, clean, and harvested; 2 = NOT done (an
 # ordinary state, not a failure); 1 = usage or IO error.
@@ -37,26 +46,33 @@ WF="$ROOT/.workflow"          # legacy layout — fallback only, see header
 ASSETS="$HERE/assets"
 
 die() { echo "error: $*" >&2; exit 1; }
-note_legacy() { echo "NOTE: legacy run at .workflow/$1/ — migrate to workflows/<workflow>/<target>/ (this fallback is scheduled for removal in a future version)" >&2; }
+note_legacy() { echo "NOTE: legacy session at .workflow/$1/ — migrate to workflows/<workflow>/<app>/<session>/ (this fallback is scheduled for removal in a future version)" >&2; }
 
 usage() {
   sed -n '/^# BEGIN-USAGE/,/^# END-USAGE/p' "${BASH_SOURCE[0]}" | sed '1d;$d;s/^# \{0,1\}//'
   exit "${1:-1}"
 }
 
-# collect_sessions — populate SESS_KEY[]/SESS_PATH[]/SESS_LEGACY[] with every run found
-# under both layouts. Current layout first, legacy second; order only matters for
+# collect_sessions — populate SESS_KEY[]/SESS_PATH[]/SESS_LEGACY[] with every session
+# found under both layouts. Current layout first, legacy second; order only matters for
 # list's display order.
+#
+# <app>/tasks.md is CARRIED work, not a session, and is never collected here. Only
+# <app>/<session>/tasks.md is a session. Treating carried work as a session would let a
+# never-ending list of epics block every DoD verdict in the repo.
 collect_sessions() {
   SESS_KEY=(); SESS_PATH=(); SESS_LEGACY=()
-  local wdir tdir d key
+  local wdir adir sdir d key
   if [ -d "$WORKFLOWS" ]; then
     for wdir in "$WORKFLOWS"/*/; do
       [ -d "$wdir" ] || continue
-      for tdir in "$wdir"*/; do
-        [ -f "$tdir/tasks.md" ] || continue
-        key="$(basename "$wdir")/$(basename "$tdir")"
-        SESS_KEY+=("$key"); SESS_PATH+=("$tdir/tasks.md"); SESS_LEGACY+=(0)
+      for adir in "$wdir"*/; do
+        [ -d "$adir" ] || continue
+        for sdir in "$adir"*/; do
+          [ -f "$sdir/tasks.md" ] || continue
+          key="$(basename "$wdir")/$(basename "$adir")/$(basename "$sdir")"
+          SESS_KEY+=("$key"); SESS_PATH+=("$sdir/tasks.md"); SESS_LEGACY+=(0)
+        done
       done
     done
   fi
@@ -84,9 +100,9 @@ resolve_session() {
         return 0
       fi
     done
-    die "no such run: $want (want <workflow>/<target>, or a legacy slug under .workflow/)"
+    die "no such session: $want (want <workflow>/<app>/<session>, or a legacy slug under .workflow/)"
   fi
-  if [ "$n" -eq 0 ]; then die "no runs under workflows/ or .workflow/ — run: orchestrate.sh init <workflow> <target>"; fi
+  if [ "$n" -eq 0 ]; then die "no sessions under workflows/ or .workflow/ — run: orchestrate.sh init <workflow> <app> [<session>]"; fi
   if [ "$n" -eq 1 ]; then
     RESOLVED_KEY="${SESS_KEY[0]}"; RESOLVED_PATH="${SESS_PATH[0]}"
     if [ "${SESS_LEGACY[0]}" = "1" ]; then note_legacy "$RESOLVED_KEY"; fi
@@ -103,9 +119,9 @@ resolve_session() {
     return 0
   fi
   if [ "${#open_idx[@]}" -eq 0 ]; then
-    die "all runs exhausted; name one: ${SESS_KEY[*]}"
+    die "all sessions exhausted; name one: ${SESS_KEY[*]}"
   else
-    die "${#open_idx[@]} open runs; name one: ${SESS_KEY[*]}"
+    die "${#open_idx[@]} open sessions; name one: ${SESS_KEY[*]}"
   fi
 }
 
@@ -151,7 +167,7 @@ report() {
       deps[id]  = substr(f[3], 6)
       title[id] = t
       last = id
-      if (marker !~ /^[ ~x!-]$/)                          bad(id ": unknown marker [" marker "]")
+      if (marker !~ /^[ ~x!^-]$/)                         bad(id ": unknown marker [" marker "]")
       if (f[2] != "flagship" && f[2] != "workhorse" && f[2] != "fleet") bad(id ": invalid tier \"" f[2] "\" (flagship|workhorse|fleet)")
       if (f[4] == "")                                     bad(id ": empty title")
       count[marker]++
@@ -189,13 +205,20 @@ report() {
         if (m == "!" && !has(id, "blocked"))     bad(id ": [!] without blocked:")
         if (m == "-" && !has(id, "why"))         bad(id ": [-] without why:")
         if (m == "-" && !has(id, "signoff"))     bad(id ": [-] without signoff: (dropping a task needs user sign-off)")
+        if (m == "^" && !has(id, "carried"))     bad(id ": [^] without carried: (name its entry in <app>/tasks.md — promoting work is not the same as dropping it)")
         rem[id] = 1
         if (deps[id] == "-" || deps[id] == "") continue
+        # A dead-end dependency only matters for a task that still intends to run. A
+        # task that is itself carried or dropped travels with its dependency; flagging
+        # that pair would force an operator to sever links that are correct.
+        stillopen = (m == " " || m == "~" || m == "!")
         nd = split(deps[id], d, ",")
         for (j = 1; j <= nd; j++) {
           if (d[j] == id)          bad(id ": depends on itself")
           else if (!(d[j] in mark)) bad(id ": depends on unknown " d[j])
+          else if (!stillopen) continue
           else if (mark[d[j]] == "-") bad(id ": depends on dropped " d[j] " — re-plan or drop it too")
+          else if (mark[d[j]] == "^") bad(id ": depends on carried " d[j] " — carry this one too, or it can never start")
         }
       }
       # Kahn: unknown deps count as satisfied (already reported), so what is left is a cycle.
@@ -232,8 +255,8 @@ report() {
         if (nr == 0) printf "(none ready: %d pending, %d in flight, %d blocked)\n", count[" "], count["~"], count["!"]
       } else {
         printf "tasks       %d\n", nt
-        printf "  pending   %d\n  in flight %d\n  done      %d\n  blocked   %d\n  dropped   %d\n", \
-               count[" "], count["~"], count["x"], count["!"], count["-"]
+        printf "  pending   %d\n  in flight %d\n  done      %d\n  blocked   %d\n  carried   %d\n  dropped   %d\n", \
+               count[" "], count["~"], count["x"], count["!"], count["^"], count["-"]
         printf "harvest     %s\n", harvest_val
         if (nr > 0) { printf "ready      "; for (i = 1; i <= nr; i++) printf "%s%s", ready[i], (i < nr ? " " : "\n") }
         if (nv > 0) { print  "violations " nv; for (i = 1; i <= nv; i++) print "  ! " viol[i] }
@@ -248,41 +271,55 @@ report() {
 }
 
 cmd_init() {
-  local workflow="${1:-}" target="${2:-}" today
-  [ -n "$workflow" ] && [ -n "$target" ] || die "usage: orchestrate.sh init <workflow> <target>"
-  [[ "$workflow" =~ ^[A-Za-z0-9._-]+$ ]] || die "workflow name may contain only letters, digits, dot, underscore, dash: $workflow"
-  [[ "$target" =~ ^[A-Za-z0-9._-]+$ ]]   || die "target name may contain only letters, digits, dot, underscore, dash: $target"
+  local workflow="${1:-}" app="${2:-}" session="${3:-}" today
+  [ -n "$workflow" ] && [ -n "$app" ] || die "usage: orchestrate.sh init <workflow> <app> [<session>]"
   today="$(date +%F)"
-  local wdir="$WORKFLOWS/$workflow" dir="$WORKFLOWS/$workflow/$target"
-  [ -e "$dir/tasks.md" ] && die "run already exists: workflows/$workflow/$target/tasks.md"
-  mkdir -p "$wdir" "$dir/notes"
+  [ -n "$session" ] || session="$today"
+  local seg
+  for seg in "$workflow" "$app" "$session"; do
+    [[ "$seg" =~ ^[A-Za-z0-9._-]+$ ]] || die "names may contain only letters, digits, dot, underscore, dash: $seg"
+  done
+  local wdir="$WORKFLOWS/$workflow" adir="$WORKFLOWS/$workflow/$app" dir="$WORKFLOWS/$workflow/$app/$session"
+  [ -e "$dir/tasks.md" ] && die "session already exists: workflows/$workflow/$app/$session/tasks.md"
+  [ -e "$wdir/SKILL.md" ] || echo "NOTE: workflows/$workflow/SKILL.md does not exist — this workflow has no TTPs written yet. Scaffold one with: /workflow-manage new-workflow $workflow" >&2
+  mkdir -p "$wdir" "$adir" "$dir/notes"
   local f
   for f in tasks roster; do
-    sed -e "s/__WORKFLOW__/$workflow/g" -e "s/__TARGET__/$target/g" -e "s/__DATE__/$today/g" \
+    sed -e "s/__WORKFLOW__/$workflow/g" -e "s/__APP__/$app/g" -e "s/__SESSION__/$session/g" -e "s/__DATE__/$today/g" \
       "$ASSETS/$f.template.md" > "$dir/$f.md"
   done
   : > "$dir/notes/.gitkeep"
-  echo "created workflows/$workflow/$target/{tasks.md,roster.md,notes/}"
+  # Carried work and the application profile are DURABLE. Created once, never
+  # overwritten by a later session -- clobbering them is how cross-session work is lost.
+  for f in carried:tasks profile:profile; do
+    local src="${f%%:*}" dst="${f##*:}"
+    if [ ! -e "$adir/$dst.md" ]; then
+      sed -e "s/__WORKFLOW__/$workflow/g" -e "s/__APP__/$app/g" -e "s/__DATE__/$today/g" \
+        "$ASSETS/$src.template.md" > "$adir/$dst.md"
+      echo "created workflows/$workflow/$app/$dst.md"
+    fi
+  done
+  echo "created workflows/$workflow/$app/$session/{tasks.md,roster.md,notes/}"
   echo "next: paste the directive verbatim, resolve the roster, then decompose."
 }
 
 cmd_list() {
   collect_sessions
-  [ "${#SESS_KEY[@]}" -eq 0 ] && die "no runs under workflows/ or .workflow/ — run: orchestrate.sh init <workflow> <target>"
+  [ "${#SESS_KEY[@]}" -eq 0 ] && die "no sessions under workflows/ or .workflow/ — run: orchestrate.sh init <workflow> <app> [<session>]"
   local rc=0 i verdict
   for i in "${!SESS_KEY[@]}"; do
     verdict="$(report "${SESS_PATH[$i]}" status | grep '^DoD:' || true)"
     report "${SESS_PATH[$i]}" status >/dev/null 2>&1 || rc=2
     [ "${SESS_LEGACY[$i]}" = "1" ] && note_legacy "${SESS_KEY[$i]}"
-    printf '%-40s %s\n' "${SESS_KEY[$i]}" "${verdict:-DoD: unparseable}"
+    printf '%-52s %s\n' "${SESS_KEY[$i]}" "${verdict:-DoD: unparseable}"
   done
   return "$rc"
 }
 
 case "${1:-}" in
-  init)          shift; cmd_init "${1:-}" "${2:-}" ;;
+  init)          shift; cmd_init "${1:-}" "${2:-}" "${3:-}" ;;
   status|ready)  mode="$1"; shift; resolve_session "${1:-}"
-                 echo "run: $RESOLVED_KEY"; report "$RESOLVED_PATH" "$mode" ;;
+                 echo "session: $RESOLVED_KEY"; report "$RESOLVED_PATH" "$mode" ;;
   list)          cmd_list ;;
   -h|--help|help) usage 0 ;;
   *)             usage 1 ;;

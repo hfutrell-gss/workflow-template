@@ -173,13 +173,17 @@ cmd_derive() {
   # Orchestration run state is identity too, and it is COMMITTED (unlike workspace/), so
   # a derive-by-clone carries the template's own in-flight runs into the new workflow —
   # task lists and notes for work that has nothing to do with it. Clear it for the same
-  # reason as journal/: a run belongs to the repo that performed it. Two strata to clear
-  # differently: workflows/<workflow>/<target>/ is INSTANCE state (clear it); a bare
-  # workflows/<workflow>/ with no target subdirs is the DURABLE procedure and must
-  # survive derive, same as .agents/skills/ does. .workflow/<slug>/ is the legacy
-  # (pre-stratification) layout, kept only as a one-version fallback — clear it too.
+  # reason as journal/: a session belongs to the repo that performed it. Clear by level
+  # (AGENTS.CORE.md "The shapes"): workflows/<workflow>/SKILL.md and its references/ are
+  # TIMELESS and must survive derive, same as .agents/skills/ does. Everything else under
+  # a workflow is an APPLICATION directory -- its profile, its carried work, its sessions
+  # -- and all of that is the template's identity, not the new derivation's.
+  # .workflow/<slug>/ is the legacy layout, kept only as a one-version fallback -- clear
+  # it too.
   for d in "$ROOT"/workflows/*/*/; do
-    [ -f "$d/tasks.md" ] && rm -rf "$d"
+    [ -d "$d" ] || continue
+    [ "$(basename "$d")" = "references" ] && continue
+    rm -rf "$d"
   done
   rm -rf "$ROOT/.workflow"/*/ 2>/dev/null || true
 

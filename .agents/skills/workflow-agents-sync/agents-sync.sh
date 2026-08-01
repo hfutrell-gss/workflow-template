@@ -68,15 +68,23 @@ check_skill_stubs() {
     note "DRIFT   $label: non-stub file under .claude/skills: ${f#"$dir"/} (scripts/other files belong under .agents/skills)"
   done < <(find "$claude_skills" -type f ! -name 'SKILL.md' -print0 2>/dev/null)
 
-  local skill name stub canonical fm_end body_lines
+  # A stub's canonical body is .agents/skills/<name>/SKILL.md for machinery, or
+  # workflows/<name>/SKILL.md for a workflow (AGENTS.CORE.md, "The shapes"). Both are
+  # canonical; the stub side is identical either way.
+  local skill name stub canonical canonical_rel fm_end body_lines
   for skill in "$claude_skills"/*/; do
     [ -d "$skill" ] || continue
     name="$(basename "$skill")"
     stub="$skill/SKILL.md"
     canonical="$agents_skills/$name/SKILL.md"
+    canonical_rel=".agents/skills/$name/SKILL.md"
+    if [ ! -f "$canonical" ] && [ -f "$dir/workflows/$name/SKILL.md" ]; then
+      canonical="$dir/workflows/$name/SKILL.md"
+      canonical_rel="workflows/$name/SKILL.md"
+    fi
 
     if [ ! -f "$canonical" ]; then
-      note "DRIFT   $label: .claude/skills/$name/SKILL.md has no canonical counterpart at .agents/skills/$name/SKILL.md"
+      note "DRIFT   $label: .claude/skills/$name/SKILL.md has no canonical counterpart at .agents/skills/$name/SKILL.md or workflows/$name/SKILL.md"
       continue
     fi
 
@@ -101,9 +109,9 @@ check_skill_stubs() {
     fi
     body_lines="$(tail -n +"$((fm_end+1))" "$stub" | sed '/^[[:space:]]*$/d' | wc -l)"
     if [ "$body_lines" -gt "$MAX_STUB_BODY_LINES" ]; then
-      note "DRIFT   $label: .claude/skills/$name/SKILL.md body is $body_lines non-blank lines (>$MAX_STUB_BODY_LINES) — doctrine belongs in the canonical .agents/skills/$name/SKILL.md"
-    elif ! tail -n +"$((fm_end+1))" "$stub" | grep -q "\.agents/skills/$name/SKILL.md"; then
-      note "DRIFT   $label: .claude/skills/$name/SKILL.md does not point at its canonical .agents/skills/$name/SKILL.md"
+      note "DRIFT   $label: .claude/skills/$name/SKILL.md body is $body_lines non-blank lines (>$MAX_STUB_BODY_LINES) — doctrine belongs in the canonical $canonical_rel"
+    elif ! tail -n +"$((fm_end+1))" "$stub" | grep -q "$canonical_rel"; then
+      note "DRIFT   $label: .claude/skills/$name/SKILL.md does not point at its canonical $canonical_rel"
     fi
   done
 }

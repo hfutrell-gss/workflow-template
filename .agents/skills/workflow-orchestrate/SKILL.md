@@ -2,7 +2,7 @@
 name: workflow-orchestrate
 description: >-
   Task-based orchestration bound to model tiers, not model names. Take a directive, decompose
-  it into a committed task list at workflows/<workflow>/<target>/tasks.md, reorganize that into
+  it into a committed task list at workflows/<workflow>/<app>/<session>/tasks.md, reorganize that into
   a streamlined flow, dispatch each task to the fitting tier (flagship consultant · workhorse
   orchestrator · fleet workers) resolved from a lane roster, and loop until the list is
   exhausted AND its durable output harvested out of the run directory. Use when asked to
@@ -30,12 +30,13 @@ Hedged once, here. The rest of this file is imperative on purpose.
 ## What this is
 
 You are the **orchestrator**: you coordinate, you do not personally do the work. The durable
-artifact is not your context — it is `workflows/<workflow>/<target>/tasks.md`, committed, so a
+artifact is not your context — it is `workflows/<workflow>/<app>/<session>/tasks.md`, committed, so a
 cold tick, a compaction, or a different machine resumes the same run.
 
-`<workflow>` names a reusable way-of-working (`refactor`, `create-web-app`); `<target>` is the
-repo it lands in. `workflows/<workflow>/` is the DURABLE procedure and is never pruned;
-`workflows/<workflow>/<target>/` is this one run's INSTANCE state and is disposable — but only
+`<workflow>` names a nature of work (`refactor`, `web-app-development`); `<app>` is what it
+acts on; `<session>` is this one instantiation. `workflows/<workflow>/` is TIMELESS and never
+pruned; `<app>/` is DURABLE (its `profile.md` and its carried `tasks.md`);
+`<app>/<session>/` is disposable — but only
 *after* its output is harvested out. Full stratification rule, the legacy-path fallback, and
 the harvest gate: `references/tasklist.md`.
 
@@ -73,7 +74,7 @@ Load a `references/` file when you reach the step that needs it. Keep this page 
    *now*, before spending fleet tokens (`references/consultation.md`).
 
 2. **Resolve the roster.** Resolve each tier to a concrete dispatch handle and write
-   `workflows/<workflow>/<target>/roster.md`, so a continuation reproduces the same fleet
+   `workflows/<workflow>/<app>/<session>/roster.md`, so a continuation reproduces the same fleet
    instead of re-deciding. Record substitutions loudly — a degraded lane is a finding, not a
    detail.
 
@@ -132,13 +133,13 @@ Load a `references/` file when you reach the step that needs it. Keep this page 
 `orchestrate.sh` — the only mechanical part. Reporting is read-only; `init` is the one write.
 
 ```sh
-.agents/skills/workflow-orchestrate/orchestrate.sh init <workflow> <target>  # scaffold a run
+.agents/skills/workflow-orchestrate/orchestrate.sh init <workflow> <app> [<session>]  # scaffold a session
 .agents/skills/workflow-orchestrate/orchestrate.sh status [<key>]   # counts, violations, harvest, DoD verdict
 .agents/skills/workflow-orchestrate/orchestrate.sh ready  [<key>]   # tasks whose deps are all done
 .agents/skills/workflow-orchestrate/orchestrate.sh list             # every run + its verdict
 ```
 
-`<key>` is `<workflow>/<target>`, or a bare slug for a run still at the legacy
+`<key>` is `<workflow>/<app>/<session>`, or a bare slug for a session still at the legacy
 `.workflow/<slug>/` path (resolved for one version — `references/tasklist.md`).
 
 Task-list edits are yours to make with an editor, not the script's: recording completion

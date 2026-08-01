@@ -1,12 +1,20 @@
-# Run: __WORKFLOW__ · __TARGET__
+# Session: __WORKFLOW__ · __APP__ · __SESSION__
 
 Opened __DATE__. Grammar, anti-cheat rules, and the harvest gate:
 `.agents/skills/workflow-orchestrate/references/tasklist.md`.
 
-This directory is INSTANCE state — disposable after harvest, by definition. Anything
-here that should outlive this run belongs one level up in `workflows/__WORKFLOW__/`
-(the durable procedure), in __TARGET__'s own docs, or in the journal — never left
-behind here.
+This directory is SESSION state — deleted after harvest, by definition. Anything here
+that should outlive this session has somewhere else to go:
+
+| Output | Goes to |
+|--------|---------|
+| a stabilized way of working | `workflows/__WORKFLOW__/SKILL.md` or its `references/` |
+| understanding of __APP__ | __APP__'s own docs, or `../profile.md` |
+| work not finished, still wanted | `../tasks.md` — mark the task `[^]` with a `carried:` line |
+| what merely happened | `journal/` |
+
+Work that cannot finish is **promoted, not stalled**. `[^]` is not open, so this
+session can close with the work preserved.
 
 ## Directive
 
@@ -37,7 +45,7 @@ Task list exhaustion **and** harvest: no `[ ]`, `[~]`, or `[!]` remains,
 ## Harvest
 
 <!-- Required before this run can close. Sweep notes/ and decisions into (a) the
-     procedure workflows/__WORKFLOW__/ if a way-of-working stabilized, (b) __TARGET__'s
+     procedure workflows/__WORKFLOW__/ if a way-of-working stabilized, (b) __APP__'s
      own docs if the knowledge is the target's, (c) the journal if it is narrative.
      Then record where, and this directory may be deleted outright — it is committed,
      so git log is the archive; no graveyard directory is kept. -->

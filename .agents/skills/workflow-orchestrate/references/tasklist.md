@@ -9,60 +9,65 @@ work (`refactor`, `create-web-app`, `onboard-app`) — not a log of one time it 
 procedure and any one run of it live at different levels, and the split is load-bearing:
 
 ```
-workflows/<workflow>/                    # DURABLE — the procedure. Never pruned.
-workflows/<workflow>/<target>/tasks.md   # INSTANCE — one run. Disposable after harvest.
-workflows/<workflow>/<target>/roster.md  # the tiers this run resolved (see model-classes.md)
-workflows/<workflow>/<target>/notes/     # worker artifacts, evidence too big for one line
+workflows/<workflow>/SKILL.md                     # TIMELESS — the TTPs. Never pruned.
+workflows/<workflow>/references/                  # depth for those TTPs
+workflows/<workflow>/<app>/profile.md             # DURABLE — that application's particulars
+workflows/<workflow>/<app>/tasks.md               # CARRIED — epics, deferred work. Crosses sessions.
+workflows/<workflow>/<app>/<session>/tasks.md     # SESSION — one run. Deleted after harvest.
+workflows/<workflow>/<app>/<session>/roster.md    # the tiers this session resolved
+workflows/<workflow>/<app>/<session>/notes/       # worker artifacts, evidence too big for one line
 ```
 
-- **`<workflow>`** names the way-of-working. Its directory level holds whatever documents
-  that procedure — durable, never keyed to a single run, never pruned by a harvest.
-- **`<target>`** is the repo the work lands in — not a date. One `<workflow>`×`<target>` pair
-  is a long-lived run: "the more-or-less global task set for doing `<workflow>`-shaped work
-  on `<target>`." It is meant to be reopened across sessions, not closed and re-created daily.
-- **The stratification rule: everything under `<target>/` is disposable after harvest, by
-  definition.** If something there is *not* disposable — a lesson that generalizes beyond this
-  one run, a decision future runs of this workflow need — it does not belong there. It belongs
-  one level up in `workflows/<workflow>/`, in `<target>`'s own docs (if the knowledge is the
-  target's), or in the journal (if it is narrative). This is what stops "workflow" from
-  collapsing into "run log" again: pruning `workflows/<workflow>/<target>/` can never damage
-  the procedure, because nothing durable was ever allowed to live there. See "Harvest" below —
-  this is the gate that enforces it.
-- **Both levels always at the workflow repo root** — never inside bound substrate. Run state
-  belongs to the workflow that owns the run; the substrate only receives the work.
-- **Committed, not gitignored**, at both levels. That is the entire point: a continuation on
+Four levels, four lifetimes (`AGENTS.CORE.md` "The shapes"):
+
+- **`<workflow>`** names the nature of work — `web-app-development`, `refactor`,
+  `upstream-workflow-management`. Timeless. It does not know when it runs or what it ran
+  against. Its `SKILL.md` is the retrieval surface; see "Retrieving the workflow" below.
+- **`<app>`** is what the workflow acts on. Durable. `profile.md` holds its operational
+  particulars — the facts the workflow needs to operate it, distinct from its own repo docs.
+- **`<app>/tasks.md`** is **carried work**: epics, deferred tasks, threads that must survive
+  any one session. `orchestrate.sh` never reads it as a session list. It is the reason the
+  application level exists.
+- **`<session>`** is one discrete instantiation — dated by default. **Everything under it is
+  disposable after harvest, by definition.** Anything there that is not disposable has one of
+  three other homes, and harvest is the gate that moves it.
+
+- **Every level at the workflow repo root** — never inside bound substrate. Session state
+  belongs to the workflow that owns the session; the substrate only receives the work.
+- **Committed, not gitignored**, at every level. That is the entire point: a continuation on
   another machine, or after a compaction, resumes from the commit. (Contrast `workspace/`,
-  which is per-machine and never committed.) A closed, harvested instance directory may be
-  **deleted outright** — it is committed, so `git log` is the archive; no graveyard directory
-  is kept.
-- **One instance directory per (workflow, target).** `orchestrate.sh init <workflow> <target>`
-  refuses if `tasks.md` already exists there — resume the existing run instead of starting a
-  parallel one for the same pair.
+  which is per-machine and never committed.) A harvested session directory is **deleted
+  outright** — `git log` is the archive; no graveyard directory is kept.
+- **One session directory per (workflow, app, session).** `orchestrate.sh init` refuses if
+  `tasks.md` already exists there. It never overwrites `<app>/tasks.md` or `<app>/profile.md`:
+  clobbering carried work is how cross-session threads are lost.
 
 The harness `TaskCreate`/`TaskUpdate` store may mirror `tasks.md` for the live UI. It is
-**never the source of truth**: it does not survive a cold tick, and a run whose state lives
-only there cannot be resumed or reviewed.
+**never the source of truth**: it does not survive a cold tick, and a session whose state
+lives only there cannot be resumed or reviewed.
 
-## Retrieving the procedure stratum
+## Retrieving the workflow
 
-A directory alone cannot be found by a model at the moment of need — `workflows/<workflow>/`
-holds the procedure, but nothing loads it unless something points there. The intended pattern,
-once a `workflows/<workflow>/` has content worth retrieving: a thin, derivation-local skill
-stub (outside the `workflow-*`/`craft-*` reserved prefixes) whose **frontmatter `description`
-is the retrieval surface** — written so a model reaching for this kind of work matches it — and
-whose body does little more than point at `workflows/<workflow>/` for the actual doctrine. This
-skill does not build that stub for any specific workflow; it only names the pattern so the
-stratum stays reachable once a derivation's procedure is worth naming.
+A directory alone cannot be found by a model at the moment of need. `workflows/<workflow>/`
+holds the TTPs, and `.claude/skills/<workflow>/SKILL.md` is the thin discovery stub that makes
+them reachable: frontmatter `description` written so a model reaching for this kind of work
+matches it, and a body that points at `workflows/<workflow>/SKILL.md`. `/workflow-manage
+new-workflow <name>` scaffolds both. A workflow must not take a `workflow-*` or `craft-*`
+machinery name — both namespaces reach the Skill tool.
 
 ## Legacy layout
 
-Runs created before this stratification landed live at `.workflow/<slug>/tasklist.md` (one
-flat, dated directory — no workflow/target split, no harvest gate). `orchestrate.sh status`,
-`ready`, and `list` **keep resolving that path for one version**, so an in-flight legacy run
-is not stranded — it can finish, or be migrated, on its own schedule. A resolved legacy run
-prints a `NOTE:` naming the path; that is not noise to silence, it is the migration reminder.
-**This fallback is scheduled for removal in a future version.** `init` never writes to it —
-every new run goes to `workflows/<workflow>/<target>/` only.
+Sessions created before this layout live at `.workflow/<slug>/tasklist.md` (one flat, dated
+directory — no workflow/app split, no harvest gate). `orchestrate.sh status`, `ready`, and
+`list` **keep resolving that path for one version**, so an in-flight legacy session is not
+stranded. A resolved legacy session prints a `NOTE:` naming the path; that is the migration
+reminder, not noise to silence. **This fallback is scheduled for removal in a future
+version.** `init` never writes to it.
+
+The two-segment form `workflows/<workflow>/<app>/tasks.md` shipped in v22 only, and that
+path is now carried work. No fallback is provided for it: the shape existed for hours and no
+session was ever stored in it. If one was, move it down one level into a `<session>/`
+directory before running `status`.
 
 ## Grammar
 
@@ -75,7 +80,7 @@ One line per task, exact separators (` · `), so it parses mechanically and merg
 
 | Part | Rule |
 |------|------|
-| `<marker>` | one of ` ` `~` `x` `!` `-` (below) |
+| `<marker>` | one of ` ` `~` `x` `!` `^` `-` (below) |
 | `<ID>` | `T` + digits, unique in the file, never reused or renumbered |
 | `<tier>` | `flagship` · `workhorse` · `fleet` — a tier, never a model name |
 | `<deps>` | `-`, or comma-separated IDs with no spaces: `deps:T001,T004` |
@@ -90,6 +95,7 @@ One line per task, exact separators (` · `), so it parses mechanically and merg
 | `[~]` | claimed, worker in flight | `agent:` — which agent holds it |
 | `[x]` | done and verified | `evidence:` — what proves it |
 | `[!]` | blocked | `blocked:` — on what, and what was done about it |
+| `[^]` | carried | `carried:` — its entry in `<app>/tasks.md`, and why it could not finish here |
 | `[-]` | dropped | `why:` **and** `signoff:` — who authorized it, when |
 
 Every task carries `accept:` from the moment it is created — the acceptance test it will be
@@ -132,6 +138,12 @@ finished. All are mechanically checked:
 
 - **`[x]` requires `evidence:`** — a command and its result, a test name, a diff, a path under
   `notes/`. A worker's assertion that it succeeded is not evidence; what you checked is.
+- **`[^]` requires `carried:`** — promoting is not dropping. The work leaves this session and
+  arrives in `<app>/tasks.md` with the session that raised it and why it stopped. A `[^]` with
+  no destination is work thrown away with extra steps. Use it when a task is real, still
+  wanted, and cannot finish here — a blocker owned by someone else, an epic larger than this
+  session. `[^]` is not open, so a session with carried work still reaches DoD: **unfinished
+  work never blocks a session forever.**
 - **`[-]` requires `why:` and `signoff:`** — you cannot drop your way to exhaustion. Dropping a
   task is the user's call, and the signoff records that they made it.
 - **`[!]` blocks DoD.** A blocked task must be unblocked or escalated. Converting it to `[-]` to
@@ -156,7 +168,8 @@ not done until its durable output has left the run directory.**
 Before closing a run:
 
 1. Sweep `notes/` and the `## Log` decisions into (a) `workflows/<workflow>/` if a
-   way-of-working stabilized enough to write down, (b) `<target>`'s own docs if the knowledge
+   way-of-working stabilized enough to write down, (b) `<app>`'s own docs or `<app>/profile.md`
+   if the knowledge
    belongs to the target repo, (c) the journal if it is narrative rather than procedure or
    target-specific fact.
 2. Record where, in `## Harvest`: `harvest: done <destination(s), briefly>`.
@@ -192,10 +205,10 @@ A fresh tick has no memory of the run. Reconstruct in this order:
 - `/usr/bin/git` explicitly, always (`AGENTS.CORE.md`).
 - Commit the run state when a batch is verified — an uncommitted `tasks.md` is not a
   continuation. Small, frequent commits beat one commit at the end of the run.
-- Run-state commits state the transition, not the file: `orchestrate(<workflow>/<target>):
+- Run-state commits state the transition, not the file: `orchestrate(<workflow>/<app>/<session>):
   T002,T004 done; T007 blocked on staging creds`.
 - The instance directory is committed to the workflow repo. Work products go to the substrate
   repo, on its own branch, under its own law — two separate commit streams; never mix them.
 - Open the run's journal entry (`journal/YYYY-MM-DD-<slug>.md`) pointing at
-  `workflows/<workflow>/<target>/`. The journal is the human narrative of the run; the task
+  `workflows/<workflow>/<app>/`. The journal is the human narrative of the run; the task
   list is its machine state. Neither replaces the other.

@@ -2,7 +2,7 @@
 name: workflow-orchestrate
 description: >-
   Task-based orchestration bound to model tiers, not model names. Take a directive, decompose
-  it into a committed task list at workflows/<workflow>/<target>/tasks.md, reorganize that into
+  it into a committed task list at workflows/<workflow>/<app>/<session>/tasks.md, reorganize that into
   a streamlined flow, dispatch each task to the fitting tier (flagship consultant · workhorse
   orchestrator · fleet workers) resolved from a lane roster, and loop until the list is
   exhausted AND its durable output harvested out of the run directory. Use when asked to

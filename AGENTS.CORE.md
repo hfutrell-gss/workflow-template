@@ -21,8 +21,8 @@ a stale lock means this machine hasn't run the latest init.
 A **workflow repo** captures the techniques, tactics, procedures, and doctrine for a
 whole **area of work** (stewardship, schema management, incident response, …). Code
 repos are **substrate** — operated *on*, not *in*. This repo is the core every derived
-workflow repo shares: managed law, a package of skills, a live link upstream. Read "The
-shapes" below before adding anything.
+workflow repo shares: managed law, a package of skills and workflows, a live link
+upstream. Read "The shapes" below before adding anything.
 
 ## Canonical file format
 
@@ -36,11 +36,10 @@ to make, and a derivation that reads its law through Claude-specific plumbing ha
 dependency backwards — `AGENTS.md` is the law; `CLAUDE.md` is one vendor's way of
 finding it.
 
-**The proxy rule: `.claude` is a proxy for `.agents`.** Canonical content — `AGENTS.md`, `.agents/skills`
-bodies/scripts — lives under `.agents`; `.claude` keeps only what tooling mechanically
-requires (a skill's doctrine is `.agents/skills/<name>/SKILL.md`,
-`.claude/skills/<name>/SKILL.md` a thin proxy stub). Nothing executable under
-`.claude`. At root, law splits across `AGENTS.CORE.md` (this file) and `AGENTS.md`
+**The proxy rule: `.claude` holds no content.** Every `.claude/skills/<name>/SKILL.md`
+is a thin stub with discovery frontmatter and a pointer to a canonical body elsewhere:
+`.agents/skills/<name>/SKILL.md` for machinery, `workflows/<name>/SKILL.md` for a
+workflow. Nothing executable under `.claude`. At root, law splits across `AGENTS.CORE.md` (this file) and `AGENTS.md`
 (derivation's own doctrine); `AGENTS.md` imports `AGENTS.CORE.md`, and `CLAUDE.md`
 points at `AGENTS.md` alone.
 
@@ -65,43 +64,72 @@ Resolution detail: `/workflow-manage`.
 
 ## The shapes
 
-**"Workflow" carries four senses**, kept separate after conflating them once cost real
-confusion: **a workflow repo** (the container); **`workflow-*`/`craft-*`** (an
-*ownership* marker only); **a workflow** (sense 3, primary — a reusable way of
-working, e.g. `refactor`); **a run** (one application to one target — state,
-disposable once harvested).
+Four levels, each with a different lifetime. Collapsing any two makes work unfindable
+or throws it away:
 
-Six kinds of thing live here; one home each — the wrong home makes it unfindable:
+| Level | What it is | Lifetime | Home |
+|-------|-----------|----------|------|
+| **Workflow** | the TTPs of one nature of work (`web-app-development`, `refactor`) | timeless | `workflows/<workflow>/SKILL.md` |
+| **Application** | a thing the workflow acts on, with its own particulars | durable | `workflows/<workflow>/<app>/profile.md` |
+| **Carried work** | epics, deferred tasks, threads that link sessions | outlives any session | `workflows/<workflow>/<app>/tasks.md` |
+| **Session** | one discrete instantiation of a workflow against an application | temporal | `workflows/<workflow>/<app>/<session>/tasks.md` |
+
+A workflow does not know when it runs. A session does not know anything but its own
+run. Carried work is the only thing that crosses sessions, and it is the reason the
+application level exists: delete a session and its unfinished work must survive, or the
+next session starts blind.
+
+Six kinds of thing live here; one home each:
 
 | Kind | What it is | Home | Retrieved by |
 |------|-----------|------|--------------|
 | **Law** | the managed constitution | `AGENTS.CORE.md` | always loaded |
-| **Doctrine** | this workflow's standing judgment | `AGENTS.md` | always loaded |
-| **Procedure** | a reusable way of working (sense 3) | a derivation-local skill | **lazily, by the Skill tool** |
-| **Knowledge** | what is true, and why | substrate repo's docs, or `knowledge/` if cross-app | index line, then on demand |
-| **Run** | a task list and working notes | `workflows/<workflow>/<target>/` | only the run that owns it |
+| **Doctrine** | this workflow repo's standing judgment | `AGENTS.md` | always loaded |
+| **Workflow** | the TTPs of a nature of work | `workflows/<workflow>/SKILL.md` | **lazily, by the Skill tool** |
+| **Knowledge** | what is true, and why | substrate repo's docs; `<app>/profile.md` for operational particulars | index line, then on demand |
+| **Session** | one run's task list and notes | `workflows/<workflow>/<app>/<session>/` | only the session that owns it |
 | **Narrative** | what happened on a given day | `journal/` | humans, archaeology |
 
-**Procedures are skills; derivation-local skills are expected** — frontmatter
-description, thin body, `references/` for detail, named outside `workflow-*`/`craft-*`
-(`/workflow-manage` scaffolds one). Not a categorical-rule violation: that rule covers
-template-concept tooling, not a workflow authoring its own procedures. Prose is not a
-lesser procedure — it needs lazy retrieval too.
+**A workflow is a skill with state.** Its body is the timeless part — frontmatter
+description, thin body, `references/` for depth, retrieved lazily. Its directory also
+holds the durable state the TTPs act on: applications, their particulars, their carried
+work, and the sessions run against them. `/workflow-manage new-workflow <name>`
+scaffolds both halves and the `.claude/skills/<name>/` discovery stub.
 
-**Harvest law:** a run is done only when its durable output has **left** the run
-directory — a stabilized way → a procedure skill; substrate understanding → that
-repo's own docs; what merely happened → the journal. Then it closes and is deleted,
-not archived — `git log` is the archive.
+**The proxy rule applies unchanged.** `.claude/skills/<name>/SKILL.md` is a stub that
+points at the canonical body. For a workflow the canonical body is
+`workflows/<name>/SKILL.md`, not `.agents/skills/`. `.agents/skills/` holds machinery
+only: the managed `workflow-*` and `craft-*` skills. Both namespaces reach the Skill
+tool, so a workflow must not take a machinery name.
+
+**Managed workflows.** The template ships workflows too, not only skills.
+`upstream-workflow-management` is one, present in every derivation: the TTPs for
+finding a generalizable concept in a derivation and promoting it upstream. Its
+application is `self`. Managed workflows are listed in `template-manifest.yaml`; a
+derivation must not create a workflow with a managed name.
+
+**Harvest law:** a session is done only when its durable output has **left** the
+session directory:
+
+| Output | Goes to |
+|--------|---------|
+| a stabilized way of working | the workflow's `SKILL.md` or `references/` |
+| understanding of an application | that repo's own docs, or `<app>/profile.md` |
+| work not finished, still wanted | `<app>/tasks.md` — carried, not lost |
+| what merely happened | `journal/` |
+
+Then the session directory closes and is **deleted**, not archived — `git log` is the
+archive. Unfinished work never blocks a session forever: it is promoted to carried work
+and the session closes.
 
 ## Journal, session state, git
 
-- **Journal** — one dated file per run/decision (`journal/YYYY-MM-DD-slug.md`), never
-  one growing file. A day's session binds belong in that day's entry.
-- **Session state** — a run keeps state at `workflows/<workflow>/<target>/`,
-  **committed** (unlike `workspace/`) so it survives compaction or a machine change.
-  `workflows/<workflow>/` is the DURABLE procedure; `<target>/` is disposable INSTANCE
-  state, gated shut by harvest before the run may close. Runs predating this layout
-  resolve for one more version at `.workflow/<slug>/`. See `/workflow-orchestrate`.
+- **Journal** — one dated file per session/decision (`journal/YYYY-MM-DD-slug.md`),
+  never one growing file. A day's session binds belong in that day's entry.
+- **Session state** — **committed** (unlike `workspace/`) so it survives compaction or
+  a machine change. Sessions predating this layout resolve for one more version at
+  `.workflow/<slug>/`. See
+  `/workflow-orchestrate`.
 - **Git** — **always native git, `/usr/bin/git` explicitly**, never a bare `git` that
   may resolve to a Windows binary (a WSL `git=...git.exe` alias is the common trap).
   `/workflow-init --check` warns if detected.

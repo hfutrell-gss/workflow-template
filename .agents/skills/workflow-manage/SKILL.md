@@ -19,20 +19,22 @@ contributes only its data and its judgment about it, never hand-rolled tooling.
    `AGENTS.CORE.md`, "Bind law"). Editing it is `yq`; assembling the substrate it
    describes onto disk is `sync-binds.sh`. `/workflow-bind` is the companion skill that
    actually attaches repos to a session.
-2. **Procedures** — a reusable way of working (`AGENTS.CORE.md`, "The shapes"), which
-   lives as a derivation-local skill. Scaffolding one correctly means knowing the proxy
-   rule and the reserved `workflow-*`/`craft-*` prefixes; `new-procedure.sh` is the one
-   tool for it.
+2. **Workflows** — the TTPs of one nature of work (`AGENTS.CORE.md`, "The shapes"),
+   which live as a skill with state. Scaffolding one correctly means knowing the proxy
+   rule, the reserved `workflow-*`/`craft-*` machinery prefixes, and the managed
+   workflow names; `new-workflow.sh` is the one tool for it.
 
-## Scaffold a procedure
+## Scaffold a workflow
 ```sh
-.agents/skills/workflow-manage/new-procedure.sh <name>
+.agents/skills/workflow-manage/new-workflow.sh <name>
 ```
-Creates the canonical body (`.agents/skills/<name>/SKILL.md`, TODO-scaffolded — a
+Creates the canonical body (`workflows/<name>/SKILL.md`, TODO-scaffolded — a
 frontmatter `description` prompting for concrete trigger phrases, since that
 description is the whole retrieval surface, plus a thin body pointing at
-`references/`), the proxy stub (`.claude/skills/<name>/SKILL.md`, frontmatter mirrored,
-body only the pointer import — the proxy rule), and an empty `references/` dir.
+`references/`), the discovery stub (`.claude/skills/<name>/SKILL.md`, frontmatter
+mirrored, body only the pointer import — the proxy rule), and an empty `references/`
+dir. Applications, their profiles, their carried work, and sessions arrive later, from
+`orchestrate.sh init <name> <app>`.
 Refuses: a `workflow-*`/`craft-*` name (those prefixes are template-owned; a
 derivation-local skill so named risks being clobbered by a future
 `workflow-template-sync update`), an illegal name, or overwriting an existing skill.

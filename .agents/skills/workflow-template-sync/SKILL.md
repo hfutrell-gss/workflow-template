@@ -25,12 +25,12 @@ description: >-
 Run this **inside a fresh copy or clone of workflow-template** — nothing else. It:
 1. Refuses if `.template.lock` already exists (already derived) or `VERSION` is
    missing (doesn't look like a template checkout).
-2. Clears template-only identity: example content out of `journal/`, any INSTANCE run state
-   under `workflows/<workflow>/<target>/` (a bare `workflows/<workflow>/` with no target
-   subdirs is the DURABLE procedure and survives), and any legacy run state under
-   `.workflow/`. That matters because both are **committed** (unlike `workspace/`), so a
-   derive-by-clone would otherwise carry the template's own in-flight runs and notes into the
-   new workflow. A run belongs to the repo that performed it.
+2. Clears template-only identity: example content out of `journal/`, every application
+   directory under `workflows/<workflow>/` (profiles, carried work, sessions — the workflow's
+   own `SKILL.md` and `references/` survive, being TIMELESS), and any legacy run state under
+   `.workflow/`. That matters because all of it is **committed** (unlike `workspace/`), so a
+   derive-by-clone would otherwise carry the template's own applications and in-flight
+   sessions into the new workflow. A session belongs to the repo that performed it.
 3. Removes the root `VERSION` file — that describes the *template's* own version;
    a derivation's relationship to it lives entirely in `.template.lock` instead.
 4. Writes `.template.lock`: `template_version`, `upstream`, `derived` (today's date),

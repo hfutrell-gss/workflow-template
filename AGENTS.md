@@ -22,10 +22,13 @@ Area of work: **<one sentence: what whole area this workflow owns>.**
 ## Conditions
 - <the invariants and constraints under which all work in this area happens>
 
-## Procedures
-- `/<procedure-name>` — <when to use it>. Procedures are derivation-local skills:
-  `.agents/skills/<name>/` plus its `.claude/skills/<name>/` proxy stub. Scaffold one with
-  `/workflow-manage`; name it outside the reserved `workflow-*` and `craft-*` prefixes.
+## Workflows
+- `/upstream-workflow-management` — managed; promote a generalizable concept from this
+  derivation to the upstream template.
+- `/<workflow-name>` — <the nature of work it covers>. A workflow is
+  `workflows/<name>/SKILL.md` plus its `.claude/skills/<name>/` discovery stub. Scaffold one
+  with `/workflow-manage new-workflow <name>`; name it outside the reserved `workflow-*` and
+  `craft-*` machinery prefixes.
 <!-- executable procedures go in .agents/skills/<name>/SKILL.md (scoped: "<area>:<name>"),
      with a .claude/skills/<name>/SKILL.md proxy stub for Claude Code discovery -->
 
@@ -42,7 +45,7 @@ own law still wins inside its boundaries.
 
 ## Orchestration
 For anything beyond a single step, invoke `/workflow-orchestrate`: the directive becomes a
-committed task list under `workflows/<workflow>/<target>/`, work is dispatched per model tier
+committed task list under `workflows/<workflow>/<app>/<session>/`, work is dispatched per model tier
 (`flagship` · `workhorse` · `fleet`), and the run is done only when the list is exhausted AND
 its durable output harvested out of the run directory.
 Set this workflow's tier→lane preference in `.agents/orchestrate/roster.local.yaml`.

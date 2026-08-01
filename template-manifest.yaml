@@ -9,11 +9,18 @@
 # This file is itself managed: a derivation gets it kept in sync too, and it's what
 # lets a future template version add or retire a managed path in every derivation.
 
-version: 23  # mirrors this repo's VERSION at the time this manifest last changed
+version: 24  # mirrors this repo's VERSION at the time this manifest last changed
              # VERSION is a plain integer; comparison uses sort -n.
 
 managed:
   - AGENTS.CORE.md
+  # Managed workflows: the template ships workflows, not only skills
+  # (AGENTS.CORE.md "The shapes"). Only the TIMELESS half is managed -- a derivation's
+  # applications, carried work, and sessions under this workflow are its own data and
+  # are never overwritten by update.
+  - workflows/upstream-workflow-management/SKILL.md
+  - workflows/upstream-workflow-management/references/**
+  - .claude/skills/upstream-workflow-management/SKILL.md
   - VOICE.md
   - CLAUDE.md
   - template-manifest.yaml
