@@ -81,8 +81,7 @@ next session starts blind.
 
 These four are defined again in `GLOSSARY.md`, with every other term this system uses —
 bind, substrate, derivation, harvest, tier, lane, overlay, promotion. Look a term up
-there rather than re-deriving it. We practise DDD, so this repo keeps one language and
-holds itself to `/craft-ubiquitous-language` like any other codebase.
+there rather than re-deriving it.
 
 Six kinds of thing live here; one home each:
 
@@ -126,6 +125,32 @@ session directory:
 Then the session directory closes and is **deleted**, not archived — `git log` is the
 archive. Unfinished work never blocks a session forever: it is promoted to carried work
 and the session closes.
+
+## DDD, applied to a workflow repo
+
+This system is built DDD-first, and a derivation is expected to be too. Not by analogy —
+the structure is already there, and naming it stops it being re-invented:
+
+| DDD | Here |
+|-----|------|
+| Bounded context | the workflow repo — one area of work, one language |
+| Ubiquitous language | `GLOSSARY.md` (managed, this system's terms) + `GLOSSARY.local.md` (the derivation's own) |
+| Context map | `binds.yaml` — `kind:` names the relationship, and `upstream`/`downstream`/`stewarded`/`reference`/`co-change` are those relationships, not labels resembling them |
+| Anti-corruption layer | bind law: a bound repo's law wins inside its boundaries. You do not impose this repo's language on substrate |
+| Aggregate | an application — it has identity, it is durable, and it owns its own particulars |
+
+What this asks of a derivation:
+
+- **Keep one language, and write it down.** `GLOSSARY.local.md` at the derivation's root
+  is yours: unmanaged, never touched by `update`, the same overlay mechanism the `craft-*`
+  skills use. Put your area's terms there. `GLOSSARY.md` stays the system's terms.
+- **Name a term the first time it is ambiguous, not the third.** The cost of the wrong
+  name is paid in every session afterward. This repo learned that by naming a directory
+  after the wrong sense of "workflow".
+- **Do not translate at the boundary.** When a bound repo names a thing, use its name
+  inside its boundaries. Two names for one concept is the defect, wherever it appears.
+- **`/craft-ubiquitous-language`** carries the full doctrine, and it governs this repo as
+  much as any application it stewards.
 
 ## Journal, session state, git
 

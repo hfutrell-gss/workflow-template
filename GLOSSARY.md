@@ -14,6 +14,13 @@ The four load-bearing terms — workflow, application, carried work, session —
 in `AGENTS.CORE.md` "The shapes" as well, because they are always loaded. Everything else
 is here.
 
+**This file is managed. Your terms go in `GLOSSARY.local.md`.** This glossary holds the
+system's vocabulary and `workflow-template-sync update` overwrites it. A derivation's own
+area of work has its own language — its applications, its domain nouns, the distinctions
+that matter to it — and that belongs in `GLOSSARY.local.md` at the derivation root:
+unmanaged, committed, yours. Same shape as the entries below. See `AGENTS.CORE.md` "DDD,
+applied to a workflow repo".
+
 ### Application
 
 A thing a workflow acts on, with particulars of its own. Durable: it outlives every

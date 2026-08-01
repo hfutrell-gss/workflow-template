@@ -31,9 +31,11 @@ Run this **inside a fresh copy or clone of workflow-template** — nothing else.
    `.workflow/`. That matters because all of it is **committed** (unlike `workspace/`), so a
    derive-by-clone would otherwise carry the template's own applications and in-flight
    sessions into the new workflow. A session belongs to the repo that performed it.
-3. Removes the root `VERSION` file — that describes the *template's* own version;
+3. Scaffolds `GLOSSARY.local.md` if absent — the derivation's own ubiquitous language,
+   unmanaged and never overwritten by `update` (`GLOSSARY.md` holds the system's terms).
+4. Removes the root `VERSION` file — that describes the *template's* own version;
    a derivation's relationship to it lives entirely in `.template.lock` instead.
-4. Writes `.template.lock`: `template_version`, `upstream`, `derived` (today's date),
+5. Writes `.template.lock`: `template_version`, `upstream`, `derived` (today's date),
    `pinned: false`. `upstream` is resolved by precedence: `--upstream PATH` >
    `$WORKFLOW_TEMPLATE_UPSTREAM` env var > this checkout's own `origin` remote URL
    (`git -C <dir> remote get-url origin`), if one exists > hardcoded fallback
@@ -43,7 +45,7 @@ Run this **inside a fresh copy or clone of workflow-template** — nothing else.
    plain `cp -r` copy has no `.git/origin` and falls through to the next step exactly
    as before. When the `origin` remote is what's chosen, `derive` echoes it so the
    inference is visible rather than silent.
-5. Leaves `AGENTS.md` exactly as the template's carveout skeleton — write this
+6. Leaves `AGENTS.md` exactly as the template's carveout skeleton — write this
    workflow's actual doctrine into it next; that's the one thing derive never touches.
 
 Asks nothing interactively — safe to run non-interactively right after a copy/clone.

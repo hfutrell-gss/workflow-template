@@ -191,6 +191,34 @@ cmd_derive() {
   # derivation's relationship to it is tracked entirely in .template.lock instead.
   rm -f "$ROOT/VERSION"
 
+  # The derivation's own ubiquitous language. GLOSSARY.md is managed and holds the
+  # system's terms; this file is unmanaged and holds the derivation's. Scaffolded here
+  # because an overlay slot nobody knows exists is an overlay slot nobody fills.
+  if [ ! -e "$ROOT/GLOSSARY.local.md" ]; then
+    cat > "$ROOT/GLOSSARY.local.md" <<'GLOSSEOF'
+# GLOSSARY.local.md — this workflow's ubiquitous language
+
+This file is **yours**. Unmanaged, committed, never touched by
+`workflow-template-sync update`. `GLOSSARY.md` holds the workflow system's terms; this
+holds your area of work's.
+
+Doctrine: `/craft-ubiquitous-language`, and `AGENTS.CORE.md` "DDD, applied to a workflow
+repo". Entry shape and worked examples:
+`.agents/skills/craft-ubiquitous-language/references/glossary-format.md`.
+
+Add a term the first time it is ambiguous, not the third. Alphabetical, flat.
+
+### <Term>
+
+<What it is, in one or two sentences. Present tense. No hedging.>
+
+**Is not:** <the adjacent concept it is confused with, and why they differ. Only where
+the confusion has actually cost time.>
+
+**In code:** `<where it appears>`
+GLOSSEOF
+  fi
+
   {
     echo "template_version: $template_version"
     echo "upstream: $upstream"

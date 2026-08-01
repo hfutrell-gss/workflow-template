@@ -11,6 +11,10 @@ full force wherever the first two are silent. Where a repo has a standard, detec
 apply it; where it has none, say so as a finding. Never proceed as though a missing
 standard did not matter.
 
+**This governs the workflow repo too**, not only the substrate it stewards. The system's
+own terms are in `GLOSSARY.md`; a derivation's are in `GLOSSARY.local.md` at its root.
+See `AGENTS.CORE.md` "DDD, applied to a workflow repo".
+
 ## The rule
 
 **One language, shared by the domain experts and the code, bounded by one context.**
@@ -24,9 +28,10 @@ performs. It is a defect the code carries.
 
 Every application under DDD keeps a glossary. It is the single source of its terms.
 
-- **It lives in the application's own repo** — `docs/glossary.md` unless that repo's law
-  says otherwise. The code must obey it, so it sits with the code. A glossary kept
-  outside the repo it governs drifts within one session.
+- **It lives in the repo it governs** — `docs/glossary.md` in an application, unless that
+  repo's law says otherwise; `GLOSSARY.local.md` at a workflow repo's root. The code must
+  obey it, so it sits with the code. A glossary kept outside the repo it governs drifts
+  within one session.
 - **One glossary per bounded context.** The same word in two contexts is two entries, in
   two glossaries. Never one compromise definition that fits neither.
 - **A term enters when it enters the code**, not afterward. A pull request that
