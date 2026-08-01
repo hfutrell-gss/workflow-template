@@ -14,7 +14,7 @@ skills, and a live link back upstream so improvements to the core can flow forwa
 **The template facilitates, never constrains.** A derivation owns everything outside a
 small managed set (`AGENTS.CORE.md`, `VOICE.md`, `CLAUDE.md`, `template-manifest.yaml`,
 and the `workflow-*` skills — see `template-manifest.yaml` for the exact list): its own
-doctrine, its `binds.yaml`, its `playbooks/`, its `journal/`, anything it adds later.
+doctrine, its `binds.yaml`, its own procedure skills, its `journal/`, anything it adds later.
 It can pin its core (`pinned: true` in `.template.lock`) to freeze it forever, or eject
 from the template relationship entirely (delete `.template.lock`) — either way, it's
 supported for the full lifetime of the project it belongs to.
@@ -30,7 +30,7 @@ cd my-new-workflow
 `VERSION` file (that describes the *template's* version, not a derivation's), and
 writes `.template.lock` recording the template version and upstream path. Then write
 this workflow's actual doctrine into `AGENTS.md` (the skeleton is left untouched on
-purpose) and start filling in `binds.yaml`, `playbooks/`, and `journal/`.
+purpose) and start filling in `binds.yaml`, its procedure skills, and `journal/`.
 
 To pull forward later improvements to the managed set:
 ```sh
@@ -49,7 +49,6 @@ To pull forward later improvements to the managed set:
 | `workspace/` | This workflow's own substrate workspace — gitignored, per-machine; where standing binds get cloned and cross-repo work happens. Never committed, never the user's personal checkouts. |
 | `template-manifest.yaml` | The exact managed-set path list `workflow-template-sync` owns |
 | `VERSION` | This template's own version (absent in a derivation — see `.template.lock` there instead) |
-| `playbooks/` | Step-by-step procedures for this workflow's area of work |
 | `journal/` | One dated file per run/decision — never a single growing file |
 | `.workflow/` | Orchestration session state (`<session-slug>/tasklist.md` + `roster.md`) — **committed**, so a run resumes after a cold tick or on another machine. See `/workflow-orchestrate` |
 | `.agents/skills/` | Canonical skill bodies + scripts (`workflow-*` machinery, `craft-*` engineering doctrine) |

@@ -166,11 +166,9 @@ cmd_derive() {
   local template_version
   template_version="$(tr -d '[:space:]' < "$ROOT/VERSION")"
 
-  # Strip template-only identity: this workflow's own journal/playbooks start empty —
-  # any content here at derive time is the template's own example/test material, not
-  # this derivation's.
+  # Strip template-only identity: this workflow's own journal starts empty — any content
+  # here at derive time is the template's own example/test material, not this derivation's.
   find "$ROOT/journal" -type f ! -name '.gitkeep' -delete 2>/dev/null || true
-  find "$ROOT/playbooks" -type f -name '*example*' -delete 2>/dev/null || true
 
   # Orchestration session state is identity too, and it is COMMITTED (unlike workspace/),
   # so a derive-by-clone carries the template's own in-flight runs into the new workflow —
