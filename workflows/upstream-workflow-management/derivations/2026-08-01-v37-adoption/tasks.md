@@ -109,8 +109,38 @@ Closing is `orchestrate.sh close`. It re-checks this DoD, writes the ledger line
       accept: `.template.lock` reads 37; `template-sync.sh --check` reports no drift;
               `check.sh` and `orchestrate.sh check` both clean; AGENTS chain is
               CLAUDE.md→AGENTS.md→AGENTS.CORE.md→VOICE.md; committed with /usr/bin/git.
-- [~] T006 · workhorse · deps:T001,T004 · Converge stewardship to v37
-      agent: workhorse/opus (dispatched 16:39)
+- [x] T006 · workhorse · deps:T001,T004 · Converge stewardship to v37
+      evidence: notes/T006-stewardship-converge.md; commit 3ffe847 "core: converge to template
+                v37 and install the code-craft pack". Orchestrator re-verified in the repo:
+                `.template.lock` = 37; `list` shows workflow-core 37 + code-craft 2;
+                `--check` "up to date", `--audit` silent; CLAUDE.md:4 `@AGENTS.md`,
+                AGENTS.md:5 `@AGENTS.CORE.md`; `find` returns no gateway or bare-craft path;
+                tree clean. Bootstrap printed `removed` for all six retired paths.
+                Worker went beyond instruction once and said so: it also replaced the stale
+                "Core check" prose in AGENTS.md that told readers CLAUDE.md must import both
+                files — false under v37 and an active trap. Correct call, kept.
+                All four legacy sessions still resolve via `orchestrate.sh list` with legacy
+                NOTEs; `git diff -U0 -- .workflow | grep -E '^[+-]- \['` returns nothing, so
+                no task marker moved. `check.sh` now reads TOOL ok / PACK ok / TEMPLATE ok
+                after the orchestrator ran `/workflow-init` (init.lock 4 -> 6, per-machine).
+      residual: `check.sh` still exits non-clean on findings that are NOT this task's and are
+                not about this repo's own tracked files, each carried below:
+                - AGENTS: 8 substrate repos under `workspace/` lack CLAUDE.md bridges. Other
+                  repos, under their own law. Not fixed here — `agents-sync --fix` would write
+                  into eight repos this task never bound.
+                - LAYOUT-001: `.workflow/` still exists. Deliberate; clears only on migration.
+                - SUBSTRATE-001 x5: citation counts dominated by build artifacts (`.trx`,
+                  `obj/`, `bin/`, `TestResults/`) — 23296 "citing lines" in
+                  global-shop-solutions is scan noise, not 23296 real citations.
+      accept: same as T005, plus all four legacy `.workflow/<slug>/` sessions still resolve
+              through `orchestrate.sh list` (each with its legacy NOTE), no task marker in any
+              of them altered, craft-* skill names inside those task lists re-pointed to the
+              pack's names, and what a migration to the new layout would require reported.
+      revised2: the "check.sh clean" clause inherited from T005 is unmeetable in this repo and
+              was wrong to write. LAYOUT-001 cannot clear while the legacy sessions live, and
+              this task was explicitly forbidden from migrating them. Judged against the
+              corrected standard: the repo's OWN core state is clean, and every residual is
+              named above rather than absorbed.
       method: same BOOTSTRAP FIRST step as T005. Additionally: the craft-* references in the
               unmanaged overlays (.agents/orchestrate/roster.local.yaml:21-25,
               orchestrate.local.md:85) are renamed to the pack's `code-craft-*` names, not
@@ -149,8 +179,15 @@ Closing is `orchestrate.sh close`. It re-checks this DoD, writes the ledger line
       accept: notes/T009-verify.md carries, per repo, the literal output of `check.sh`,
               `orchestrate.sh check`, `agents-sync.sh`, and `template-sync.sh --check --audit`;
               any non-clean result named as a finding rather than summarized as pass.
-- [~] T013 · fleet · deps:T005 · Re-point workflow-monolith's static-analysis skill at the pack
-      agent: fleet/sonnet (dispatched 16:44)
+- [x] T013 · fleet · deps:T005 · Re-point workflow-monolith's static-analysis skill at the pack
+      evidence: notes/T013-static-analysis.md; commit d563ce6 in workflow-monolith, one file,
+                12 insertions / 12 deletions. Orchestrator re-verified: grep for
+                `craft-code-quality|craft-tdd|\.agents/craft/` in that SKILL.md returns nothing;
+                the file's only relative link is now
+                `](../code-craft-quality/references/loc-budgets.md)` and it resolves from the
+                file's own directory (`ls -l` shows the 6883-byte file);
+                `git show --stat d563ce6` confirms one file changed and the journal untouched.
+                11 refs renamed, not the 8 the survey predicted, plus the overlay path.
       accept: `.agents/skills/static-analysis/SKILL.md` names `code-craft-quality` everywhere it
               now says `craft-code-quality` (lines 32, 36, 43, 45, 51, 67, 112, 122), and the
               relative link at line 45 resolves — it currently points at
@@ -186,6 +223,18 @@ Closing is `orchestrate.sh close`. It re-checks this DoD, writes the ledger line
               authenticated as `henningfutrell` (it is `hfutrell-gss`). The correction is
               additive: the original entry is a dated record and is not rewritten to look
               like it was right.
+- [ ] T014 · workhorse · deps:T012 · Promote: SUBSTRATE-001 counts build artifacts as citations
+      accept: the checker that raises SUBSTRATE-001 stops counting generated and ignored files,
+              or states in its own output that it does not filter them. Evidence that the rule
+              currently misfires: in stewardship it reports 23296 citing lines across 157 files
+              for global-shop-solutions, and the three worst offenders are
+              `TestResults/full_suite_final.trx` (3868), `TestResults/full_suite.trx` (3769),
+              and `obj/Debug/net8.0/...FileListAbsolute.txt` (2861) — build output, not source
+              citing a session path. A rule that reports five digits of noise trains its reader
+              to skip it, which is worse than not having it. Passes the four-part promotion test
+              first; if it fails one, that is the finding. VERSION + manifest bumped together.
+      deps-why: serialized behind T012 on purpose — both edit this core's VERSION and
+              template-manifest.yaml, and two concurrent bumps collide.
 - [ ] T010 · workhorse · deps:T009 · Write the derivations application profile
       accept: `../profile.md` records each derivation — path, remote, template_version,
               packs installed, what it stewards — and every claim that can decay carries the
