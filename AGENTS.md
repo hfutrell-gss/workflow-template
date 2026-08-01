@@ -22,9 +22,16 @@ Area of work: **<one sentence: what whole area this workflow owns>.**
 ## Conditions
 - <the invariants and constraints under which all work in this area happens>
 
+## Packs
+<!-- What this repo composes in beyond the core. Managed by /workflow-template-sync;
+     `template-sync.sh list` prints the live answer. -->
+- `craft` — engineering doctrine (`/craft-tdd`, `/craft-code-quality`,
+  `/craft-event-naming`, `/craft-ubiquitous-language`). Optional; drop this line and the
+  pack together if this area of work does not want it.
+
 ## Workflows
-- `/upstream-workflow-management` — managed; promote a generalizable concept from this
-  derivation to the upstream template.
+- `/upstream-workflow-management` — managed by the core; promote a generalizable concept
+  from this repo upstream — into the core if it is a shape, into a pack if it is opinion.
 - `/<workflow-name>` — <the nature of work it covers>. A workflow is
   `workflows/<name>/SKILL.md` plus its `.claude/skills/<name>/` discovery stub. Scaffold one
   with `/workflow-manage new-workflow <name>`; name it outside the reserved `workflow-*` and
@@ -37,8 +44,10 @@ Area of work: **<one sentence: what whole area this workflow owns>.**
      that never fires is worth nothing, and nothing else nudges the craft-* skills into
      play. Deliberately a suggestion here rather than a rule in AGENTS.CORE.md: a
      mandatory always-loaded trigger would re-create the static-context cost these skills
-     exist to avoid. -->
-Before writing or changing production code in bound substrate, invoke `/craft-tdd` and
+     exist to avoid. Delete the section outright if this repo does not install the craft
+     pack. -->
+Requires the **craft pack** (`/workflow-template-sync add <pack-craft>`). Before writing
+or changing production code in bound substrate, invoke `/craft-tdd` and
 `/craft-code-quality`. Override their defaults for this workflow in
 `.agents/craft/craft-tdd.local.md` and `.agents/craft/craft-code-quality.local.md` — a bound repo's
 own law still wins inside its boundaries.

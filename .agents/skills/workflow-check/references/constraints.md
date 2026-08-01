@@ -61,11 +61,30 @@ malformed or self-contradicting list is.
 
 ## TEMPLATE-* — `/workflow-template-sync`
 
-The managed set against upstream. Reported by `template-sync.sh --check`.
+Version drift against each upstream. Reported by `template-sync.sh --check`, which
+contacts every upstream (core and packs) and exits 1 when anything is behind.
 
 | ID | Constraint |
 |----|------------|
-| `TEMPLATE-*` | `template_version` matches upstream `VERSION`, or the derivation is `pinned: true` and says so |
+| `TEMPLATE-*` | The core's `template_version` matches upstream `VERSION`, and every pack's installed version matches its upstream `pack.yaml` — or the thing is `pinned: true` and says so |
+
+## PACK-* — `/workflow-template-sync`
+
+Composition integrity. Reported by `template-sync.sh --audit`, which is **offline**: it
+reads `.template.lock`, `packs.yaml`, `packs.lock`, and the disk. No upstream is
+contacted, so it stays cheap and works with no network.
+
+| ID | Constraint |
+|----|------------|
+| `PACK-001` | One owner per path. No path is claimed by both the core and a pack, or by two packs |
+| `PACK-002` | Every path a pack's `packs.lock` entry claims is present in the repo |
+| `PACK-003` | Declaration and installation agree: nothing installed that `packs.yaml` does not declare, nothing declared that was never installed |
+
+**Why these three.** A collision (`PACK-001`) makes the winner depend on copy order,
+which nobody can see or predict — it is the failure mode that sinks plugin systems, so it
+is refused at install time *and* re-checked here in case a manifest changed under a repo.
+`PACK-002` catches a half-applied update. `PACK-003` catches a hand-edited `packs.yaml`,
+where files sit in the repo that nothing claims and nothing will ever update.
 
 ## Adding a constraint
 

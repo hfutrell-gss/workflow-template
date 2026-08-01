@@ -11,7 +11,9 @@
 #   LAYOUT-*   workflow-orchestrate workflow/application/session directory shape
 #   TASK-*     workflow-orchestrate task grammar and anti-cheat inside each session
 #              (an OPEN session is not a violation -- work in progress is normal)
-#   TEMPLATE-* workflow-template-sync  managed-set drift against upstream
+#   TEMPLATE-* workflow-template-sync  the core/pack version drift against upstream
+#   PACK-*     workflow-template-sync  composition integrity: one owner per path,
+#              installed == declared, claimed paths present (offline; no upstream)
 #
 # Usage:
 #   check.sh            report; exit 0 all clear, 2 violations found, 1 error
@@ -71,9 +73,15 @@ echo
 
 # init.sh --check exits 0 conforming / 1 not -- its 1 is a constraint result.
 [ -f "$S/workflow-init/init.sh" ] && run_nonzero_is_violation "TOOL" bash "$S/workflow-init/init.sh" --check
-run_stdout_coded "AGENTS" bash "$S/workflow-agents-sync/agents-sync.sh" ${MODE:+"$MODE"}
+# agents-sync exits 0 conforming / 1 drift -- its 1 is a constraint result, not a defect.
+run_nonzero_is_violation "AGENTS" bash "$S/workflow-agents-sync/agents-sync.sh" ${MODE:+"$MODE"}
 run_exit_coded   "LAYOUT" bash "$S/workflow-orchestrate/orchestrate.sh" check
-[ -f "$ROOT/.template.lock" ] && run_stdout_coded "TEMPLATE" bash "$S/workflow-template-sync/template-sync.sh" --check
+# --audit is offline (composition integrity); --check contacts each upstream and exits 1
+# when something is behind -- a constraint result, not a tool defect.
+if [ -f "$ROOT/.template.lock" ]; then
+  run_stdout_coded        "PACK"     bash "$S/workflow-template-sync/template-sync.sh" --audit
+  run_nonzero_is_violation "TEMPLATE" bash "$S/workflow-template-sync/template-sync.sh" --check
+fi
 
 echo
 case "$rc" in

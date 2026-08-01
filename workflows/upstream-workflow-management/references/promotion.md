@@ -41,9 +41,15 @@ result against the pre-merge tip for rules that vanished, not just for conflicts
 
 ## 3. Manifest before VERSION
 
-`template-manifest.yaml` lists the managed set exactly. `update` copies only what it
-lists. Directory globs (`path/**`) are replaced wholesale, so upstream deletions
-propagate.
+The destination's manifest lists its managed set exactly — `template-manifest.yaml`
+(`managed:`) for the core, `pack.yaml` (`provides:`) for a pack. `update` copies only
+what it lists. Directory globs (`path/**`) are replaced wholesale, so deletions inside
+them propagate.
+
+**A path removed from a manifest is DELETED downstream** on the next update, with its
+emptied parent directories pruned. That is how a retired skill actually leaves; it also
+means an accidental deletion from the manifest destroys the path in every repo. Diff the
+manifest, not just the files.
 
 **Failure mode: a new skill or workflow that no derivation ever receives.** Bumping the
 manifest `version:` in one task while the new path is added in a later task ships a

@@ -1,117 +1,150 @@
 ---
 name: workflow-template-sync
 description: >-
-  The upstream link between workflow-template and a derived workflow repo. `derive`
-  turns a fresh copy/clone of the template into a derivation (writes .template.lock).
-  `update` pulls forward changes to the managed set (AGENTS.CORE.md, CLAUDE.md,
-  template-manifest.yaml, the workflow-* skills) from upstream, unless pinned.
-  `--check` reports current vs upstream template version. Use when asked to derive a
-  new workflow from the template, to sync/update a derivation's managed core, to check
-  whether a derivation is behind upstream, or to pin/unpin a derivation.
+  Composition for a workflow repo. A repo is assembled from PACKS: one core (this
+  template — the shapes, tracked in .template.lock) plus any number of optional packs
+  (declared in packs.yaml, each with its own pack.yaml). `derive` turns a fresh
+  copy/clone of the core into a workflow repo. `add`/`remove` install and uninstall a
+  pack. `update` pulls the core and every pack forward. `list` shows what is installed.
+  `--check` reports versions. Use when asked to derive a new workflow repo, to add or
+  drop a pack, to sync a repo's managed paths, to check whether anything is behind, or
+  to pin/unpin.
 ---
 
 # workflow-template-sync
 
 ## Run
 ```sh
-.agents/skills/workflow-template-sync/template-sync.sh derive [--upstream PATH]
-.agents/skills/workflow-template-sync/template-sync.sh update
-.agents/skills/workflow-template-sync/template-sync.sh --check
+S=.agents/skills/workflow-template-sync/template-sync.sh
+$S derive [--upstream PATH]      # in a fresh copy/clone of the core
+$S add <url-or-path> [--name N]  # install a pack
+$S remove <pack>                 # uninstall a pack and delete its paths
+$S update [<pack>]               # pull the core and every pack forward
+$S list                          # what is installed, from where, what version
+$S --check                       # versions; exit 1 if anything is behind
 ```
+
+## The model
+
+| | Core | Pack |
+|---|---|---|
+| Manifest | `template-manifest.yaml` (`managed:`) | `pack.yaml` (`provides:`) |
+| Version | root `VERSION` file | `version:` in `pack.yaml` |
+| Declared in the repo | `.template.lock` | `packs.yaml` |
+| Installed state | (its manifest, on disk) | `packs.lock` — version + exact paths |
+| Count | exactly one, never removable | any number, each removable |
+
+Three invariants, all enforced by the script:
+
+1. **One owner per path.** A path claimed by two packs is refused **before any write**.
+2. **A dropped path is removed.** A path a pack stops providing is deleted on the next
+   update, and now-empty parent directories are pruned.
+3. **No inter-pack dependencies.** No resolver, no ordering, no version solving.
 
 ## Modes
 
-### `derive` — turn a template copy into a derivation
-Run this **inside a fresh copy or clone of workflow-template** — nothing else. It:
-1. Refuses if `.template.lock` already exists (already derived) or `VERSION` is
-   missing (doesn't look like a template checkout).
-2. Clears template-only identity: example content out of `journal/`, every application
-   directory under `workflows/<workflow>/` (profiles, carried work, sessions — the workflow's
-   own `SKILL.md` and `references/` survive, being TIMELESS), and any legacy run state under
-   `.workflow/`. That matters because all of it is **committed** (unlike `workspace/`), so a
-   derive-by-clone would otherwise carry the template's own applications and in-flight
-   sessions into the new workflow. A session belongs to the repo that performed it.
-3. Scaffolds `GLOSSARY.local.md` if absent — the derivation's own ubiquitous language,
-   unmanaged and never overwritten by `update` (`GLOSSARY.md` holds the system's terms).
-4. Removes the root `VERSION` file — that describes the *template's* own version;
-   a derivation's relationship to it lives entirely in `.template.lock` instead.
-5. Writes `.template.lock`: `template_version`, `upstream`, `derived` (today's date),
-   `pinned: false`. `upstream` is resolved by precedence: `--upstream PATH` >
-   `$WORKFLOW_TEMPLATE_UPSTREAM` env var > this checkout's own `origin` remote URL
-   (`git -C <dir> remote get-url origin`), if one exists > hardcoded fallback
-   `~/workbench/workflow-template`. The `origin`-remote step is what makes `derive`
-   correct when run inside a fresh `git clone` of the published template — the
-   canonical create path — instead of silently writing the local hardcoded path; a
-   plain `cp -r` copy has no `.git/origin` and falls through to the next step exactly
-   as before. When the `origin` remote is what's chosen, `derive` echoes it so the
-   inference is visible rather than silent.
-6. Leaves `AGENTS.md` exactly as the template's carveout skeleton — write this
-   workflow's actual doctrine into it next; that's the one thing derive never touches.
+### `derive` — turn a core copy into a workflow repo
+Run this **inside a fresh copy or clone of the core** — nothing else. It:
+1. Refuses if `.template.lock` already exists (already derived) or `VERSION` is missing
+   (doesn't look like a core checkout).
+2. Clears core-only identity: example content out of `journal/`, every application
+   directory under `workflows/<workflow>/` (profiles, carried work, sessions — the
+   workflow's own `SKILL.md` and `references/` survive, being TIMELESS), and any legacy
+   run state under `.workflow/`. All of it is **committed** (unlike `workspace/`), so a
+   derive-by-clone would otherwise carry the core's own applications and in-flight
+   sessions into the new repo. A session belongs to the repo that performed it.
+3. Scaffolds `GLOSSARY.local.md` if absent and the `craft` pack's asset is present —
+   unmanaged, never overwritten (`GLOSSARY.md` holds the system's terms).
+4. Removes the root `VERSION` file — that describes the *core's* own version; a
+   derivation's relationship to it lives entirely in `.template.lock`.
+5. Writes `.template.lock`: `template_version`, `upstream`, `derived`, `pinned: false`.
+   `upstream` resolves by precedence: `--upstream PATH` > `$WORKFLOW_TEMPLATE_UPSTREAM`
+   > this checkout's own `origin` remote URL > hardcoded `~/workbench/workflow-template`.
+   The `origin` step is what makes `derive` correct inside a fresh `git clone` of the
+   published core; a `cp -r` copy has no `.git/origin` and falls through. When `origin`
+   is chosen, `derive` echoes it, so the inference is visible rather than silent.
+6. Leaves `AGENTS.md` as the skeleton — write this workflow's doctrine into it next.
 
-Asks nothing interactively — safe to run non-interactively right after a copy/clone.
+Asks nothing interactively.
 
-### `update` — pull the managed set forward from upstream
-Run inside a derivation. Reads `.template.lock`:
-- **`pinned: true`** → reports the upstream version available and exits without
-  touching anything. Flip to `pinned: false` to allow updates again.
-- **`pinned: false`** → compares `template_version` to upstream's `VERSION`. If
-  upstream is ahead, copies **only** the paths listed in the upstream's
-  `template-manifest.yaml` into this repo (directory entries are replaced wholesale,
-  so upstream deletions propagate), then bumps `template_version` in `.template.lock`.
-  Everything outside the managed set — this workflow's `AGENTS.md`, `binds.yaml`,
-  its procedure skills, `journal/`, anything else — is never touched, by construction (the
-  copy step only ever reads paths named in the manifest).
-- `upstream` may be a **local path or a git URL** (`https://`, `git@...`, `ssh://`,
-  `file://`). A URL upstream is fetched into a cached shallow clone (see "Remote
-  upstreams" below); everything downstream of that — reading `VERSION`, reading
-  `template-manifest.yaml`, copying the managed set — works identically to a local
-  path, against the cache checkout.
-- VERSION is a plain integer; comparison uses `sort -n`.
+### `add` — install a pack
+```sh
+$S add git@host:org/pack-craft
+$S add ../pack-craft --name craft
+```
+Refuses anything without a `pack.yaml` at its root, a name already declared, and the
+reserved core name `workflow-core`. On success: appends to `packs.yaml` (created if
+absent), copies the pack's `provides:` paths in, and records version + paths in
+`packs.lock`. A collision with the core or another pack aborts before any write.
 
-**Known caveat — structural moves in the managed set leave orphans.** `copy_managed_paths`
-only ever *adds/overwrites* the exact paths named in the **upstream's current**
-manifest; it never diffs against the paths named in an *older* manifest, so it can't
-know a path was retired. When a template version moves content rather than just
-editing it in place (e.g. v8's skills-under-`.agents` refactor, which retired the old
-`.claude/skills/<name>/**` directory entries in favor of `.agents/skills/<name>/**` +
-single-file `.claude/skills/<name>/SKILL.md` stubs), `update` copies the new paths in
-correctly but leaves the old files that are no longer in the manifest sitting on disk
-untouched — e.g. the pre-v8 `.claude/skills/<name>/*.sh` scripts survive as orphaned
-duplicates alongside the new canonical copies under `.agents/skills/`. **After any
-`update` that crosses a structural move like this, check the release notes for the
-new version and manually remove anything the old manifest managed that the new one
-doesn't** — `workflow-agents-sync`'s skill-stub check (`DRIFT ... non-stub file under
-.claude/skills`) will flag exactly this case for the skills package specifically, but
-the general problem (arbitrary managed-path renames) has no automated cleanup yet.
-Filed as a real limitation, not fixed as of v8 — a future version could add a
-"retired paths" list to `template-manifest.yaml` that `update` deletes explicitly.
+### `remove` — uninstall a pack
+Deletes exactly the paths `packs.lock` records for that pack, prunes emptied parent
+directories, and drops it from both `packs.yaml` and `packs.lock`. The core cannot be
+removed — eject instead, by deleting `.template.lock`.
+
+### `update` — pull everything forward
+With no argument: the core, then every declared pack. With a pack name (or
+`workflow-core`): just that one.
+
+- **`pinned: true`** (core: in `.template.lock`; pack: in its `packs.yaml` entry) →
+  reports the available version, touches nothing.
+- Otherwise, when upstream is ahead: **removes** paths the manifest no longer claims,
+  then copies the current manifest's paths in. Directory entries (`.../**`) are replaced
+  wholesale, so deletions inside them propagate too.
+- Everything outside every manifest — `AGENTS.md`, `binds.yaml`, this repo's own
+  workflows, `journal/`, the overlay slots — is never touched, by construction: the copy
+  step only ever reads paths a manifest names.
+- A pack present in `packs.lock` but absent from `packs.yaml` prints a WARNING. `update`
+  never deletes files for an undeclared pack; run `remove` deliberately.
+- Versions are plain integers for the core (`sort -n`); packs compare for equality.
+
+**How removal knows what to remove.** For a pack, `packs.lock` holds the exact installed
+path list. For the core, the derivation's own copy of `template-manifest.yaml` is that
+record — it is itself a managed path, so the pre-update copy on disk states what the core
+previously owned. This closes the orphan problem that structural moves caused through
+v29: retiring a path upstream now retires it in every repo.
 
 ### Remote upstreams
-A URL `upstream` is resolved through a cache checkout at
+A URL upstream (core or pack) resolves through a cache checkout at
 `${XDG_CACHE_HOME:-$HOME/.cache}/workflow-template-sync/<sha1 of the url>`:
 - **No cache yet** → `git clone --depth 1 <url> <cache>`.
 - **Cache exists** → `git fetch --depth 1 origin`, then hard-reset to the remote's
-  default branch (resolved via `origin/HEAD`, set with `git remote set-head origin -a`
-  if that symref isn't there yet).
-- **Fetch/clone fails and a cache already exists** → a loud `WARNING` to stderr, then
-  `update`/`--check` proceed against the **stale cache**, noting its last-refresh time.
-  Offline runs against a previously-synced remote upstream keep working this way.
-- **Fetch/clone fails and no cache exists** → a clear error, nonzero exit. Never a
-  half-update.
+  default branch (via `origin/HEAD`, set with `git remote set-head origin -a` if absent).
+- **Fetch/clone fails, cache exists** → loud `WARNING` to stderr, proceed against the
+  **stale cache**, noting its last-refresh time. Offline runs keep working.
+- **Fetch/clone fails, no cache** → clear error, nonzero exit. Never a half-update.
 
-All git operations use `/usr/bin/git` explicitly (see `AGENTS.CORE.md`'s git
-discipline).
+All git operations use `/usr/bin/git` explicitly.
 
-### Repointing upstream
-Edit `upstream:` in `.template.lock` by hand — that is the supported repoint
-procedure, whether moving to a different local path or switching to a URL (or back).
-No re-derive needed.
+### Repointing an upstream
+Edit `upstream:` in `.template.lock` (core) or in the pack's `packs.yaml` entry. Local
+path or URL, either direction. No re-derive needed.
 
 ### `--check` — report drift
-Prints `template_version`, `upstream`, the upstream's current version, and `pinned`.
-Exits 1 if behind (regardless of pinned — pinned just means `update` won't act on it).
+One line per pack: installed vs available, and `[pinned]` where it applies. Exit 1 if
+anything is behind — a constraint result (`TEMPLATE-001`), consumed by `/workflow-check`.
+
+## Authoring a pack
+
+A pack is an ordinary repo with `pack.yaml` at its root:
+
+```yaml
+name: craft
+version: 1
+provides:
+  - .agents/skills/craft-tdd/**
+  - .claude/skills/craft-tdd/SKILL.md
+```
+
+Rules that keep a pack composable:
+- **Claim only what you own.** Never list a path the core claims, or one another pack is
+  likely to want. Prefer a namespace: a skill prefix, a directory of your own.
+- **Read overlay slots; never write them.** A pack that needs to be configurable declares
+  an unmanaged `*.local.*` path and lets the repo's copy win.
+- **Bump `version:` on every change.** It is the only signal an installed repo has.
+- **Never depend on another pack.** Degrade instead: keep the duty, lose the guidance.
 
 ## The covenant
-This skill is the only thing in a derivation allowed to touch the managed set listed in
-`template-manifest.yaml`, and it only ever adds/overwrites those exact paths — never
-anything else. See `AGENTS.CORE.md` ("Template link") for the full doctrine.
+This skill is the only thing allowed to touch a managed path. It adds, overwrites, and
+removes exactly the paths a manifest names, and nothing else — see `AGENTS.CORE.md`
+("Composition") for the doctrine.

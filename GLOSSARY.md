@@ -45,15 +45,16 @@ Epics, deferred tasks, and threads that cross sessions. Lives in
 **Is not:** a *backlog* of everything wanted. It is what a closing session could not
 finish and someone still wants.
 
-### Craft overlay
+### Core
 
-A derivation-owned file at `.agents/craft/<skill-name>.local.md` that overrides a
-`craft-*` skill's defaults. The template owns the slot; the derivation owns what fills
-it. Where they conflict, the overlay wins.
+The one pack a workflow repo cannot decline: it defines the shapes every other pack plugs
+into, and every operation on them. Declared in `.template.lock`. This repo is it.
+
+**Is not:** everything that ships. Engineering opinion is a pack (`craft`), not the core.
 
 ### Derivation
 
-A workflow repo created from the template, tracking it through `.template.lock`. Owns
+A workflow repo created from the core, tracking it through `.template.lock`. Owns
 everything outside the managed set. May pin, or eject entirely.
 
 ### Harvest
@@ -71,12 +72,32 @@ retried.
 
 ### Managed set
 
-The exact list of paths in `template-manifest.yaml` that the template owns and
-`workflow-template-sync update` copies forward. Everything else belongs to the
+The exact list of paths a pack owns in a workflow repo — `template-manifest.yaml`
+(`managed:`) for the core, `pack.yaml` (`provides:`) for a pack. `update` copies these
+forward and touches nothing else. Everything outside every manifest belongs to the
 derivation.
 
-**Is not:** everything the template ships. A path absent from the manifest reaches no
+**Is not:** everything a pack ships. A path absent from the manifest reaches no
 derivation, however correct it is.
+
+### Overlay slot
+
+A path the core or a pack reads but never writes, so a derivation can change a default
+without forking the thing that holds it — `.agents/craft/<skill-name>.local.md`,
+`.agents/orchestrate/roster.local.yaml`, `.agents/init/tools.local.d/<tool>.sh`,
+`GLOSSARY.local.md`. The ladder: a bound repo's law → the overlay → the defaults.
+
+**Is not:** a fork, or a reason to pin. Where the overlay conflicts with the default, the
+overlay wins, and `update` never touches it.
+
+### Pack
+
+A repo declaring in `pack.yaml` the exact paths it owns in a workflow repo, installed
+with `/workflow-template-sync add`. Flat: no pack depends on another. One owner per path
+— a collision is an error, never a merge. A path a pack stops providing is deleted on the
+next update.
+
+**Is not:** required. A workflow repo with no packs is complete, not degraded.
 
 ### Promotion
 
@@ -85,7 +106,7 @@ Two senses, both real, distinguished by what moves:
 1. **Task promotion** — moving unfinished work from a session up into carried work
    (`[^]`).
 2. **Upstream promotion** — moving a generalizable concept from a derivation up into the
-   template. The workflow for it is `/upstream-workflow-management`.
+   core, or into a pack. The workflow for it is `/upstream-workflow-management`.
 
 ### Proxy rule
 
@@ -127,8 +148,8 @@ the skill's subject.
 
 ### Workflow repo
 
-The container: one repo capturing a whole area of work. This template is the core every
-derivation shares.
+The container: one repo capturing a whole area of work, composed from a core plus any
+number of packs.
 
 ### Workspace
 

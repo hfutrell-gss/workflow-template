@@ -47,12 +47,13 @@ To pull forward later improvements to the managed set:
 | `CLAUDE.md` | Bridge importing `@AGENTS.CORE.md`, `@VOICE.md`, then `@AGENTS.md` |
 | `binds.yaml` | Standing binds: repos related to this workflow (kind + why); `base` (default `./workspace`) says where they live on disk |
 | `workspace/` | This workflow's own substrate workspace — gitignored, per-machine; where standing binds get cloned and cross-repo work happens. Never committed, never the user's personal checkouts. |
-| `template-manifest.yaml` | The exact managed-set path list `workflow-template-sync` owns |
+| `template-manifest.yaml` | The CORE pack's manifest — the exact path list it owns in every workflow repo |
+| `packs.yaml` / `packs.lock` | The additional packs a workflow repo composes in, and what each one installed. Derivation-owned; edited through `/workflow-template-sync add`/`remove` (absent in this repo — the core is not composed into itself) |
 | `VERSION` | This template's own version (absent in a derivation — see `.template.lock` there instead) |
 | `journal/` | One dated file per run/decision — never a single growing file |
 | `workflows/` | Workflows and their state, four levels: `<workflow>/SKILL.md` is TIMELESS (the TTPs, never pruned), `<app>/profile.md` is that application's DURABLE particulars, `<app>/tasks.md` is CARRIED work crossing sessions, `<app>/<session>/` is one SESSION, deleted after harvest. **Committed**, so a session resumes after a cold tick or on another machine. See `/workflow-orchestrate` |
 | `.workflow/` | Legacy (pre-stratification) run state — `<slug>/tasklist.md`. Resolved for one version only; new runs never use it |
-| `.agents/skills/` | Canonical skill bodies + scripts (`workflow-*` machinery, `craft-*` engineering doctrine) |
+| `.agents/skills/` | Canonical skill bodies + scripts. The core ships `workflow-*` machinery only; `craft-*` engineering doctrine arrives from the optional `craft` pack |
 | `.agents/craft/` | Optional, derivation-owned overlays (`<skill>.local.md`) that override `craft-*` defaults — unmanaged, never touched by `update` |
 | `.agents/orchestrate/` | Optional, derivation-owned overlays for `/workflow-orchestrate`: `roster.local.yaml` (tier→lane preference, role→tier overrides) and `orchestrate.local.md` — unmanaged |
 | `.agents/init/tools.local.d/` | Optional, derivation-owned tool definitions (`<tool>.sh`) that `/workflow-init` sources, so a workflow's own tooling gets the full decide/install/`--check` mechanism — unmanaged. See `example-tool.sh.example` |
@@ -70,31 +71,49 @@ thin stub Claude Code needs for discovery.
 | `/workflow-init` | Install/verify required tooling (git, yq); record per-machine decisions on recommended, opt-in tools (Obsidian, codegraph, opencodex); writes per-machine `init.lock` |
 | `/workflow-check` | Every organizational constraint in one pass — tooling, file format, layout, task grammar, template drift — with stable rule IDs. Owns none of them; each skill owns the constraints for its own shapes |
 | `/workflow-agents-sync` | Enforce the AGENTS-canonical format here and across standing-bind repos present on disk |
-| `/workflow-template-sync` | The upstream link: `derive` a new workflow, `update` a derivation's managed set, `--check` report drift |
+| `/workflow-template-sync` | Composition: `derive` a new workflow repo, `add`/`remove` a pack, `update` the core and every pack, `list`, `--audit` composition integrity, `--check` version drift |
 | `/workflow-manage` | Administer this workflow: add/remove/edit standing binds, assemble/refresh the substrate (`sync-binds.sh`) |
 | `/workflow-bind` | Bind a session: attach default standing binds (and anything else asked for) via `/add-dir` |
 | `/workflow-gateway` | Manage the local opencodex model gateway (start/stop/status) and print the strictly opt-in, per-session `ANTHROPIC_BASE_URL` override |
 | `/workflow-orchestrate` | Task-based orchestration: directive → committed task list (`workflows/<workflow>/<app>/<session>/tasks.md`) → dispatch per model **tier** (`flagship` · `workhorse` · `fleet`, resolved from a lane roster, never a hardcoded model name) → loop until the list is exhausted AND its durable output harvested out of the session directory |
-| `/craft-tdd` | Test-first protocol: failing test before production code, integration focus, seams at every EUD, never mock business logic |
-| `/craft-ubiquitous-language` | The glossary as a domain's single source of terms; one language per bounded context; how code, tests, events, and UI stay in step with it, and how drift is reported |
-| `/craft-code-quality` | Module size budgets, mandatory lint/static analysis, ports and adapters, pragmatic SOLID/DDD, no implicit fallbacks, required observability — plus a ratcheting path for repos that start nowhere near any of it |
+Two prefixes are reserved: **`workflow-*`** (core machinery that operates on the shapes)
+and **`craft-*`** (the `craft` pack). Name local skills outside both, or an `update` may
+clobber them.
 
-Two prefixes are reserved for the template: **`workflow-*`** (machinery that operates on
-template shapes) and **`craft-*`** (engineering doctrine for work done *on* substrate).
-Name derivation-local skills outside both, or a future `update` may clobber them.
+## Packs
 
-### Craft overlays
+The core defines the shapes. Everything else is a **pack**: a repo with a `pack.yaml`
+declaring the exact paths it owns, installed with
 
-`craft-*` skills ship opinion — size budgets, architecture defaults, a test protocol —
-into derivations whose area of work the template cannot know. Each one declares a
-precedence ladder: **a bound repo's own law wins inside its boundaries → then this
-workflow's overlay → then the skill's defaults.** To change a default, write
+```sh
+.agents/skills/workflow-template-sync/template-sync.sh add <url-or-path>
+```
+
+**Composition, not more inheritance.** The core cannot know your area of work, so
+anything it ships beyond the shapes is a guess — and guesses belong in things you can
+decline. `craft-*` was 40% of the core by size and none of it was mechanism, so it is now
+the `craft` pack. A workflow repo with no packs is complete, not degraded.
+
+| Pack | What it carries |
+|---|---|
+| `craft` | `/craft-tdd`, `/craft-code-quality`, `/craft-event-naming`, `/craft-ubiquitous-language` — engineering doctrine for work done *on* substrate |
+
+Three invariants, enforced rather than advised: **one owner per path** (a collision is an
+error, refused before any write), **a dropped path is removed** (retiring a skill
+upstream retires it everywhere), and **no inter-pack dependencies** (no resolver, no
+ordering, no version solving). `--audit` re-checks all three offline as `PACK-001..003`.
+
+### Overlay slots
+
+A pack ships opinion into repos whose area of work it cannot know, so every one declares
+a precedence ladder: **a bound repo's own law wins inside its boundaries → then this
+workflow's overlay → then the pack's defaults.** To change a default, write the overlay:
 `.agents/craft/<skill-name>.local.md` — the skill's full name, prefix included, so
-`/craft-code-quality` overlays at `.agents/craft/craft-code-quality.local.md`; it is
-unmanaged, so `update` never touches it, and where it conflicts with the skill it wins.
-No pinning, no ejecting, no drift.
+`/craft-code-quality` overlays at `.agents/craft/craft-code-quality.local.md`. Unmanaged,
+so `update` never touches it, and where it conflicts with the skill it wins. No pinning,
+no ejecting, no drift.
 
-The same mechanism serves `/workflow-orchestrate` outside `.agents/craft/`: put tier→lane
+The same mechanism serves the core's `/workflow-orchestrate` outside `.agents/craft/`: put tier→lane
 preference and role→tier overrides in `.agents/orchestrate/roster.local.yaml`, further
 doctrine overrides in `.agents/orchestrate/orchestrate.local.md`. Both unmanaged, both win
 over the skill.

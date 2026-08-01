@@ -20,9 +20,9 @@ a stale lock means this machine hasn't run the latest init.
 
 A **workflow repo** captures the techniques, tactics, procedures, and doctrine for a
 whole **area of work** (stewardship, schema management, incident response, …). Code
-repos are **substrate** — operated *on*, not *in*. This repo is the core every derived
-workflow repo shares: managed law, a package of skills and workflows, a live link
-upstream. Read "The shapes" below before adding anything.
+repos are **substrate** — operated *on*, not *in*. This repo is the **core** every
+workflow repo composes in: managed law, the shapes, the operations on those shapes, and
+a live link upstream. Read "The shapes" and "Composition" below before adding anything.
 
 ## Canonical file format
 
@@ -149,8 +149,9 @@ What this asks of a derivation:
   after the wrong sense of "workflow".
 - **Do not translate at the boundary.** When a bound repo names a thing, use its name
   inside its boundaries. Two names for one concept is the defect, wherever it appears.
-- **`/craft-ubiquitous-language`** carries the full doctrine, and it governs this repo as
-  much as any application it stewards.
+- **`/craft-ubiquitous-language`** carries the full doctrine — from the `craft` pack, so
+  a repo without that pack keeps the duty and loses only the guidance. It governs this
+  repo as much as any application it stewards.
 
 ## Journal, session state, git
 
@@ -164,19 +165,66 @@ What this asks of a derivation:
   may resolve to a Windows binary (a WSL `git=...git.exe` alias is the common trap).
   `/workflow-init --check` warns if detected.
 
-## Template link, the categorical rule, and the covenant
+## Composition
 
-`AGENTS.CORE.md` and `.agents/skills/` are **managed by the upstream template**,
-tracked in `.template.lock` (`pinned: true` freezes updates). Full mechanics:
-`/workflow-template-sync`. **Covenant:** the template facilitates, never constrains —
-everything outside the managed set is entirely the derivation's, ejectable any time
-(delete `.template.lock`). **Categorical rule:** the template owns every operation on
-its shapes, as managed skills; a derivation contributes data/doctrine only, never a
-parallel tool (`binds.yaml`: template owns the operations, a derivation owns only its
-entries and why). **Craft overlays:** a precedence ladder — bound repo's law → the
-workflow's `.agents/craft/<skill-name>.local.md` overlay (full name, prefix included:
-`craft-tdd.local.md`), which wins → skill defaults — in
-full at `/craft-tdd` or `/craft-code-quality`.
+A workflow repo is **composed from packs**, not inherited from one parent. A **pack** is
+a repo that declares, in `pack.yaml` at its root, the exact set of paths it owns:
+
+```yaml
+name: craft
+version: 3
+provides:
+  - .agents/skills/craft-tdd/**
+```
+
+Two kinds, and the difference is only that one is required:
+
+| | The core | A pack |
+|---|---|---|
+| What it is | this repo — the shapes, and every operation on them | capability layered on top |
+| Manifest | `template-manifest.yaml` (`managed:`) | `pack.yaml` (`provides:`) |
+| Declared in | `.template.lock` — exactly one, never removable | `packs.yaml` — any number, each removable |
+| Optional | no | **yes.** A repo with no packs is complete, not degraded |
+
+Install one with `/workflow-template-sync add <url>`; `update` pulls the core and every
+pack forward; `remove` uninstalls a pack and deletes its paths. Three invariants make
+composition safe, and all three are enforced, not advised:
+
+- **One owner per path.** A path claimed by two packs is an **error**, refused before
+  anything is written. Never a merge, never last-writer-wins.
+- **A dropped path is removed.** A path a pack stops providing is deleted on the next
+  update. Retiring a skill upstream retires it everywhere, instead of leaving orphans.
+- **No inter-pack dependencies.** Packs are flat. There is no resolver, no ordering, no
+  version solving — a pack that needs another pack's file is asking for the wrong shape.
+
+**Why composition and not more inheritance.** The core cannot know your area of work, so
+anything it ships beyond the shapes is a guess. Guesses belong in things you can decline.
+`craft-*` was 40% of the core by size and none of it was mechanism; it is now the `craft`
+pack, and a workflow repo that wants no engineering opinion installs it and nothing
+breaks or warns.
+
+**The categorical rule.** The core owns every operation on its shapes, as managed skills;
+a derivation contributes data and doctrine only, never a parallel tool (`binds.yaml`: the
+core owns the operations, a derivation owns only its entries and why). A pack owns the
+operations on the shapes *it* introduces, by the same rule.
+
+**The covenant.** The core facilitates, never constrains. Everything outside the managed
+set is entirely the derivation's, ejectable any time (delete `.template.lock`);
+`pinned: true` freezes updates without ejecting.
+
+**Overlay slots** are how managed content stays configurable without forking it. A pack
+reads an unmanaged, derivation-owned file and lets it win:
+
+| Slot | Overrides |
+|---|---|
+| `.agents/craft/<skill-name>.local.md` | a `craft-*` skill's defaults (full name: `craft-tdd.local.md`) |
+| `.agents/orchestrate/roster.local.yaml` | tier→lane preference, role→tier |
+| `.agents/orchestrate/orchestrate.local.md` | orchestration doctrine |
+| `.agents/init/tools.local.d/<tool>.sh` | adds a tool to init |
+| `GLOSSARY.local.md` | the derivation's own terms |
+
+The ladder everywhere: **a bound repo's own law → the derivation's overlay → the pack's
+defaults**, which apply in full force only where the first two are silent.
 
 ## Tiers (RBAC)
 
@@ -209,23 +257,28 @@ exists to end. The registry, with every rule and why it matters:
 An unmet constraint is an ordinary result (exit 2). Only a checker that cannot run is a
 failure (exit 1).
 
-## Baked-in skills
+## Core skills
 
-Index only — descriptions load via frontmatter:
+Index only — descriptions load via frontmatter. All mechanism; all present in every
+workflow repo:
 
 - `/workflow-init` — tooling, `init.lock`, tool tiers, MCP wrapper doctrine.
 - `/workflow-agents-sync` — canonical-format enforcement.
 - `/workflow-check` — every organizational constraint in one pass; the rule registry.
-- `/workflow-template-sync` — the upstream link.
+- `/workflow-template-sync` — composition: the core link, and `add`/`remove`/`update`
+  for packs.
 - `/workflow-manage` — bind registry, workspace assembly.
 - `/workflow-bind` — attach standing binds to a session.
 - `/workflow-gateway` — local opencodex gateway, opt-in per session.
 - `/workflow-orchestrate` — directive → task list → tiered dispatch → loop; DoD is
   exhaustion **plus** harvest, decided by `orchestrate.sh status`.
-- `/craft-event-naming` — canonical event/command naming, progressive omission.
-- `/craft-tdd` — test-first protocol.
-- `/craft-code-quality` — size budgets, lint, architecture, ratchet.
-- `/craft-ubiquitous-language` — the glossary as a domain's single source of terms.
+
+Skills that arrive from a pack are not listed here — read `packs.yaml`, or run
+`/workflow-template-sync list`. The one this system publishes:
+
+- **`craft`** — engineering doctrine: `/craft-tdd`, `/craft-code-quality`,
+  `/craft-event-naming`, `/craft-ubiquitous-language`. Optional. Install it in a workflow
+  repo that wants opinions about how code is written; skip it in one that does not.
 
 ## Baked-in workflows
 

@@ -1,13 +1,14 @@
 ---
 name: workflow-template-sync
 description: >-
-  The upstream link between workflow-template and a derived workflow repo. `derive`
-  turns a fresh copy/clone of the template into a derivation (writes .template.lock).
-  `update` pulls forward changes to the managed set (AGENTS.CORE.md, CLAUDE.md,
-  template-manifest.yaml, the workflow-* skills) from upstream, unless pinned.
-  `--check` reports current vs upstream template version. Use when asked to derive a
-  new workflow from the template, to sync/update a derivation's managed core, to check
-  whether a derivation is behind upstream, or to pin/unpin a derivation.
+  Composition for a workflow repo. A repo is assembled from PACKS: one core (this
+  template — the shapes, tracked in .template.lock) plus any number of optional packs
+  (declared in packs.yaml, each with its own pack.yaml). `derive` turns a fresh
+  copy/clone of the core into a workflow repo. `add`/`remove` install and uninstall a
+  pack. `update` pulls the core and every pack forward. `list` shows what is installed.
+  `--check` reports versions. Use when asked to derive a new workflow repo, to add or
+  drop a pack, to sync a repo's managed paths, to check whether anything is behind, or
+  to pin/unpin.
 ---
 
 @../../../.agents/skills/workflow-template-sync/SKILL.md

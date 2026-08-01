@@ -1,20 +1,25 @@
-# template-manifest.yaml — the managed set.
+# template-manifest.yaml — the CORE pack's manifest.
 #
-# Exactly the paths `workflow-template-sync` owns in a derivation. `update` copies ONLY
-# these paths forward from upstream when the upstream's VERSION is ahead of a
-# derivation's `.template.lock` `template_version` (and never touches anything outside
-# this list, in this file or elsewhere). `derive` writes `.template.lock` pointing back
-# at wherever this file's repo was copied/cloned from.
+# A workflow repo is composed from packs (see AGENTS.CORE.md "Composition"). This file
+# is the manifest of the one pack that is not optional: the core, which defines the
+# shapes every other pack plugs into. Additional packs declare the same thing in a
+# `pack.yaml` at their root, with `provides:` in place of `managed:`.
 #
-# This file is itself managed: a derivation gets it kept in sync too, and it's what
-# lets a future template version add or retire a managed path in every derivation.
+# `update` copies ONLY these paths forward from upstream when the upstream's VERSION is
+# ahead of a derivation's `.template.lock` `template_version`, and touches nothing
+# outside the list. A path REMOVED from this list is deleted from every derivation on
+# its next update — the derivation's own copy of this file is the record of what the
+# core previously owned.
+#
+# This file is itself managed, which is what lets a future core version add or retire a
+# managed path everywhere.
 
-version: 29  # mirrors this repo's VERSION at the time this manifest last changed
+version: 30  # mirrors this repo's VERSION at the time this manifest last changed
              # VERSION is a plain integer; comparison uses sort -n.
 
 managed:
   - AGENTS.CORE.md
-  # Managed workflows: the template ships workflows, not only skills
+  # Managed workflows: the core ships workflows, not only skills
   # (AGENTS.CORE.md "The shapes"). Only the TIMELESS half is managed -- a derivation's
   # applications, carried work, and sessions under this workflow are its own data and
   # are never overwritten by update.
@@ -26,6 +31,9 @@ managed:
   - CLAUDE.md
   - template-manifest.yaml
   # Canonical skill bodies + scripts (proxy rule: .claude is a proxy for .agents).
+  # These are MECHANISM: the shapes, and the operations on them. Engineering opinion is
+  # not here -- it ships as the optional `craft` pack (pack-craft), installed with
+  # `template-sync.sh add`. A workflow repo with no packs is complete, not degraded.
   - .agents/skills/workflow-init/**
   - .agents/skills/workflow-agents-sync/**
   - .agents/skills/workflow-check/**
@@ -35,16 +43,8 @@ managed:
   - .agents/skills/workflow-gateway/**
   # Task-based orchestration. Managed, but tier→lane preference and role→tier overrides
   # live in the derivation-owned overlay .agents/orchestrate/roster.local.yaml, and its
-  # run state in workflows/ (plus legacy .workflow/) — none of it managed, none touched
-  # by `update`.
+  # run state in workflows/ — none of it managed, none touched by `update`.
   - .agents/skills/workflow-orchestrate/**
-  # Engineering doctrine (craft-*): defaults for work done ON substrate. Managed, but
-  # every craft-* skill defers to a bound repo's own law and to a derivation's unmanaged
-  # overlay at .agents/craft/<skill>.local.md — see AGENTS.CORE.md "Craft overlays".
-  - .agents/skills/craft-tdd/**
-  - .agents/skills/craft-code-quality/**
-  - .agents/skills/craft-event-naming/**
-  - .agents/skills/craft-ubiquitous-language/**
   # Discovery-frontmatter proxy stubs — Claude Code needs these under .claude/skills/
   # to find each skill; each stub's body only points at its canonical file above.
   - .claude/skills/workflow-init/SKILL.md
@@ -55,7 +55,3 @@ managed:
   - .claude/skills/workflow-bind/SKILL.md
   - .claude/skills/workflow-gateway/SKILL.md
   - .claude/skills/workflow-orchestrate/SKILL.md
-  - .claude/skills/craft-tdd/SKILL.md
-  - .claude/skills/craft-code-quality/SKILL.md
-  - .claude/skills/craft-event-naming/SKILL.md
-  - .claude/skills/craft-ubiquitous-language/SKILL.md

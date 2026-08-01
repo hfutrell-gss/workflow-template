@@ -28,17 +28,31 @@ Promote only what passes all four:
 1. **General.** The concept holds for a derivation whose area of work you know nothing
    about. A rule that names this derivation's applications is doctrine, not template
    material.
-2. **Shaped, not opinionated.** The template owns shapes and operations. Where the
-   template must carry opinion — the `craft-*` skills do — it ships with a
-   derivation-owned overlay slot that wins over it.
-3. **Owned by the managed set.** Check `template-manifest.yaml`. If the target path is
-   not managed, `update` will never carry it, and the change belongs here, not
-   upstream. Say so rather than shipping it into a file no derivation reads.
+2. **Shaped, not opinionated.** The core owns shapes and operations, and nothing else.
+   Opinion goes in a **pack** — the `craft` pack is the worked example — and every pack
+   ships a derivation-owned overlay slot that wins over it. "This is general but it is an
+   opinion" is not a reason to skip promotion; it is the answer to *which repo*.
+3. **Owned by a managed set.** Check the destination's manifest —
+   `template-manifest.yaml` for the core, `pack.yaml` for a pack. If the target path is
+   not managed, `update` will never carry it, and the change belongs here, not upstream.
+   Say so rather than shipping it into a file no repo reads.
 4. **Evidenced.** The concept came from real work, not from speculation. Record what
    made it necessary.
 
 A concept that fails 1 belongs in this repo's `AGENTS.md`. A concept that fails 3 needs
 a manifest entry first, or a different home.
+
+**Choosing the destination.** Ask what breaks without it:
+
+| If the concept… | It goes in |
+|---|---|
+| defines a shape, or an operation on one | the core |
+| is engineering opinion about how code is written | the `craft` pack |
+| is opinion about something else, general, and nothing existing owns it | a new pack |
+| names this derivation's applications | this repo's `AGENTS.md` — not upstream |
+
+A new pack is cheap: a repo, a `pack.yaml`, and the paths it claims. Adding opinion to
+the core because no pack exists yet is the failure this structure was built to stop.
 
 ## Procedure
 
@@ -50,9 +64,11 @@ Full step list, including the failure modes that cost the most time:
    upstream and that you can push to it.
 2. Make the change upstream, in `workspace/workflow-template`. Never in the derivation's
    own managed copy.
-3. Bump `VERSION`, and `template-manifest.yaml`'s `version:` to match. Add any new path
-   to the manifest **before** you bump, or `update` will skip the new file in every
-   derivation.
+3. Bump the version: `VERSION` **and** `template-manifest.yaml`'s `version:` for the
+   core, or `pack.yaml`'s `version:` for a pack. Add any new path to the manifest
+   **before** you bump, or `update` will skip the new file in every repo. Removing a
+   path from the manifest now deletes it downstream — intended, and worth stating in the
+   commit.
 4. Run the checks the change touches: `agents-sync.sh`, `bash -n` on any script,
    `orchestrate.sh status` on a live session.
 5. Push.
