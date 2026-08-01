@@ -249,6 +249,12 @@ that owns a rule and stops there — it does not restate it. A restatement drift
 copy, never in the canonical file, so the reader who finds the copy first reads the
 version nothing enforces.
 
+**Capability this system does not own arrives as a plugin, not a pack.** The test:
+*would we send a pull request to change it?* Yes → pack. No → **plugin** — the harness's
+own mechanism, installed per-machine, declared in `plugins.yaml` and governed by
+`/workflow-plugins`, which owns what a plugin gives up by not being a pack and how a user
+declines one the repo enables by default. A repo that declares no plugins is complete.
+
 **The covenant.** The core facilitates, never constrains. Everything outside the managed
 set is entirely the derivation's, ejectable any time (delete `.template.lock`);
 `pinned: true` freezes updates without ejecting.
@@ -339,6 +345,8 @@ workflow repo:
 - `/workflow-check` — every organizational constraint in one pass; the rule registry.
 - `/workflow-template-sync` — composition: the core link, and `add`/`remove`/`update`
   for packs.
+- `/workflow-plugins` — the plugin registry: the shared default set, the review behind
+  each entry, and the per-user opt-out.
 - `/workflow-manage` — bind registry, workspace assembly.
 - `/workflow-bind` — attach standing binds to a session.
 - `/workflow-orchestrate` — directive → task list → tiered dispatch → loop; DoD is

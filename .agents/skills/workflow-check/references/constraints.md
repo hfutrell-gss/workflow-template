@@ -115,6 +115,25 @@ writes, or obfuscation. That is a gate, not a constraint: it runs once, on a pac
 not yet part of the repo, and `--reviewed` waives it deliberately. Re-run it any time
 with `scan <pack>`.
 
+## PLUGIN-* — `/workflow-plugins`
+
+The registry for capability consumed as a Claude Code plugin rather than as a pack.
+Reported by `plugins.sh check`. Skipped silently when there is no `plugins.yaml` — a
+repo that declares no plugins is complete, not degraded.
+
+| ID | Constraint | Why it matters |
+|----|------------|----------------|
+| `PLUGIN-001` | `.claude/settings.json` matches what `plugins.sh render` would write | That file is generated from `plugins.yaml`. A hand-edit is a second source of truth for the default set, and it is the one that wins without anyone noticing |
+| `PLUGIN-002` | Every declared plugin has `why:` and a `reviewed:` block carrying a `verdict:` | A plugin executes arbitrary code with your privileges, and no scan gate stands in front of it. The review is the only control there is; `why:` is what makes it possible to drop the plugin later |
+| `PLUGIN-003` | Every declined plugin names a reason | Separates declined-on-purpose from absent-by-accident. Without it a session that finds the skill missing cannot tell whether to work around the gap or report a broken machine |
+| `PLUGIN-004` | `.agents/plugins/plugins.local.yaml` is not tracked by git | It is one machine's answer. Committing it imposes that answer on everyone, which inverts the feature it exists to provide |
+
+**Why a plugin needs constraints a pack does not.** A pack is bound by composition law:
+one owner per path, a scan before install, a version in `packs.lock`, an overlay slot.
+A plugin has none of that — it is installed by the harness, outside the repo, from a
+source this system does not control. These four are what replaces it, and all four are
+about the human step, because the human step is all there is.
+
 ## Adding a constraint
 
 1. **Find its owner.** The skill that defines the shape owns the check. If no skill owns

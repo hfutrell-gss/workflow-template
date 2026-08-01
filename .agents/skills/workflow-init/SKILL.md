@@ -27,7 +27,7 @@ message on any other platform (macOS/arm64, native Windows, etc.).
 
 ## Tool tiers
 
-- **REQUIRED** — `git`, `yq`. Every procedure in this repo assumes these. Missing on a
+- **REQUIRED** — `git`, `yq`, `jq`. Every procedure in this repo assumes these. Missing on a
   plain run → installed automatically. Missing on `--check` → hard failure.
 - **RECOMMENDED** — `obsidian`, `codegraph`. Useful, but opt-in **per
   machine**, one tool at a time, via a recorded decision (below). A recommended tool
@@ -106,6 +106,11 @@ Typical opt-in flow for a recommended tool:
   Installs from GitHub releases into `~/.local/bin` if missing. `init.lock` itself is
   parsed with plain grep/awk (never `yq`) precisely because init.sh may still be
   bootstrapping yq when it reads its own lock.
+- **jq** — required by `workflow-plugins`, which generates `.claude/settings.json` from
+  `plugins.yaml` and must merge into files that hold unrelated keys rather than
+  overwriting them. `PLUGIN-001` compares the committed file against a fresh render, so
+  the rendering has to be byte-stable, which is a job for a JSON tool and not for a
+  shell. Installs the static binary from GitHub releases into `~/.local/bin` if missing.
 
 **Recommended (decision-gated):**
 - **Obsidian** — the vault lens over this repo's `journal/` and doctrine. Installs

@@ -24,7 +24,7 @@ ROOT="$(cd "$HERE/../../.." && pwd)"
 VERSION="$(tr -d '[:space:]' < "$HERE/VERSION")"
 LOCK="$ROOT/init.lock"
 
-REQUIRED=(git yq)
+REQUIRED=(git yq jq)
 RECOMMENDED=(obsidian codegraph)
 
 # ---- derivation-owned tool overlays ------------------------------------------
@@ -92,6 +92,7 @@ fi
 have() { command -v "$1" >/dev/null 2>&1; }
 
 check_yq()       { have yq && yq --version 2>/dev/null | grep -o 'v[0-9][0-9.]*' | head -1; }
+check_jq()       { have jq && jq --version 2>/dev/null | head -1; }
 check_obsidian() { have obsidian && echo present; }
 check_codegraph(){ have codegraph && (codegraph --version 2>/dev/null || echo present) | head -1; }
 
@@ -156,6 +157,16 @@ install_yq() {
   curl -fsSL -o "$HOME/.local/bin/yq" \
     "https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64" \
     && chmod +x "$HOME/.local/bin/yq"
+}
+
+install_jq() {
+  # jq renders and compares the generated settings files for /workflow-plugins. The
+  # static binary is used for the same reason as yq's: no package manager is assumed.
+  echo "installing jq to ~/.local/bin ..." >&2
+  mkdir -p "$HOME/.local/bin"
+  curl -fsSL -o "$HOME/.local/bin/jq" \
+    "https://github.com/jqlang/jq/releases/latest/download/jq-linux-amd64" \
+    && chmod +x "$HOME/.local/bin/jq"
 }
 
 install_obsidian() {

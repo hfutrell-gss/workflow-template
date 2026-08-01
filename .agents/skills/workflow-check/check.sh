@@ -14,6 +14,8 @@
 #   TEMPLATE-* workflow-template-sync  the core/pack version drift against upstream
 #   PACK-*     workflow-template-sync  composition integrity: one owner per path,
 #              installed == declared, claimed paths present (offline; no upstream)
+#   PLUGIN-*   workflow-plugins     the plugin registry: the default set matches
+#              plugins.yaml, every plugin is reviewed, every decline names its reason
 #
 # Usage:
 #   check.sh            report; exit 0 all clear, 2 violations found, 1 error
@@ -82,6 +84,9 @@ if [ -f "$ROOT/.template.lock" ]; then
   run_stdout_coded        "PACK"     bash "$S/workflow-template-sync/template-sync.sh" --audit
   run_nonzero_is_violation "TEMPLATE" bash "$S/workflow-template-sync/template-sync.sh" --check
 fi
+# A repo with no plugins.yaml declares no plugins, which is a complete state -- the
+# owner returns 0 silently, so this needs no guard of its own.
+[ -f "$S/workflow-plugins/plugins.sh" ] && run_exit_coded "PLUGIN" bash "$S/workflow-plugins/plugins.sh" check
 
 echo
 case "$rc" in

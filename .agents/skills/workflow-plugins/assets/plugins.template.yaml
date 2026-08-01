@@ -1,0 +1,41 @@
+# plugins.yaml — capability this repo consumes as a Claude Code PLUGIN.
+#
+# A pack is an opinion this system holds and would fix at the source. A plugin is
+# somebody else's product that we use and do not steer. The test: would we send a pull
+# request to change it? Yes -> pack (packs.yaml). No -> plugin (here).
+#
+# This file is the DEFAULT SET, shared with everyone who clones. It is not the opt-out:
+# a user declines in .agents/plugins/plugins.local.yaml, which is per-machine and never
+# committed. Full doctrine, the decline procedure, and PLUGIN-001..004:
+# /workflow-plugins.
+#
+# `.claude/settings.json` is GENERATED from this file by `plugins.sh render`. Never edit
+# it by hand — PLUGIN-001 exists because a hand-edit is the source of truth that wins
+# without anyone noticing.
+
+marketplaces: {}
+# One entry per marketplace, keyed by the name plugins reference below. A repo that is
+# its own marketplace uses its own name:
+#
+#   my-tools:
+#     source: { source: github, repo: your-org/claude-plugins }
+
+plugins: []
+# - name: example                 # the marketplace ENTRY's name, which can differ from
+#                                 # the name inside the plugin's own plugin.json
+#   marketplace: my-tools         # a key under marketplaces: above
+#   default: true                 # true  = on for everyone who clones
+#                                 # false = declared and reviewed, but opt-in
+#   why: >-
+#     One or two sentences. Not what the plugin does — what THIS repo needed that it
+#     answers. A dependency nobody can justify is one nobody can drop either.
+#   reviewed:                     # PLUGIN-002. The point of this file.
+#     version: "1.0.0"            # what was actually read
+#     date: 2026-01-01
+#     hooks: none                 # what runs WITHOUT being invoked. Read this first:
+#                                 # a hook fires on every matching tool call, in every
+#                                 # project where the plugin is active.
+#     egress: none                # what it sends, where, and how to turn it off
+#     credentials: none           # every env var and secret it reads
+#     verdict: accepted           # notes without a conclusion tell the next reader
+#                                 # nothing. Write 'none' for a field, never omit it.

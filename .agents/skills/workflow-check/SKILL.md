@@ -1,6 +1,6 @@
 ---
 name: workflow-check
-description: Run every organizational constraint this repo declares in one pass — tooling, canonical file format, workflow/application/session layout, task grammar, template drift, and pack composition integrity — and return one verdict with rule IDs. Use when checking whether the repo is in a conforming state, before or after a large restructuring, when a session closes, when something feels out of place but you cannot name which rule it breaks, or when adding a new organizational constraint and needing to know where it belongs.
+description: Run every organizational constraint this repo declares in one pass — tooling, canonical file format, workflow/application/session layout, task grammar, template drift, pack composition integrity, and the plugin registry — and return one verdict with rule IDs. Use when checking whether the repo is in a conforming state, before or after a large restructuring, when a session closes, when something feels out of place but you cannot name which rule it breaks, or when adding a new organizational constraint and needing to know where it belongs.
 ---
 
 # workflow-check
@@ -35,6 +35,7 @@ applied to enforcement. This dispatches to them and aggregates one verdict.
 | `SUBSTRATE-*` | `/workflow-orchestrate` | session identifiers escaping into bound substrate |
 | `TEMPLATE-*` | `/workflow-template-sync` | core and pack version drift against upstream |
 | `PACK-*` | `/workflow-template-sync` | composition integrity: path ownership, installed state, overlay slots |
+| `PLUGIN-*` | `/workflow-plugins` | the plugin registry: the default set, the reviews, the per-user declines |
 
 Every rule, with its statement and why it matters: `references/constraints.md`. Cite the
 ID — `LAYOUT-007`, `AGENTS-003` — and a reader can look up exactly what was broken.

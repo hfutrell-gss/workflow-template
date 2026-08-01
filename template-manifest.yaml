@@ -14,7 +14,7 @@
 # This file is itself managed, which is what lets a future core version add or retire a
 # managed path everywhere.
 
-version: 36  # mirrors this repo's VERSION at the time this manifest last changed
+version: 39  # mirrors this repo's VERSION at the time this manifest last changed
              # VERSION is a plain integer; comparison uses sort -n.
 
 managed:
@@ -40,6 +40,10 @@ managed:
   - .agents/skills/workflow-template-sync/**
   - .agents/skills/workflow-manage/**
   - .agents/skills/workflow-bind/**
+  # The plugin registry. The SKILL and its script are managed; plugins.yaml (the
+  # derivation's declared set) and .agents/plugins/plugins.local.yaml (one machine's
+  # declines) are the derivation's own and are never touched by update.
+  - .agents/skills/workflow-plugins/**
   # Task-based orchestration. Managed, but tier→lane preference and role→tier overrides
   # live in the derivation-owned overlay .agents/orchestrate/roster.local.yaml, and its
   # run state in workflows/ — none of it managed, none touched by `update`.
@@ -52,4 +56,5 @@ managed:
   - .claude/skills/workflow-template-sync/SKILL.md
   - .claude/skills/workflow-manage/SKILL.md
   - .claude/skills/workflow-bind/SKILL.md
+  - .claude/skills/workflow-plugins/SKILL.md
   - .claude/skills/workflow-orchestrate/SKILL.md
