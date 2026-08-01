@@ -169,13 +169,14 @@ Closing is `orchestrate.sh close`. It re-checks this DoD, writes the ledger line
               `workflow-gateway` is the path being dropped.
       accept: same as T005, except: no remote is configured, so the push clause does not apply
               and the commit is local by definition.
-- [ ] T008 · fleet · deps:T005,T006,T007 · Update ~/.claude/skills/wf/SKILL.md to the v37 model
+- [ ] T008 · fleet · deps:T015,T016,T017 · Update ~/.claude/skills/wf/SKILL.md to the current model
       accept: the file names packs and `template-sync.sh add/remove/list`, the four-level
-              `workflows/<workflow>/<app>/<session>/` layout, `/workflow-check`, and the
-              `code-craft` pack; no surviving reference to `craft-*`, `.workflow/`,
-              `playbooks/`, or the removed gateway; every repo URL and path in it verified
-              against disk.
-- [ ] T009 · fleet · deps:T005,T006,T007 · Verify all three derivations under the v37 checks
+              `workflows/<workflow>/<app>/<session>/` layout, `/workflow-check`,
+              `/workflow-plugins` and the pack-vs-plugin test ("would we send a pull request
+              to change it?"), and the `code-craft` pack; no surviving reference to `craft-*`,
+              `.workflow/`, `playbooks/`, or the removed gateway; every repo URL and path in it
+              verified against disk. Runs LAST so it describes the state that actually exists.
+- [ ] T009 · fleet · deps:T015,T016,T017 · Verify all three derivations under the v37 checks
       accept: notes/T009-verify.md carries, per repo, the literal output of `check.sh`,
               `orchestrate.sh check`, `agents-sync.sh`, and `template-sync.sh --check --audit`;
               any non-clean result named as a finding rather than summarized as pass.
@@ -235,6 +236,25 @@ Closing is `orchestrate.sh close`. It re-checks this DoD, writes the ledger line
               first; if it fails one, that is the finding. VERSION + manifest bumped together.
       deps-why: serialized behind T012 on purpose — both edit this core's VERSION and
               template-manifest.yaml, and two concurrent bumps collide.
+- [ ] T015 · fleet · deps:T014 · Re-converge stewardship onto the core's released version
+      accept: `.template.lock` matches this core's VERSION at the time the task runs (>= 40);
+              `--check` no drift for core AND code-craft; `/workflow-init` run (init VERSION
+              went 6 -> 7, jq is now a required tool); `## Closed` present in every application
+              `tasks.md` per the tightened LAYOUT-008; the four legacy sessions still resolve
+              and no task marker moved. NO bootstrap step needed this time — the repo's own
+              script is already v37, which computes dropped paths correctly.
+- [ ] T016 · fleet · deps:T014 · Re-converge workflow-monolith onto the core's released version
+      accept: same as T015, minus the legacy-session clause (that repo has none).
+- [ ] T017 · fleet · deps:T014 · Re-converge sandbox onto the core's released version
+      accept: same as T016. No pack, no remote.
+- [ ] T018 · fleet · deps:- · Survey the plugin marketplace and recommend a registry
+      accept: notes/T018-plugins.md lists every plugin available in `claude-plugins-official`
+              (registered on this machine today at 16:29 local; nothing enabled anywhere), and
+              for each: what it executes — HOOKS FIRST, then egress, then credential reads —
+              at what version, per `/workflow-plugins`'s review duty. Ends with a
+              recommendation per workflow repo and an explicit statement that declaring a
+              plugin is the user's call, not this task's. Writes NO plugins.yaml: a repo with
+              none is complete, not degraded, and an empty registry is worse than no registry.
 - [ ] T010 · workhorse · deps:T009 · Write the derivations application profile
       accept: `../profile.md` records each derivation — path, remote, template_version,
               packs installed, what it stewards — and every claim that can decay carries the
@@ -302,3 +322,28 @@ harvest: pending
   work, per the constitution's mandatory first check. v6 dropped `opencodex` (v37 removed the
   gateway from the core). Standing warning, unchanged: `git` is aliased to a Windows binary at
   `/home/henning/.zshenv:39`; `/usr/bin/git` explicitly, always.
+- **Upstream moved a third time, to v40 — chased on the user's instruction.** `personal/main`
+  reached v40 while T005–T007 were converging the derivations onto v37, and `main` had
+  DIVERGED (7 session commits vs 4 upstream). Rebased the session commits onto v40 — clean, no
+  conflicts, because the session only touches `workflows/.../derivations/**` and one journal
+  file while upstream touched skills and core law. Pushed to origin. Three of the four new
+  commits bear on this run: v38 fixes `close` stripping the blockquote marker from the ledger
+  directive (this session's Directive IS a blockquote), v40 restores `## Closed` to the carried
+  template (the `derivations/tasks.md` scaffolded here lacked it — LAYOUT-008 caught it, fixed
+  by hand), and `workflow-init` VERSION went 6 -> 7 with `jq` now required, so every repo's
+  `init.lock` is stale again.
+- **Re-plan: promote first, converge once.** T015–T017 re-converge the three derivations, but
+  they are sequenced BEHIND the two promotions (T012, T014) rather than run now against v40.
+  Converging to 40 and then again to 41 would be two hops for one outcome. The promotions
+  bump the core; the derivations then take a single hop to whatever that release is.
+  T012 and T014 are serialized against each other for the same reason two writers cannot both
+  bump VERSION.
+- **Neither promotion was pre-empted upstream.** v38–v40 touched `check.sh` and
+  `constraints.md`, so both T012 (update bootstrap) and T014 (SUBSTRATE-001 counting build
+  artifacts) were re-checked against the new code and both still stand.
+- **Plugins: mechanism arrives, registry does not.** `/workflow-plugins` (v39) is now present
+  in all four repos as part of the core. Nothing is declared and nothing is enabled: no repo
+  has a `plugins.yaml`, `plugins.sh list` says so, and `enabledPlugins` is empty in the
+  harness. One marketplace is registered — `claude-plugins-official`, added 2026-08-01 16:29
+  local. T018 surveys it and recommends; it deliberately writes no `plugins.yaml`, because an
+  empty registry is worse than none and which plugins a repo declares is the user's call.
