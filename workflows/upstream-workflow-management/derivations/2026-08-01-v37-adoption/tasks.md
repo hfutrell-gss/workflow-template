@@ -200,8 +200,32 @@ Closing is `orchestrate.sh close`. It re-checks this DoD, writes the ledger line
       found:  raised by T005's worker as outside its assigned scope. Correct call — a dangling
               relative link in a derivation-owned skill is real work, and widening T005 to
               absorb it would have hidden the growth.
-- [~] T012 · workhorse · deps:T005,T006,T007 · Promote the update-bootstrap defect into the core
-      agent: workhorse/opus (dispatched 18:13)
+- [x] T012 · workhorse · deps:T005,T006,T007 · Promote the update-bootstrap defect into the core
+      evidence: notes/T012-promotion.md; commits 190ff4b (core v41) + 4166639 (notes), pushed
+                to origin as a1b23d8. Four-part promotion test applied in writing, PASS on all
+                four. Orchestrator re-verified: VERSION=41 and template-manifest.yaml
+                `version: 41` bumped together; `bash -n` parses; `check.sh` all constraints met.
+                Fix is in code, not documentation: `update_core` stages the upstream's
+                workflow-template-sync dir over the local one and re-execs, guarded by
+                WORKFLOW_TEMPLATE_SYNC_RESTAGED (no loop), gated behind pinned/up-to-date/behind,
+                skipped when the dirs are identical, and refused unless the upstream script
+                `bash -n`-parses in a temp dir first. Staging never touches
+                template-manifest.yaml, so `old` is still the derivation's manifest when the
+                new script diffs it — verified by reading update_core lines 512-529.
+      corrected: the worker corrected the orchestrator's premise. Dropped-path removal arrived
+                in core v30 (c0707e7), NOT v37 — confirmed by `git log -S remove_paths`. The
+                finding is unaffected: the three derivations were on 13, 17 and 19, all below
+                30. v30 is the threshold now written into the skill.
+      limitation: the fix is one release late by construction, and the worker said so rather
+                than hiding it. A derivation whose installed script predates the staging step
+                stages nothing. Demonstrated live, not argued: sandbox at v40 updating to v41
+                ran the OLD logic and printed no `staged` line. Its script is now v41, so the
+                staging path exercises on the next hop — which T014's bump to 42 provides, and
+                that is where this gets its real end-to-end test.
+      note:     orchestrator ran that sandbox update as verification and left the repo at 41
+                (commit 7fff825, init.lock 7, all constraints met). An earlier attempt piped
+                the script into `head -8`, which SIGPIPE'd it under `pipefail` and left the
+                tree half-synced with the lock unwritten; re-run without the pipe, exit 0.
       accept: the core (this repo) states the ordering constraint where an operator will hit it
               — `.agents/skills/workflow-template-sync/SKILL.md` and, if the shape allows,
               handled in `template-sync.sh` itself rather than documented around. The defect:
