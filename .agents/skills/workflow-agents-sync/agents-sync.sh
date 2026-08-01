@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # workflow-agents-sync — enforce the canonical-format invariant:
 #   AGENTS.md (and .agents/) are canonical; CLAUDE.md is at most a header bridge
-#   importing @AGENTS.md (root also imports @AGENTS.CORE.md, ahead of @AGENTS.md).
+#   importing @AGENTS.md (root also imports @AGENTS.CORE.md and @VOICE.md, ahead of
+#   @AGENTS.md).
 #   Also enforces the proxy rule for skills: .claude/skills/<name>/SKILL.md must be a
 #   thin stub (frontmatter + short pointer) whose canonical body + scripts live at
 #   .agents/skills/<name>/SKILL.md — never the reverse, and never scripts under
@@ -25,11 +26,12 @@ MODE="${1:---check}"
 MAX_BRIDGE_LINES=8
 MAX_STUB_BODY_LINES=6
 
-# Root bridge: imports the managed core ahead of this repo's own doctrine.
+# Root bridge: imports the managed core and VOICE.md ahead of this repo's own doctrine.
 ROOT_BRIDGE='# CLAUDE.md
 <!-- managed by /workflow-agents-sync — no content here; AGENTS.CORE.md + AGENTS.md are canonical -->
 
 @AGENTS.CORE.md
+@VOICE.md
 @AGENTS.md
 '
 # Standing-bind repo bridge: the plain single-import form (these repos have no

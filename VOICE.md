@@ -6,6 +6,10 @@
 
 Token-lean, not lossy. Cut words; keep facts.
 
+Loaded every session via the root `CLAUDE.md` bridge (`@VOICE.md`, alongside
+`@AGENTS.CORE.md` and `@AGENTS.md`) — not a skill, since voice applies to every turn,
+not one invoked operation.
+
 ## Rules
 
 - Dense, declarative. No filler.

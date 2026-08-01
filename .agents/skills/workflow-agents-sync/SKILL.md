@@ -3,7 +3,8 @@ name: workflow-agents-sync
 description: >-
   Enforce the canonical file-format invariant: AGENTS.md (and .agents/ rules) are the
   canonical sources; every CLAUDE.md is at most a header bridge importing @AGENTS.md
-  (root also imports @AGENTS.CORE.md). Also enforces the proxy rule for skills —
+  (root also imports @AGENTS.CORE.md and @VOICE.md). Also enforces the proxy rule for
+  skills —
   .claude/skills/<name>/SKILL.md must be a stub pointing at its canonical
   .agents/skills/<name>/SKILL.md. Scans this workflow's root and every standing bind
   from binds.yaml. Use when asked to run /workflow-agents-sync, after adding a standing
@@ -24,8 +25,8 @@ description: >-
 - At this repo's root specifically, `AGENTS.CORE.md` (the managed constitution) is
   canonical too, alongside `AGENTS.md` (this workflow's own doctrine).
 - `CLAUDE.md` is a **header at most**: the managed comment + import(s), ≤8 lines, no
-  content of its own. At root: `@AGENTS.CORE.md` then `@AGENTS.md`. Everywhere else:
-  `@AGENTS.md` alone.
+  content of its own. At root: `@AGENTS.CORE.md`, `@VOICE.md`, then `@AGENTS.md`.
+  Everywhere else: `@AGENTS.md` alone.
 - **The proxy rule for skills** (AGENTS.CORE.md): `.claude` is a proxy for `.agents`.
   Every `.claude/skills/<name>/SKILL.md` must be a thin stub — discovery frontmatter
   (verbatim from the canonical file) plus a short pointer body (≤6 non-blank lines,
@@ -61,8 +62,8 @@ description: >-
   `/workflow-init`.
 
 ## Scope
-1. This repo's own root (`AGENTS.CORE.md` + `AGENTS.md` + the two-import `CLAUDE.md`,
-   plus every `.claude/skills/*/SKILL.md` stub found here).
+1. This repo's own root (`AGENTS.CORE.md` + `VOICE.md` + `AGENTS.md` + the three-import
+   `CLAUDE.md`, plus every `.claude/skills/*/SKILL.md` stub found here).
 2. Every standing bind declared in `binds.yaml` that is present on disk under `base`
    (absent repos are `/workflow-manage`'s `sync-binds.sh` concern, not format drift).
    An empty or example-only `binds.yaml` (no `standing:` entries) is a clean no-op here.

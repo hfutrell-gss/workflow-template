@@ -52,6 +52,21 @@ yq -i 'del(.standing[] | select(.repo == "NAME"))' binds.yaml
 Removing a standing bind is a registry change only — it does not delete anything on
 disk, and does not affect any repo already session-bound right now.
 
+## The workspace, in full
+
+Every workflow owns `workspace/` at its root (see AGENTS.CORE.md "The workspace" for
+the one-paragraph summary) — a per-machine working area, **gitignored** so nested
+substrate clones never appear in the workflow's own `git status`. `binds.yaml`'s `base`
+key controls where standing binds actually land on disk; it defaults to `./workspace`
+and is always resolved **relative to the repo root**, never to the current working
+directory, so `sync-binds.sh` behaves identically regardless of where it's invoked
+from. `sync-binds.sh` (below) is what actually populates `base` — a workflow manages
+its own repos here: pull, organize, and branch inside `workspace/<repo>`, never on
+checkouts it doesn't own, including the user's own personal working copies elsewhere on
+disk. Inside `workspace/<repo>`, that repo's own git and its own law (`AGENTS.md`)
+apply — the workspace only changes *where* the clone lives, not what governs working in
+it (see "Cross-repo changes" below).
+
 ## Sync binds (substrate assembly)
 ```sh
 .agents/skills/workflow-manage/sync-binds.sh                # every standing bind with a url
@@ -59,10 +74,8 @@ disk, and does not affect any repo already session-bound right now.
 ```
 This is the one tool for bringing every standing bind with a `url` onto disk under
 `base` and keeping it current — clone-if-absent and ongoing refresh are the same
-operation, not two. `base` defaults to `./workspace`: this workflow's own substrate
-workspace (gitignored, per-machine, resolved relative to the repo root — see
-AGENTS.CORE.md "The workspace"). `sync-binds.sh` populates it; a workflow never
-resolves standing binds into the user's personal checkouts. For each targeted bind:
+operation, not two. `sync-binds.sh` populates `base`; a workflow never resolves
+standing binds into the user's personal checkouts. For each targeted bind:
 - **Missing on disk** → clones it (`--branch` if `binds.yaml` sets one, else the
   remote's default branch).
 - **Present, clean, on the tracked branch** → fetches and fast-forwards.

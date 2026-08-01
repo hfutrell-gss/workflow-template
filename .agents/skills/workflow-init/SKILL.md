@@ -3,10 +3,11 @@ name: workflow-init
 description: >-
   Initialize (or verify) this machine for this workflow repo: ensure required tools
   (git, yq) and record per-machine decisions about recommended tools (Obsidian,
-  codegraph, opencodex), then write init.lock at the repo root. Use when the root
-  AGENTS.CORE.md init check fails (init.lock missing or stale), when asked to run
-  /workflow-init, when opting a recommended tool in or out, or when setting up a
-  fresh machine.
+  codegraph, opencodex), then write init.lock at the repo root. Also the home of MCP
+  server registration doctrine (.mcp.json, tools.local.d wrapper rules). Use when the
+  root AGENTS.CORE.md init check fails (init.lock missing or stale), when asked to run
+  /workflow-init, when opting a recommended tool in or out, when setting up a fresh
+  machine, or when registering/wiring an MCP server.
 ---
 
 # workflow-init
@@ -128,6 +129,24 @@ Typical opt-in flow for a recommended tool:
   decide opencodex install`). Once installed, see `/workflow-gateway` for the
   strictly-opt-in-per-session usage doctrine — installing the tool is not the same as
   routing any traffic through it.
+
+## MCP servers
+
+A workflow that needs an MCP server registers it in a committed, project-scoped
+`.mcp.json` at its root — derivation-owned and unmanaged, like `binds.yaml`. Two rules
+keep a committed registration shareable across machines:
+
+- **No machine-specific paths in `.mcp.json`.** Point `command` at a fixed
+  `${HOME}/.local/bin/<name>` wrapper that the tool's `tools.local.d` installer
+  generates (see "Derivation-owned tools" above), and let the wrapper hold every
+  variable part — install location, interop paths, and any working directory the
+  server requires. A server launched with a working directory it can't use may fail
+  *silently*, never answering `initialize`, so the wrapper is the right place to pin
+  one.
+- **A skipped tool is not a broken config.** A server whose backing tool was never
+  opted into (see "Recording a decision" above) simply shows as unconnected in `/mcp`.
+  That is the intended resting state on a machine with no use for it, not an error to
+  chase.
 
 ## Migration note (v4 → v5)
 

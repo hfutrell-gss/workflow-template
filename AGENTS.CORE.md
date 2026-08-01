@@ -6,308 +6,128 @@
 
 ## MANDATORY FIRST — verify initialization
 
-Before any other work in any session under this repo:
+Before any other work in any session under this repo: read `init.lock` at this repo
+root and `.agents/skills/workflow-init/VERSION`. If `init.lock` is missing, or its
+`version:` differs → **run `/workflow-init` now** (installs/verifies required tooling,
+writes `init.lock`). If they match, proceed.
 
-1. Read `init.lock` at this repo root and `.agents/skills/workflow-init/VERSION`.
-2. If `init.lock` is missing, or its `version:` differs from `VERSION` → **run
-   `/workflow-init` now** (it installs/verifies the required tooling and writes
-   `init.lock`).
-3. If they match, proceed.
-
-`init.lock` is per-machine state (gitignored). `VERSION` is bumped whenever the init
-procedure changes; a stale lock means this machine hasn't run the latest init.
+`init.lock` is per-machine state (gitignored); `VERSION` bumps whenever init changes —
+a stale lock means this machine hasn't run the latest init.
 
 ---
 
 A **workflow repo** captures the techniques, tactics, procedures, and doctrine for a
 whole **area of work** (stewardship, schema management, incident response, …). Code
-repos are **substrate** — things a workflow operates *on*, not *in*. This repo — the
-workflow-template — is the core every derived workflow repo shares: managed law, a
-package of skills, and a live link back upstream.
-
-Read "The shapes" below before adding anything to a workflow repo. It says which of the
-six kinds of thing you are writing and therefore where it goes.
+repos are **substrate** — operated *on*, not *in*. This repo is the core every derived
+workflow repo shares: managed law, a package of skills, a live link upstream. Read "The
+shapes" below before adding anything.
 
 ## Canonical file format
 
-**`AGENTS.md` (and any `.agents/` rule dirs) are the canonical sources — here and in
-every bound repo.** `CLAUDE.md` files are at most a header with an import of the
-sibling `AGENTS.md` (and, at repo root, of `AGENTS.CORE.md` too); they carry no content
-of their own. `/workflow-agents-sync` enforces this invariant (creates missing bridges,
-reports non-conforming files). Never author doctrine in a `CLAUDE.md`.
-
-**The proxy rule, in full: `.claude` is a proxy for `.agents`.** Anything with a
-canonical form lives under `.agents` (`AGENTS.md` files, `.agents/skills` bodies and
-scripts) and is referenced from `.claude`; the `.claude` side keeps only what tooling
-mechanically requires (`CLAUDE.md` bridge headers, skill discovery frontmatter). This
-applies to skills too: a skill's full doctrine and any scripts live at
-`.agents/skills/<name>/SKILL.md` (+ scripts); `.claude/skills/<name>/SKILL.md` is a
-proxy stub — the frontmatter Claude Code needs for discovery, plus a body that only
-points at the canonical file. Nothing executable lives under `.claude`.
-
-At this repo's root specifically, the law is split in two files, both canonical:
-`AGENTS.CORE.md` (this file — the managed constitution) and `AGENTS.md` (this
-derivation's own doctrine — entirely yours). The root `CLAUDE.md` bridges to both.
+**`AGENTS.md` is canonical, here and in every bound repo.** `CLAUDE.md` is at most a
+header importing the sibling `AGENTS.md` (root also imports `AGENTS.CORE.md`) — no
+content of its own; `/workflow-agents-sync` enforces this. **The proxy rule: `.claude`
+is a proxy for `.agents`.** Canonical content — `AGENTS.md`, `.agents/skills`
+bodies/scripts — lives under `.agents`; `.claude` keeps only what tooling mechanically
+requires (a skill's doctrine is `.agents/skills/<name>/SKILL.md`,
+`.claude/skills/<name>/SKILL.md` a thin proxy stub). Nothing executable under
+`.claude`. At root, law splits across `AGENTS.CORE.md` (this file) and `AGENTS.md`
+(derivation's own doctrine); `CLAUDE.md` bridges to both.
 
 ## Bind law
 
-You work by **binding** repos to a workflow session, not by "being in a repo." Two
-kinds of bind:
+You work by **binding** repos to a session, not by "being in a repo." **Standing
+binds** are repos related to this workflow, declared in `binds.yaml` (`kind` + `why`)
+— a registry, not a session state. **Session binds** are repos attached to *this*
+session, via `/add-dir` or `claude --add-dir`; `/workflow-bind` attaches `default:
+true` standing binds plus anything asked for.
 
-- **Standing binds** — repos *related to* this workflow, declared in `binds.yaml` with
-  the relationship (`kind` + `why`): reference material, repos that tend to co-change
-  with this workflow's work, repos this workflow stewards, upstream/downstream
-  dependencies. Standing binds are a registry, not a session state — declaring one
-  doesn't attach it to anything yet.
-- **Session binds** — repos actually attached to the *current* session, via `/add-dir`
-  once running or `claude --add-dir <path>` at launch. `/workflow-bind` automates
-  binding a session to the standing binds marked `default: true`, plus any repos asked
-  for on top.
-
-Rules that apply to every bind, standing or session:
-
-1. **On binding a target, read its `AGENTS.md` first**, and honor its acknowledgement
-   protocol before operating in it. Workflow doctrine governs *how you work*; the
-   target repo's own law governs *how to behave inside it*. Both apply — **repo law
-   wins inside the repo's own boundaries.**
-2. **Surface, don't suppress** — the universal principle, same as every repo: report
-   drift, conflicts, and anomalies rather than silently resolving or hiding them.
+Every bind: **read the target's `AGENTS.md` first**, honor its acknowledgement
+protocol — **repo law wins inside its own boundaries.** And **surface, don't
+suppress** — report drift, conflicts, anomalies; never resolve or hide them silently.
+Universal, true everywhere below.
 
 ## The workspace
 
-Every workflow owns `workspace/` at its root — a per-machine working area, gitignored
-(nested substrate clones must never appear in the workflow's own `git status`), where
-its standing binds actually get cloned (`binds.yaml`'s `base`, default `./workspace`)
-and where cross-repo changes happen. A workflow manages its own repos here: pull,
-organize, and branch inside `workspace/<repo>` — it never operates on checkouts it
-doesn't own, including the user's own personal working copies elsewhere on disk. Inside
-`workspace/<repo>`, that repo's own git and its own law (`AGENTS.md`) apply — the
-workspace only changes where the clone lives, not what governs working in it.
+Every workflow owns `workspace/` — a per-machine, gitignored area where standing
+binds get cloned; inside `workspace/<repo>`, its own git and `AGENTS.md` apply.
+Resolution detail: `/workflow-manage`.
 
 ## The shapes
 
-**"Workflow" carries four senses here.** They were conflated once, at real cost, so they
-are separated by name and never used interchangeably:
+**"Workflow" carries four senses**, kept separate after conflating them once cost real
+confusion: **a workflow repo** (the container); **`workflow-*`/`craft-*`** (an
+*ownership* marker only); **a workflow** (sense 3, primary — a reusable way of
+working, e.g. `refactor`); **a run** (one application to one target — state,
+disposable once harvested).
 
-1. **A workflow repo** — one whole area of work. The container; a derivation of this
-   template.
-2. **The `workflow-*` / `craft-*` skill prefixes** — template-owned machinery. An
-   *ownership* marker, not a description: it says who may overwrite the file on `update`
-   and nothing else.
-3. **A workflow** — a reusable way of working: `refactor`, `create-web-app`,
-   `onboard-app`. Durable procedural knowledge, the answer to *what do we do when we do
-   that*. **This is the primary sense** and the one the system exists to accumulate.
-4. **A run** — one application of a workflow to one target, carrying a task list. State,
-   not knowledge, and disposable once harvested.
-
-Six kinds of thing live in a workflow repo. Each has one home, and putting a thing in
-the wrong home is how it becomes unfindable:
+Six kinds of thing live here; one home each — the wrong home makes it unfindable:
 
 | Kind | What it is | Home | Retrieved by |
 |------|-----------|------|--------------|
 | **Law** | the managed constitution | `AGENTS.CORE.md` | always loaded |
 | **Doctrine** | this workflow's standing judgment | `AGENTS.md` | always loaded |
 | **Procedure** | a reusable way of working (sense 3) | a derivation-local skill | **lazily, by the Skill tool** |
-| **Knowledge** | what is true, and why it was decided | the *substrate repo's* docs, or `knowledge/` when genuinely cross-app | an index line, then on demand |
-| **Run** | a task list and its working notes | see "Session state" | only by the run that owns it |
+| **Knowledge** | what is true, and why | substrate repo's docs, or `knowledge/` if cross-app | index line, then on demand |
+| **Run** | a task list and working notes | `.workflow/<session-slug>/` | only the run that owns it |
 | **Narrative** | what happened on a given day | `journal/` | humans, archaeology |
 
-**Procedures are skills, and derivation-local skills are expected.** A procedure needs a
-frontmatter description (the retrieval surface, loaded every session), a thin body, and
-`references/` for detail — the same progressive disclosure every managed skill uses. Name
-it outside the reserved `workflow-*` and `craft-*` prefixes; `/workflow-manage` scaffolds
-one correctly. **The categorical rule does not forbid this.** That rule governs tooling
-for *template concepts* — do not hand-roll a second `binds.yaml` editor. A workflow repo
-authoring the procedures of its own area of work is the entire point of deriving one.
+**Procedures are skills; derivation-local skills are expected** — frontmatter
+description, thin body, `references/` for detail, named outside `workflow-*`/`craft-*`
+(`/workflow-manage` scaffolds one). Not a categorical-rule violation: that rule covers
+template-concept tooling, not a workflow authoring its own procedures. Prose is not a
+lesser procedure — it needs lazy retrieval too.
 
-**Prose is not a lesser procedure.** Do not sort procedures by whether they ship a script
-— a prose-only procedure needs lazy retrieval exactly as much as a scripted one, and the
-skill system is the only mechanism that provides it. `playbooks/` was that mis-sort and is
-**retired**; anything still living there moves to a procedure skill.
+**Harvest law:** a run is done only when its durable output has **left** the run
+directory — a stabilized way → a procedure skill; substrate understanding → that
+repo's own docs; what merely happened → the journal. Then it closes and is deleted,
+not archived — `git log` is the archive.
 
-**The harvest law.** A run is not done when its tasks are done. It is done when its
-durable output has **left** the run directory:
+## Journal, session state, git
 
-- a way of working that stabilized → a procedure skill, new or amended
-- understanding of a substrate repo → **that repo's** docs, so it travels with the app
-- what merely happened → the journal
+- **Journal** — one dated file per run/decision (`journal/YYYY-MM-DD-slug.md`), never
+  one growing file. A day's session binds belong in that day's entry.
+- **Session state** — orchestration runs keep state at `.workflow/<session-slug>/`,
+  **committed** (unlike `workspace/`) so a run survives compaction or a machine
+  change. See `/workflow-orchestrate`.
+- **Git** — **always native git, `/usr/bin/git` explicitly**, never a bare `git` that
+  may resolve to a Windows binary (a WSL `git=...git.exe` alias is the common trap).
+  `/workflow-init --check` warns if detected.
 
-Only then does the run close, and a closed run is deleted rather than archived — these
-files are committed, so `git log` is the archive and a graveyard directory buys nothing.
-Knowledge left in a run directory is knowledge thrown away on a slower schedule.
+## Template link, the categorical rule, and the covenant
 
-## Journal discipline
-
-Keep `journal/` — one dated file per run/decision (`YYYY-MM-DD-slug.md`), never a
-single growing file. Atomic files merge cleanly across people and agents. Session binds
-made for a given day belong in that day's journal entry (see `/workflow-bind`).
-
-## Session state
-
-Orchestration runs keep machine-readable state at `.workflow/<session-slug>/` —
-**committed**, unlike `workspace/`, so a run resumes after a compaction, after a cold
-`/loop` tick, or on another machine entirely. The task list there is the state of the run;
-that day's journal entry is its human narrative. Neither replaces the other. See
-`/workflow-orchestrate`.
-
-## Git discipline
-
-**Always use native git — `/usr/bin/git` explicitly — for every git operation in this
-repo and its derivations**, never a bare `git` that might resolve to a Windows binary.
-A common WSL trap: a `git=...git.exe` alias in `~/.zshenv` (or `~/.zshrc`) shadows
-native git on PATH. `/workflow-init`'s `--check` warns if such an alias is detected.
-
-(Earlier revisions of this doctrine relied on a committed `.constitution.md` symlink
-per workflow directory, with its own Windows-git symlink-corruption risk. That mechanism
-is dead: a workflow is now one repo, not a directory inside a monorepo, so there is no
-same-repo ancestor path to bridge with a symlink. Same-directory imports only.)
-
-## Template link — how this repo relates to a derivation
-
-This file (`AGENTS.CORE.md`) and the managed skills under `.agents/skills/` are
-**managed by the upstream template** (this repo, or wherever a derivation was cloned
-from). **Two skill namespaces are reserved for the template: `workflow-*` (workflow
-machinery) and `craft-*` (engineering doctrine).** Name derivation-local skills outside
-both prefixes, or a future `update` may clobber them. A
-derivation records the relationship in `.template.lock` at its root: `template_version`,
-`upstream` (a local path **or a git URL** — `https://`, `git@...`, `ssh://`, `file://`;
-a URL upstream is synced through a cached shallow clone under
-`${XDG_CACHE_HOME:-$HOME/.cache}/workflow-template-sync/`, degrading to the stale cache
-with a loud warning if offline rather than failing outright), `derived` (date), and
-`pinned`.
-
-- `pinned: false` (default) — `workflow-template-sync update` may copy forward changes
-  to the managed set (see `template-manifest.yaml`) when the upstream's `VERSION` is
-  ahead of the derivation's recorded `template_version`.
-- `pinned: true` — the derivation has chosen to freeze its core. `update` (and
-  `--check`) still **report** the available upstream version but **never touch
-  anything** in a pinned derivation. Pinning is reversible by editing `.template.lock`.
-
-**The covenant: the template facilitates, never constrains.** Everything outside the
-managed set (`template-manifest.yaml` lists it exactly) belongs entirely to the
-derivation — doctrine in `AGENTS.md`, `binds.yaml`, its own procedure skills, `journal/`,
-anything else added later. A derivation may eject from the template relationship entirely at any
-time (delete `.template.lock`) and is supported for the full lifetime of its project
-either way, linked or not.
-
-**The categorical rule.** The template defines the shapes; the template owns every
-operation on those shapes, shipped as managed skills. Derivations contribute data and
-doctrine only. If you find yourself writing tooling for a template concept inside a
-derivation, that tooling belongs upstream — contribute it to the template. `binds.yaml`
-is the recurring example: the template defines its shape (the standing-bind schema), so
-the template — not any one derivation — owns every operation on it (registry edits,
-substrate assembly/refresh) as a managed `workflow-manage` capability. A derivation's own
-`binds.yaml` entries are its data; a derivation's judgment about *which* repos to bind
-and *why* is its doctrine. Neither is a license to hand-roll a parallel tool for
-something the template already ships.
-
-**Craft overlays — how managed doctrine stays constitutional.** The `craft-*` skills ship
-*engineering opinion* (size budgets, architecture defaults, test protocol) into
-derivations whose areas of work the template cannot know. Two mechanisms keep that
-facilitating rather than constraining:
-
-1. **A precedence ladder, declared at the top of every `craft-*` skill.** A bound repo's
-   own law wins inside its boundaries → then this workflow's overlay → then the skill's
-   defaults, which apply in full force only where the first two are silent. A `craft-*`
-   skill never claims authority over substrate it does not own; it converts
-   world-assertions into duties — detect the repo's standard and apply it, or surface its
-   absence as a finding. Never silently proceed as though a missing standard did not
-   matter.
-2. **A derivation-owned overlay slot: `.agents/craft/<skill-name>.local.md`.** Unmanaged,
-   committed by the derivation, never touched by `update`. A `craft-*` skill reads its
-   overlay on invocation; where the overlay conflicts with the skill, **the overlay
-   wins.** This is the categorical rule applied correctly — the template owns the shape
-   (the skill and the overlay slot), the derivation owns the doctrine-data that fills it.
-   Because of this slot, "managed" does not mean "unmodifiable": a derivation changes a
-   default by writing its overlay, not by pinning, ejecting, or eating drift on every
-   `update`.
-
-## Tool tiers
-
-`/workflow-init` distinguishes REQUIRED tools (git, yq — every procedure here assumes
-them) from RECOMMENDED tools (Obsidian, codegraph, opencodex — useful, but installed
-only on an explicit per-machine decision recorded in `init.lock`, never silently). See
-`/workflow-init`'s SKILL.md for the decision flow (`init.sh decide <tool> install|skip`).
-
-**A derivation's own tools go in `.agents/init/tools.local.d/<tool>.sh`** — unmanaged,
-never touched by `update`, sourced by `init.sh` at startup, and thereby granted the whole
-mechanism (decide, install, `--check`, `init.lock`). This is the categorical rule applied
-to tooling: the template owns the shape (tiers, decisions, the lock), the derivation
-supplies the tool definition. Never fork `init.sh` to add a tool, and never hand-roll a
-parallel installer beside it — the first gets overwritten by `update`, the second is the
-same violation with extra steps. Overlay tools are always RECOMMENDED: a derivation cannot
-make its own tool mandatory for a machine, since `--check` failing on a tool the template
-never heard of would make the init mandate above unsatisfiable for anyone lacking it.
-
-Tools viable on only some platforms declare `unsupported_reason_<tool>()`. Because
-`init.lock` decisions travel between machines, a tool decided `install` on a machine that
-cannot host it is **not drift** — the decision is honored as far as the machine allows and
-the shortfall prints as a `NOTE`. Surface, don't suppress; don't manufacture failures
-either.
-
-## MCP servers
-
-A workflow that needs an MCP server registers it in a committed, project-scoped
-`.mcp.json` at its root — derivation-owned and unmanaged, like `binds.yaml`. Two rules
-keep a committed registration shareable across machines:
-
-- **No machine-specific paths in `.mcp.json`.** Point `command` at a fixed
-  `${HOME}/.local/bin/<name>` wrapper that the tool's `tools.local.d` installer generates,
-  and let the wrapper hold every variable part — install location, interop paths, and any
-  working directory the server requires. A server launched with a working directory it
-  can't use may fail *silently*, never answering `initialize`, so the wrapper is the right
-  place to pin one.
-- **A skipped tool is not a broken config.** A server whose backing tool was never opted
-  into simply shows as unconnected in `/mcp`. That is the intended resting state on a
-  machine with no use for it, not an error to chase.
+`AGENTS.CORE.md` and `.agents/skills/` are **managed by the upstream template**,
+tracked in `.template.lock` (`pinned: true` freezes updates). Full mechanics:
+`/workflow-template-sync`. **Covenant:** the template facilitates, never constrains —
+everything outside the managed set is entirely the derivation's, ejectable any time
+(delete `.template.lock`). **Categorical rule:** the template owns every operation on
+its shapes, as managed skills; a derivation contributes data/doctrine only, never a
+parallel tool (`binds.yaml`: template owns the operations, a derivation owns only its
+entries and why). **Craft overlays:** a precedence ladder — bound repo's law → the
+workflow's `.agents/craft/<skill>.local.md` overlay, which wins → skill defaults — in
+full at `/craft-tdd` or `/craft-code-quality`.
 
 ## Tiers (RBAC)
 
-This repo's `AGENTS.md` declares `tier:` in frontmatter — the roles/credentials its
-procedures presume (e.g. `dev`, `ops`, `admin`). Enforcement is real, not cosmetic:
-- **Write** access is governed per-directory via CODEOWNERS.
-- **Execution** is governed by the credentials the procedures require (cloud roles,
-  kubeconfigs, VCS perms) — if you lack the tier's credentials, the procedures fail.
-- Reads are open by design: doctrine is transparent. Truly secret doctrine (rare)
-  belongs in a separate restricted repo, never here.
+`AGENTS.md` declares `tier:` — roles/credentials procedures presume. Write access via
+CODEOWNERS; execution via the credentials required. Reads stay open — secret doctrine
+goes in a separate restricted repo, never here.
 
 ## Voice
 
-Agents adopt `VOICE.md`'s reduced voice for conversational output, reports, commit
-bodies, and PR descriptions.
+Agents adopt `VOICE.md`'s reduced voice for output, reports, commit bodies, PR
+descriptions. Loaded every session via the root `CLAUDE.md` bridge.
 
 ## Baked-in skills
 
-- `/workflow-init` — install/verify required tooling (git, yq) and record per-machine
-  decisions about recommended tooling (Obsidian, codegraph, opencodex); writes
-  `init.lock`.
-- `/workflow-agents-sync` — enforce the canonical-format invariant here and across
-  standing-bind repos present on disk.
-- `/workflow-template-sync` — the upstream link: `derive` a new workflow repo from a
-  template copy, `update` a derivation's managed set from upstream, `--check` report
-  drift.
-- `/workflow-manage` — administer this workflow: add/remove/edit standing binds, review
-  the registry, and assemble/refresh the substrate those binds describe (`sync-binds.sh`
-  — clone missing repos, fast-forward clean ones, never clobber local work).
-- `/workflow-bind` — bind a session: attach default standing binds (and any requested
-  extras) via `/add-dir`, per the bind law above.
-- `/workflow-gateway` — manage the local opencodex model gateway (start/stop/status)
-  and the **strictly opt-in, per-session** `ANTHROPIC_BASE_URL` override for routing
-  Claude Code through it. Never set globally or by default — see its SKILL.md.
-- `/workflow-orchestrate` — task-based orchestration: decompose a directive into a
-  committed task list (`.workflow/<session-slug>/tasklist.md`), dispatch each task to a
-  model **tier** (`flagship` · `workhorse` · `fleet`) resolved from a lane roster instead
-  of a hardcoded model name, and loop until the list is exhausted — DoD is exhaustion,
-  and `orchestrate.sh status` decides it, not the orchestrator. Tier→lane preference and
-  role→tier overrides live in `.agents/orchestrate/roster.local.yaml`; further doctrine
-  overrides in `.agents/orchestrate/orchestrate.local.md`. Both are derivation-owned and
-  unmanaged — the same overlay mechanism the `craft-*` skills use, outside `.agents/craft/`.
+Index only — descriptions load via frontmatter:
 
-Engineering doctrine (`craft-*`) — defaults for work done *on* substrate, governed by the
-precedence ladder and overlay slot above:
-
-- `/craft-tdd` — test-first protocol: failing test before production code, integration
-  focus, seams at every external unmanaged dependency, never mock business logic.
-- `/craft-code-quality` — module size budgets, mandatory lint/static analysis, ports and
-  adapters, pragmatic SOLID/DDD, no implicit fallbacks, required observability; plus the
-  ratchet for substrate that starts nowhere near any of it.
+- `/workflow-init` — tooling, `init.lock`, tool tiers, MCP wrapper doctrine.
+- `/workflow-agents-sync` — canonical-format enforcement.
+- `/workflow-template-sync` — the upstream link.
+- `/workflow-manage` — bind registry, workspace assembly.
+- `/workflow-bind` — attach standing binds to a session.
+- `/workflow-gateway` — local opencodex gateway, opt-in per session.
+- `/workflow-orchestrate` — directive → task list → tiered dispatch → loop.
+- `/craft-tdd` — test-first protocol.
+- `/craft-code-quality` — size budgets, lint, architecture, ratchet.
