@@ -36,7 +36,7 @@ Area of work: **<one sentence: what whole area this workflow owns>.**
      exist to avoid. -->
 Before writing or changing production code in bound substrate, invoke `/craft-tdd` and
 `/craft-code-quality`. Override their defaults for this workflow in
-`.agents/craft/tdd.local.md` and `.agents/craft/code-quality.local.md` — a bound repo's
+`.agents/craft/craft-tdd.local.md` and `.agents/craft/craft-code-quality.local.md` — a bound repo's
 own law still wins inside its boundaries.
 
 ## Orchestration
