@@ -146,8 +146,11 @@ effort beats a `workhorse` at default on many well-scoped tasks, at lower cost.
 **Other mechanics**
 - **Parallelism follows independence, not tier.** Every ready task goes out in one message
   regardless of which lanes they land in.
-- **Worktree isolation** (`isolation: 'worktree'`) only when multiple workers mutate the same
-  files concurrently. It costs setup and disk; skip it for read-only fan-out.
+- **Worktree isolation** only when multiple workers mutate the same repo concurrently — skip it
+  for read-only fan-out, it costs setup and disk. The Agent tool's `isolation: 'worktree'` flag
+  isolates the *session's own* repo, which is correct only when that is also the repo being
+  mutated; in a workflow-over-substrate layout it isolates the wrong repo and fails as a silent
+  no-op. Full procedure and the hand-cut alternative: `references/worktrees.md`.
 - **Agent types over raw tiers** where a specialist fits better than a capability class —
   `Explore` for broad read-only search, `Plan` for design.
 - **Routed lanes have skills blocked** (their generated definitions name which — e.g.
