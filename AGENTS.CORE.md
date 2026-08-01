@@ -25,6 +25,9 @@ repos are **substrate** — things a workflow operates *on*, not *in*. This repo
 workflow-template — is the core every derived workflow repo shares: managed law, a
 package of skills, and a live link back upstream.
 
+Read "The shapes" below before adding anything to a workflow repo. It says which of the
+six kinds of thing you are writing and therefore where it goes.
+
 ## Canonical file format
 
 **`AGENTS.md` (and any `.agents/` rule dirs) are the canonical sources — here and in
@@ -81,6 +84,58 @@ doesn't own, including the user's own personal working copies elsewhere on disk.
 `workspace/<repo>`, that repo's own git and its own law (`AGENTS.md`) apply — the
 workspace only changes where the clone lives, not what governs working in it.
 
+## The shapes
+
+**"Workflow" carries four senses here.** They were conflated once, at real cost, so they
+are separated by name and never used interchangeably:
+
+1. **A workflow repo** — one whole area of work. The container; a derivation of this
+   template.
+2. **The `workflow-*` / `craft-*` skill prefixes** — template-owned machinery. An
+   *ownership* marker, not a description: it says who may overwrite the file on `update`
+   and nothing else.
+3. **A workflow** — a reusable way of working: `refactor`, `create-web-app`,
+   `onboard-app`. Durable procedural knowledge, the answer to *what do we do when we do
+   that*. **This is the primary sense** and the one the system exists to accumulate.
+4. **A run** — one application of a workflow to one target, carrying a task list. State,
+   not knowledge, and disposable once harvested.
+
+Six kinds of thing live in a workflow repo. Each has one home, and putting a thing in
+the wrong home is how it becomes unfindable:
+
+| Kind | What it is | Home | Retrieved by |
+|------|-----------|------|--------------|
+| **Law** | the managed constitution | `AGENTS.CORE.md` | always loaded |
+| **Doctrine** | this workflow's standing judgment | `AGENTS.md` | always loaded |
+| **Procedure** | a reusable way of working (sense 3) | a derivation-local skill | **lazily, by the Skill tool** |
+| **Knowledge** | what is true, and why it was decided | the *substrate repo's* docs, or `knowledge/` when genuinely cross-app | an index line, then on demand |
+| **Run** | a task list and its working notes | see "Session state" | only by the run that owns it |
+| **Narrative** | what happened on a given day | `journal/` | humans, archaeology |
+
+**Procedures are skills, and derivation-local skills are expected.** A procedure needs a
+frontmatter description (the retrieval surface, loaded every session), a thin body, and
+`references/` for detail — the same progressive disclosure every managed skill uses. Name
+it outside the reserved `workflow-*` and `craft-*` prefixes; `/workflow-manage` scaffolds
+one correctly. **The categorical rule does not forbid this.** That rule governs tooling
+for *template concepts* — do not hand-roll a second `binds.yaml` editor. A workflow repo
+authoring the procedures of its own area of work is the entire point of deriving one.
+
+**Prose is not a lesser procedure.** Do not sort procedures by whether they ship a script
+— a prose-only procedure needs lazy retrieval exactly as much as a scripted one, and the
+skill system is the only mechanism that provides it. `playbooks/` was that mis-sort and is
+**retired**; anything still living there moves to a procedure skill.
+
+**The harvest law.** A run is not done when its tasks are done. It is done when its
+durable output has **left** the run directory:
+
+- a way of working that stabilized → a procedure skill, new or amended
+- understanding of a substrate repo → **that repo's** docs, so it travels with the app
+- what merely happened → the journal
+
+Only then does the run close, and a closed run is deleted rather than archived — these
+files are committed, so `git log` is the archive and a graveyard directory buys nothing.
+Knowledge left in a run directory is knowledge thrown away on a slower schedule.
+
 ## Journal discipline
 
 Keep `journal/` — one dated file per run/decision (`YYYY-MM-DD-slug.md`), never a
@@ -130,8 +185,8 @@ with a loud warning if offline rather than failing outright), `derived` (date), 
 
 **The covenant: the template facilitates, never constrains.** Everything outside the
 managed set (`template-manifest.yaml` lists it exactly) belongs entirely to the
-derivation — doctrine in `AGENTS.md`, `binds.yaml`, `playbooks/`, `journal/`, anything
-else added later. A derivation may eject from the template relationship entirely at any
+derivation — doctrine in `AGENTS.md`, `binds.yaml`, its own procedure skills, `journal/`,
+anything else added later. A derivation may eject from the template relationship entirely at any
 time (delete `.template.lock`) and is supported for the full lifetime of its project
 either way, linked or not.
 

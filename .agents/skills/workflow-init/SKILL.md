@@ -107,7 +107,7 @@ Typical opt-in flow for a recommended tool:
   bootstrapping yq when it reads its own lock.
 
 **Recommended (decision-gated):**
-- **Obsidian** — the vault lens over this repo's `journal/` and `playbooks/`. Installs
+- **Obsidian** — the vault lens over this repo's `journal/` and doctrine. Installs
   the AppImage into `~/.local/opt/obsidian` with the WSLg `--disable-gpu` wrapper at
   `~/.local/bin/obsidian`.
 - **codegraph** — defaults to the official install method from

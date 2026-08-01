@@ -22,7 +22,9 @@ Area of work: **<one sentence: what whole area this workflow owns>.**
 - <the invariants and constraints under which all work in this area happens>
 
 ## Procedures
-- [playbooks/<name>.md](playbooks/) — <when to use it>
+- `/<procedure-name>` — <when to use it>. Procedures are derivation-local skills:
+  `.agents/skills/<name>/` plus its `.claude/skills/<name>/` proxy stub. Scaffold one with
+  `/workflow-manage`; name it outside the reserved `workflow-*` and `craft-*` prefixes.
 <!-- executable procedures go in .agents/skills/<name>/SKILL.md (scoped: "<area>:<name>"),
      with a .claude/skills/<name>/SKILL.md proxy stub for Claude Code discovery -->
 

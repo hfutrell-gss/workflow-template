@@ -25,7 +25,7 @@ description: >-
 Run this **inside a fresh copy or clone of workflow-template** — nothing else. It:
 1. Refuses if `.template.lock` already exists (already derived) or `VERSION` is
    missing (doesn't look like a template checkout).
-2. Clears template-only identity: example content out of `journal/` and `playbooks/`, and
+2. Clears template-only identity: example content out of `journal/`, and
    any orchestration session state under `.workflow/`. That last one matters because
    `.workflow/` is **committed** (unlike `workspace/`), so a derive-by-clone would
    otherwise carry the template's own in-flight task lists and notes into the new
@@ -56,7 +56,7 @@ Run inside a derivation. Reads `.template.lock`:
   `template-manifest.yaml` into this repo (directory entries are replaced wholesale,
   so upstream deletions propagate), then bumps `template_version` in `.template.lock`.
   Everything outside the managed set — this workflow's `AGENTS.md`, `binds.yaml`,
-  `playbooks/`, `journal/`, anything else — is never touched, by construction (the
+  its procedure skills, `journal/`, anything else — is never touched, by construction (the
   copy step only ever reads paths named in the manifest).
 - `upstream` may be a **local path or a git URL** (`https://`, `git@...`, `ssh://`,
   `file://`). A URL upstream is fetched into a cached shallow clone (see "Remote
