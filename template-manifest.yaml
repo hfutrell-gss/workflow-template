@@ -34,6 +34,7 @@ managed:
   # overlay at .agents/craft/<skill>.local.md — see AGENTS.CORE.md "Craft overlays".
   - .agents/skills/craft-tdd/**
   - .agents/skills/craft-code-quality/**
+  - .agents/skills/craft-event-naming/**
   # Discovery-frontmatter proxy stubs — Claude Code needs these under .claude/skills/
   # to find each skill; each stub's body only points at its canonical file above.
   - .claude/skills/workflow-init/SKILL.md
@@ -45,3 +46,4 @@ managed:
   - .claude/skills/workflow-orchestrate/SKILL.md
   - .claude/skills/craft-tdd/SKILL.md
   - .claude/skills/craft-code-quality/SKILL.md
+  - .claude/skills/craft-event-naming/SKILL.md
