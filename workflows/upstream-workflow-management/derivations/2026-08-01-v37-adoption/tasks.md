@@ -46,20 +46,24 @@ Closing is `orchestrate.sh close`. It re-checks this DoD, writes the ledger line
 
 ## Tasks
 
-- [ ] T001 · fleet · deps:- · Survey stewardship for v37 convergence blockers
+- [~] T001 · fleet · deps:- · Survey stewardship for v37 convergence blockers
+      agent: fleet/sonnet (dispatched 16:33)
       accept: notes/T001-stewardship.md states, with file:line or command output for each —
               current template_version and upstream URL; `template-sync.sh --check` output;
               every `craft-*` path present; whether AGENTS.md imports AGENTS.CORE.md and what
               CLAUDE.md imports; every legacy `.workflow/<slug>/` session and its open/closed
               state; working-tree cleanliness; whether the repo declares any local skill whose
               name a v37 prefix would collide with.
-- [ ] T002 · fleet · deps:- · Survey workflow-monolith for v37 convergence blockers
+- [~] T002 · fleet · deps:- · Survey workflow-monolith for v37 convergence blockers
+      agent: fleet/sonnet (dispatched 16:33)
       accept: notes/T002-monolith.md, same checklist as T001, plus the one uncommitted
               README.md change identified (what it is, whether it must be committed first).
-- [ ] T003 · fleet · deps:- · Survey sandbox for v37 convergence blockers
+- [~] T003 · fleet · deps:- · Survey sandbox for v37 convergence blockers
+      agent: fleet/sonnet (dispatched 16:33)
       accept: notes/T003-sandbox.md, same checklist as T001, plus an explicit read on whether
               13→37 update is viable or the repo is better re-derived — evidence either way.
-- [ ] T004 · fleet · deps:- · Verify pack-code-craft is reachable and audit what it claims
+- [~] T004 · fleet · deps:- · Verify pack-code-craft is reachable and audit what it claims
+      agent: fleet/sonnet (dispatched 16:33)
       accept: notes/T004-pack.md gives the exact clone URL that works from this machine (the
               `gh` account is `henningfutrell`, the `github-gss` SSH alias is `hfutrell-gss` —
               say which key reaches it), the pack's `pack.yaml` version and full `provides:`
