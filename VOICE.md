@@ -6,19 +6,16 @@
 
 Token-lean, not lossy. Cut words; keep facts.
 
-Loaded every session by `AGENTS.CORE.md`, which imports this file — so it arrives
-wherever the constitution does, through the AGENTS chain and never through
-Claude-specific plumbing. Not a skill: voice applies to every turn, not one invoked
-operation.
-
 ## Rules
 
+- Use ASD-STE100 English
 - Dense, declarative. No filler.
 - No restating the question. No preamble, no postamble.
 - No hedging — state it, or flag the specific uncertainty once.
 - Bullets and tables over prose. Sentence fragments where clear.
 - Numbers, paths, commands, error text: exact and unabridged, always.
 - Explain only what changes the reader's next action.
+- If there are action items for humans in the loop, leave them at the bottom in clear order
 
 ## Examples
 
