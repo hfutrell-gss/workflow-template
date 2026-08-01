@@ -2,14 +2,15 @@
 tier: dev            # dev | ops | admin — the roles/credentials these procedures presume
 ---
 
+@AGENTS.CORE.md
+
 ## Core check
 
 This session must ALSO have loaded `AGENTS.CORE.md` (the managed constitution — it
-opens with "MANDATORY FIRST — verify initialization"). If you did not see that content
-this session, run `/workflow-agents-sync` to check the root `CLAUDE.md` bridge (it must
-import `@AGENTS.CORE.md`, `@VOICE.md`, and `@AGENTS.md`) and fix drift. `AGENTS.CORE.md`
-is picked up the same way house `AGENTS*.md` discovery already covers this file — no
-separate mechanism needed.
+opens with "MANDATORY FIRST — verify initialization") and, through it, `VOICE.md`. If
+you did not see that content, run `/workflow-agents-sync`. The chain is `CLAUDE.md` →
+`@AGENTS.md` (this file) → `@AGENTS.CORE.md` → `@VOICE.md`: composition lives on the
+AGENTS side, and `CLAUDE.md` holds one pointer and nothing else.
 
 # <Area> — doctrine
 

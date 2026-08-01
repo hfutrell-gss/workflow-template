@@ -26,16 +26,9 @@ MODE="${1:---check}"
 MAX_BRIDGE_LINES=8
 MAX_STUB_BODY_LINES=6
 
-# Root bridge: imports the managed core and VOICE.md ahead of this repo's own doctrine.
-ROOT_BRIDGE='# CLAUDE.md
-<!-- managed by /workflow-agents-sync — no content here; AGENTS.CORE.md + AGENTS.md are canonical -->
-
-@AGENTS.CORE.md
-@VOICE.md
-@AGENTS.md
-'
-# Standing-bind repo bridge: the plain single-import form (these repos have no
-# AGENTS.CORE.md of their own — that file only exists at this workflow's root).
+# One bridge form everywhere, root included: CLAUDE.md holds a single pointer at the
+# canonical AGENTS.md and never composes. At the root, AGENTS.md imports AGENTS.CORE.md
+# and AGENTS.CORE.md imports VOICE.md -- checked separately by check_root_chain.
 BRIDGE='# CLAUDE.md
 <!-- managed by /workflow-agents-sync — no content here; AGENTS.md is canonical -->
 
@@ -115,21 +108,44 @@ check_skill_stubs() {
   done
 }
 
-# root=1 additionally requires AGENTS.CORE.md to exist and @AGENTS.CORE.md to be
-# imported ahead of @AGENTS.md in CLAUDE.md.
+# root=1 additionally requires the AGENTS-side chain: AGENTS.CORE.md must exist,
+# AGENTS.md must import it, and it must import VOICE.md. CLAUDE.md is the same single
+# pointer everywhere -- it never composes.
+check_root_chain() {
+  local dir="$1" label="$2"
+  local core="$dir/AGENTS.CORE.md" agents="$dir/AGENTS.md" voice="$dir/VOICE.md"
+
+  if [ ! -f "$core" ]; then
+    note "MISSING $label: AGENTS.CORE.md not found at repo root (expected here -- template link broken?)"
+    return 0
+  fi
+  if ! grep -q '@AGENTS.CORE.md' "$agents"; then
+    if [ "$MODE" = "--fix" ]; then
+      # Insert after YAML frontmatter if present, else at the very top.
+      awk 'NR==1 && $0=="---" {fm=1; print; next}
+           fm==1 && $0=="---" {print; print ""; print "@AGENTS.CORE.md"; fm=2; next}
+           fm!=1 && !done {print "@AGENTS.CORE.md"; print ""; done=1}
+           {print}' "$agents" > "$agents.tmp" && mv "$agents.tmp" "$agents"
+      echo "FIXED   $label: AGENTS.md now imports @AGENTS.CORE.md"
+    else
+      note "DRIFT   $label: AGENTS.md does not import @AGENTS.CORE.md -- the managed core won't load this session"
+    fi
+  fi
+  if [ -f "$voice" ] && ! grep -q '@VOICE.md' "$core"; then
+    note "DRIFT   $label: AGENTS.CORE.md does not import @VOICE.md -- the mandated voice loads nowhere (fix upstream, not here)"
+  fi
+}
+
 check_dir() {
   local dir="$1" label="$2" root="${3:-0}"
   local bridge="$BRIDGE"
-  [ "$root" = "1" ] && bridge="$ROOT_BRIDGE"
   local agents="$dir/AGENTS.md" claude="$dir/CLAUDE.md"
 
   check_skill_stubs "$dir" "$label"
 
   [ -f "$agents" ] || return 0        # no law here; nothing to bridge
 
-  if [ "$root" = "1" ] && [ ! -f "$dir/AGENTS.CORE.md" ]; then
-    note "MISSING $label: AGENTS.CORE.md not found at repo root (expected here — template link broken?)"
-  fi
+  [ "$root" = "1" ] && check_root_chain "$dir" "$label"
 
   if [ ! -f "$claude" ]; then
     if [ "$MODE" = "--fix" ]; then
@@ -140,12 +156,13 @@ check_dir() {
     fi
     return 0
   fi
-  # conformance: must import AGENTS.md (and, at root, @AGENTS.CORE.md too) and be a
-  # header at most
+  # conformance: one pointer at @AGENTS.md, a header at most, and no composition --
+  # a root CLAUDE.md importing AGENTS.CORE.md/VOICE.md directly is drift now, not the
+  # required form, because that decision belongs to the AGENTS chain.
   if ! grep -q '@AGENTS.md' "$claude"; then
     note "DRIFT   $label: CLAUDE.md does not import @AGENTS.md — move its content into AGENTS.md, replace with the bridge"
-  elif [ "$root" = "1" ] && ! grep -q '@AGENTS.CORE.md' "$claude"; then
-    note "DRIFT   $label: CLAUDE.md does not import @AGENTS.CORE.md — the managed core won't load this session"
+  elif grep -qE '^@(AGENTS\.CORE|VOICE)\.md' "$claude"; then
+    note "DRIFT   $label: CLAUDE.md composes (@AGENTS.CORE.md/@VOICE.md) — that belongs in AGENTS.md -> AGENTS.CORE.md -> VOICE.md; CLAUDE.md holds one pointer"
   elif [ "$(wc -l < "$claude")" -gt "$MAX_BRIDGE_LINES" ]; then
     note "DRIFT   $label: CLAUDE.md exceeds $MAX_BRIDGE_LINES lines — content belongs in AGENTS.md"
   fi

@@ -6,9 +6,10 @@
 
 Token-lean, not lossy. Cut words; keep facts.
 
-Loaded every session via the root `CLAUDE.md` bridge (`@VOICE.md`, alongside
-`@AGENTS.CORE.md` and `@AGENTS.md`) — not a skill, since voice applies to every turn,
-not one invoked operation.
+Loaded every session by `AGENTS.CORE.md`, which imports this file — so it arrives
+wherever the constitution does, through the AGENTS chain and never through
+Claude-specific plumbing. Not a skill: voice applies to every turn, not one invoked
+operation.
 
 ## Rules
 

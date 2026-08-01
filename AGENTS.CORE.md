@@ -4,6 +4,8 @@
      updated by `workflow-template-sync update`, never hand-edited. Edit it here, in
      workflow-template itself, to change what every derivation inherits. -->
 
+@VOICE.md
+
 ## MANDATORY FIRST — verify initialization
 
 Before any other work in any session under this repo: read `init.lock` at this repo
@@ -25,14 +27,22 @@ shapes" below before adding anything.
 ## Canonical file format
 
 **`AGENTS.md` is canonical, here and in every bound repo.** `CLAUDE.md` is at most a
-header importing the sibling `AGENTS.md` (root also imports `AGENTS.CORE.md`) — no
-content of its own; `/workflow-agents-sync` enforces this. **The proxy rule: `.claude`
-is a proxy for `.agents`.** Canonical content — `AGENTS.md`, `.agents/skills`
+header importing the sibling `AGENTS.md` — one pointer, no content of its own, and the
+same single-import form at the root as anywhere else; `/workflow-agents-sync` enforces
+this. **Composition never lives on the Claude side.** What else loads is decided by the
+AGENTS chain: root `AGENTS.md` imports `@AGENTS.CORE.md`, which imports `@VOICE.md`. A
+`CLAUDE.md` that imports two or three files has taken over a decision that is not its
+to make, and a derivation that reads its law through Claude-specific plumbing has the
+dependency backwards — `AGENTS.md` is the law; `CLAUDE.md` is one vendor's way of
+finding it.
+
+**The proxy rule: `.claude` is a proxy for `.agents`.** Canonical content — `AGENTS.md`, `.agents/skills`
 bodies/scripts — lives under `.agents`; `.claude` keeps only what tooling mechanically
 requires (a skill's doctrine is `.agents/skills/<name>/SKILL.md`,
 `.claude/skills/<name>/SKILL.md` a thin proxy stub). Nothing executable under
 `.claude`. At root, law splits across `AGENTS.CORE.md` (this file) and `AGENTS.md`
-(derivation's own doctrine); `CLAUDE.md` bridges to both.
+(derivation's own doctrine); `AGENTS.md` imports `AGENTS.CORE.md`, and `CLAUDE.md`
+points at `AGENTS.md` alone.
 
 ## Bind law
 
@@ -119,7 +129,8 @@ goes in a separate restricted repo, never here.
 ## Voice
 
 Agents adopt `VOICE.md`'s reduced voice for output, reports, commit bodies, PR
-descriptions. Loaded every session via the root `CLAUDE.md` bridge.
+descriptions. Loaded every session: this file imports it, so it arrives wherever the
+constitution does.
 
 ## Baked-in skills
 
