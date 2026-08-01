@@ -28,8 +28,14 @@ Four levels, four lifetimes (`AGENTS.CORE.md` "The shapes"):
 - **`<app>/tasks.md`** is **carried work**: epics, deferred tasks, threads that must survive
   any one session. `orchestrate.sh` never reads it as a session list. It is the reason the
   application level exists.
-- **`<session>`** is one discrete instantiation — dated by default. **Everything under it is
-  disposable after harvest, by definition.** Anything there that is not disposable has one of
+- **`<session>`** is one discrete instantiation, named `<date>-<slug>`. **Everything under it
+  is disposable after harvest, by definition.**
+
+  The slug carries the name and the date carries the order, and both are needed. A bare date
+  says nothing about what the session was, and two sessions in one day collide. A bare slug
+  loses the ordering that makes a directory listing readable and makes a second session on
+  the same subject impossible to name. `init` takes the slug and adds the date, and refuses a
+  bare date outright. Anything there that is not disposable has one of
   three other homes, and harvest is the gate that moves it.
 
 - **Every level at the workflow repo root** — never inside bound substrate. Session state
@@ -38,7 +44,7 @@ Four levels, four lifetimes (`AGENTS.CORE.md` "The shapes"):
   another machine, or after a compaction, resumes from the commit. (Contrast `workspace/`,
   which is per-machine and never committed.) A harvested session directory is **deleted
   outright** — `git log` is the archive; no graveyard directory is kept.
-- **One session directory per (workflow, app, session).** `orchestrate.sh init` refuses if
+- **One session directory per (workflow, app, session).** `orchestrate.sh init <workflow> <app> <slug>` refuses if
   `tasks.md` already exists there. It never overwrites `<app>/tasks.md` or `<app>/profile.md`:
   clobbering carried work is how cross-session threads are lost.
 

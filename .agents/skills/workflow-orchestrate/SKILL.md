@@ -133,7 +133,7 @@ Load a `references/` file when you reach the step that needs it. Keep this page 
 `orchestrate.sh` — the only mechanical part. Reporting is read-only; `init` is the one write.
 
 ```sh
-.agents/skills/workflow-orchestrate/orchestrate.sh init <workflow> <app> [<session>]  # scaffold a session
+.agents/skills/workflow-orchestrate/orchestrate.sh init <workflow> <app> <slug>  # scaffold <date>-<slug>
 .agents/skills/workflow-orchestrate/orchestrate.sh status [<key>]   # counts, violations, harvest, DoD verdict
 .agents/skills/workflow-orchestrate/orchestrate.sh ready  [<key>]   # tasks whose deps are all done
 .agents/skills/workflow-orchestrate/orchestrate.sh list             # every run + its verdict

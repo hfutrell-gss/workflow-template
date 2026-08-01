@@ -23,9 +23,10 @@
 #
 # BEGIN-USAGE
 # Usage:
-#   orchestrate.sh init <workflow> <app> [<session>]
-#                                             scaffold workflows/<workflow>/<app>/<session>/
-#                                             (<session> defaults to today's date)
+#   orchestrate.sh init <workflow> <app> <slug>
+#                                             scaffold workflows/<workflow>/<app>/<date>-<slug>/
+#                                             <slug> says what the session is FOR; the date is
+#                                             added for you. A bare date is refused.
 #   orchestrate.sh status [<key>]             counts, violations, harvest, DoD verdict
 #   orchestrate.sh ready  [<key>]             tasks whose deps are all done
 #   orchestrate.sh list                       every session with its verdict
@@ -102,7 +103,7 @@ resolve_session() {
     done
     die "no such session: $want (want <workflow>/<app>/<session>, or a legacy slug under .workflow/)"
   fi
-  if [ "$n" -eq 0 ]; then die "no sessions under workflows/ or .workflow/ — run: orchestrate.sh init <workflow> <app> [<session>]"; fi
+  if [ "$n" -eq 0 ]; then die "no sessions under workflows/ or .workflow/ — run: orchestrate.sh init <workflow> <app> <slug>"; fi
   if [ "$n" -eq 1 ]; then
     RESOLVED_KEY="${SESS_KEY[0]}"; RESOLVED_PATH="${SESS_PATH[0]}"
     if [ "${SESS_LEGACY[0]}" = "1" ]; then note_legacy "$RESOLVED_KEY"; fi
@@ -271,10 +272,19 @@ report() {
 }
 
 cmd_init() {
-  local workflow="${1:-}" app="${2:-}" session="${3:-}" today
-  [ -n "$workflow" ] && [ -n "$app" ] || die "usage: orchestrate.sh init <workflow> <app> [<session>]"
+  local workflow="${1:-}" app="${2:-}" slug="${3:-}" session today
+  [ -n "$workflow" ] && [ -n "$app" ] && [ -n "$slug" ] \
+    || die "usage: orchestrate.sh init <workflow> <app> <slug>
+  <slug> names what the session is FOR, in two or three words: glossary, delayed-policies,
+  auth-rewrite. The date is added for you. A bare date is refused -- \"2026-08-01\" tells
+  the next reader nothing, and two sessions in one day would collide."
   today="$(date +%F)"
-  [ -n "$session" ] || session="$today"
+  # A slug that already carries its own date (a migrated session) is taken as-is.
+  case "$slug" in
+    [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]) die "\"$slug\" is a bare date, not a name. Say what the session is for: init $workflow $app <slug>" ;;
+    [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]-*) session="$slug" ;;
+    *) session="$today-$slug" ;;
+  esac
   local seg
   for seg in "$workflow" "$app" "$session"; do
     [[ "$seg" =~ ^[A-Za-z0-9._-]+$ ]] || die "names may contain only letters, digits, dot, underscore, dash: $seg"
@@ -305,7 +315,7 @@ cmd_init() {
 
 cmd_list() {
   collect_sessions
-  [ "${#SESS_KEY[@]}" -eq 0 ] && die "no sessions under workflows/ or .workflow/ — run: orchestrate.sh init <workflow> <app> [<session>]"
+  [ "${#SESS_KEY[@]}" -eq 0 ] && die "no sessions under workflows/ or .workflow/ — run: orchestrate.sh init <workflow> <app> <slug>"
   local rc=0 i verdict
   for i in "${!SESS_KEY[@]}"; do
     verdict="$(report "${SESS_PATH[$i]}" status | grep '^DoD:' || true)"
