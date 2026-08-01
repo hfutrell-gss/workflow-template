@@ -7,8 +7,8 @@ tier: dev            # dev | ops | admin — the roles/credentials these procedu
 This session must ALSO have loaded `AGENTS.CORE.md` (the managed constitution — it
 opens with "MANDATORY FIRST — verify initialization"). If you did not see that content
 this session, run `/workflow-agents-sync` to check the root `CLAUDE.md` bridge (it must
-import both `@AGENTS.CORE.md` and `@AGENTS.md`) and fix drift. `AGENTS.CORE.md` is
-picked up the same way house `AGENTS*.md` discovery already covers this file — no
+import `@AGENTS.CORE.md`, `@VOICE.md`, and `@AGENTS.md`) and fix drift. `AGENTS.CORE.md`
+is picked up the same way house `AGENTS*.md` discovery already covers this file — no
 separate mechanism needed.
 
 # <Area> — doctrine

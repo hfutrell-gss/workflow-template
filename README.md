@@ -44,7 +44,7 @@ To pull forward later improvements to the managed set:
 | `AGENTS.CORE.md` | The constitution — TEMPLATE-MANAGED, never hand-edited in a derivation |
 | `VOICE.md` | The reduced-voice contract for agent output — TEMPLATE-MANAGED |
 | `AGENTS.md` | This workflow's own doctrine — entirely yours, a skeleton until you write it |
-| `CLAUDE.md` | Bridge importing `@AGENTS.CORE.md` then `@AGENTS.md` |
+| `CLAUDE.md` | Bridge importing `@AGENTS.CORE.md`, `@VOICE.md`, then `@AGENTS.md` |
 | `binds.yaml` | Standing binds: repos related to this workflow (kind + why); `base` (default `./workspace`) says where they live on disk |
 | `workspace/` | This workflow's own substrate workspace — gitignored, per-machine; where standing binds get cloned and cross-repo work happens. Never committed, never the user's personal checkouts. |
 | `template-manifest.yaml` | The exact managed-set path list `workflow-template-sync` owns |
