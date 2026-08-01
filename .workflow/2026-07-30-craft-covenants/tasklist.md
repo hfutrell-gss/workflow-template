@@ -82,3 +82,18 @@ zero violations. `[-]` requires `why:` and a user `signoff:`.
 - 2026-07-30: verified T009 ([skill-body](64bf59b4-685e-4f88-bcc0-03568af4dee1)). Dispatched T010.
 - 2026-07-30: verified T010 ([release](435721ff-3f5e-4149-ac43-8c89caa02f93)) — VERSION 18.
   Session exhausted.
+- 2026-07-31: retroactive harvest record (T005, the run-layout task). This session
+  predates the harvest gate; its output already shipped at session-close time — the
+  craft-tdd/craft-code-quality thickening and the CQRS refs landed as VERSION 18's
+  managed set, and `journal/2026-07-30-craft-covenants.md` carries the narrative. No
+  further sweep needed.
+
+## Harvest
+
+<!-- Required before this run can close. Sweep notes/ and decisions into (a) the
+     procedure workflows/<workflow>/ if a way-of-working stabilized, (b) the target
+     repo's own docs if the knowledge is the target's, (c) the journal if it is
+     narrative. Then record where, and the instance directory may be deleted — it is
+     committed, so git log is the archive; no graveyard directory is kept. -->
+
+harvest: done shipped as VERSION 18 managed craft-tdd/craft-code-quality assets; narrative in journal/2026-07-30-craft-covenants.md

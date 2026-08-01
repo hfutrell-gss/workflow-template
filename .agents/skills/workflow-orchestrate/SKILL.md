@@ -2,12 +2,13 @@
 name: workflow-orchestrate
 description: >-
   Task-based orchestration bound to model tiers, not model names. Take a directive, decompose
-  it into a committed task list at .workflow/<session-slug>/tasklist.md, reorganize that into a
-  streamlined flow, dispatch each task to the fitting tier (flagship consultant · workhorse
+  it into a committed task list at workflows/<workflow>/<target>/tasks.md, reorganize that into
+  a streamlined flow, dispatch each task to the fitting tier (flagship consultant · workhorse
   orchestrator · fleet workers) resolved from a lane roster, and loop until the list is
-  exhausted. Use when asked to orchestrate or coordinate a multi-task job, when a directive
-  needs decomposing into tasks, when resuming a prior session's task list, or when work must
-  survive across sessions and cold /loop ticks.
+  exhausted AND its durable output harvested out of the run directory. Use when asked to
+  orchestrate or coordinate a multi-task job, when a directive needs decomposing into tasks,
+  when resuming a prior run's task list, or when work must survive across sessions and cold
+  /loop ticks.
 ---
 
 # workflow-orchestrate
@@ -29,12 +30,20 @@ Hedged once, here. The rest of this file is imperative on purpose.
 ## What this is
 
 You are the **orchestrator**: you coordinate, you do not personally do the work. The durable
-artifact is not your context — it is `.workflow/<session-slug>/tasklist.md`, committed, so a
+artifact is not your context — it is `workflows/<workflow>/<target>/tasks.md`, committed, so a
 cold tick, a compaction, or a different machine resumes the same run.
 
-**Definition of Done: task list exhaustion.** Nothing else. Not "enough progress", not "the
-interesting part is finished". See `references/tasklist.md` for what exhaustion means and why
-you cannot assert it — `orchestrate.sh status` decides.
+`<workflow>` names a reusable way-of-working (`refactor`, `create-web-app`); `<target>` is the
+repo it lands in. `workflows/<workflow>/` is the DURABLE procedure and is never pruned;
+`workflows/<workflow>/<target>/` is this one run's INSTANCE state and is disposable — but only
+*after* its output is harvested out. Full stratification rule, the legacy-path fallback, and
+the harvest gate: `references/tasklist.md`.
+
+**Definition of Done: task list exhaustion, plus harvest.** Nothing else. Not "enough
+progress", not "the interesting part is finished", and not "every task is `[x]`" while the
+run's own notes and decisions are still stranded in its instance directory. See
+`references/tasklist.md` for what both mean and why you cannot assert either —
+`orchestrate.sh status` decides.
 
 ## Roles and tiers
 
@@ -64,8 +73,9 @@ Load a `references/` file when you reach the step that needs it. Keep this page 
    *now*, before spending fleet tokens (`references/consultation.md`).
 
 2. **Resolve the roster.** Resolve each tier to a concrete dispatch handle and write
-   `.workflow/<slug>/roster.md`, so a continuation reproduces the same fleet instead of
-   re-deciding. Record substitutions loudly — a degraded lane is a finding, not a detail.
+   `workflows/<workflow>/<target>/roster.md`, so a continuation reproduces the same fleet
+   instead of re-deciding. Record substitutions loudly — a degraded lane is a finding, not a
+   detail.
 
 3. **Decompose.** Directive → tasks. Each task: independently dispatchable, one tier, one
    stated acceptance test, small enough that a `fleet` worker can finish it in one dispatch.
@@ -85,9 +95,11 @@ Load a `references/` file when you reach the step that needs it. Keep this page 
    against the worker's claim of success. Then write `[x]` plus an `evidence:` line. Failed or
    partial work goes back to `[ ]` or `[!]`. Never `[x]` on a worker's word alone.
 
-7. **Check DoD.** Run `orchestrate.sh status`. Not exhausted → return to the step that owns
-   the gap (new work found → 3; ordering wrong → 4; tasks ready → 5). Exhausted and clean →
-   report, then stop the loop.
+7. **Check DoD.** Run `orchestrate.sh status`. Not done → return to the step that owns the gap
+   (new work found → 3; ordering wrong → 4; tasks ready → 5; tasks exhausted but `harvest
+   pending` → sweep `notes/` and the `## Log` into the procedure, the target's docs, or the
+   journal, then record `harvest: done <where>`). Exhausted, clean, and harvested → report,
+   then stop the loop.
 
 ## Continuation
 
@@ -120,11 +132,14 @@ Load a `references/` file when you reach the step that needs it. Keep this page 
 `orchestrate.sh` — the only mechanical part. Reporting is read-only; `init` is the one write.
 
 ```sh
-.agents/skills/workflow-orchestrate/orchestrate.sh init <name>       # scaffold a session
-.agents/skills/workflow-orchestrate/orchestrate.sh status [<slug>]   # counts, violations, DoD verdict
-.agents/skills/workflow-orchestrate/orchestrate.sh ready  [<slug>]   # tasks whose deps are all done
-.agents/skills/workflow-orchestrate/orchestrate.sh list              # every session + its verdict
+.agents/skills/workflow-orchestrate/orchestrate.sh init <workflow> <target>  # scaffold a run
+.agents/skills/workflow-orchestrate/orchestrate.sh status [<key>]   # counts, violations, harvest, DoD verdict
+.agents/skills/workflow-orchestrate/orchestrate.sh ready  [<key>]   # tasks whose deps are all done
+.agents/skills/workflow-orchestrate/orchestrate.sh list             # every run + its verdict
 ```
+
+`<key>` is `<workflow>/<target>`, or a bare slug for a run still at the legacy
+`.workflow/<slug>/` path (resolved for one version — `references/tasklist.md`).
 
 Task-list edits are yours to make with an editor, not the script's: recording completion
 requires judgment about evidence, and a script that mutates markers invites marking things

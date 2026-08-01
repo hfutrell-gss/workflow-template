@@ -89,10 +89,13 @@ made for a given day belong in that day's journal entry (see `/workflow-bind`).
 
 ## Session state
 
-Orchestration runs keep machine-readable state at `.workflow/<session-slug>/` —
+Orchestration runs keep machine-readable state at `workflows/<workflow>/<target>/` —
 **committed**, unlike `workspace/`, so a run resumes after a compaction, after a cold
-`/loop` tick, or on another machine entirely. The task list there is the state of the run;
-that day's journal entry is its human narrative. Neither replaces the other. See
+`/loop` tick, or on another machine entirely. `workflows/<workflow>/` itself is the
+DURABLE procedure; `<target>/` is disposable INSTANCE state, gated shut by a harvest
+step before the run may close. (Runs predating this layout resolve for one version at
+the legacy `.workflow/<slug>/` path.) The task list is the state of the run; that day's
+journal entry is its human narrative. Neither replaces the other. See
 `/workflow-orchestrate`.
 
 ## Git discipline
@@ -240,9 +243,10 @@ bodies, and PR descriptions.
   and the **strictly opt-in, per-session** `ANTHROPIC_BASE_URL` override for routing
   Claude Code through it. Never set globally or by default — see its SKILL.md.
 - `/workflow-orchestrate` — task-based orchestration: decompose a directive into a
-  committed task list (`.workflow/<session-slug>/tasklist.md`), dispatch each task to a
-  model **tier** (`flagship` · `workhorse` · `fleet`) resolved from a lane roster instead
-  of a hardcoded model name, and loop until the list is exhausted — DoD is exhaustion,
+  committed task list (`workflows/<workflow>/<target>/tasks.md`), dispatch each task to
+  a model **tier** (`flagship` · `workhorse` · `fleet`) resolved from a lane roster
+  instead of a hardcoded model name, and loop until the list is exhausted AND its
+  durable output harvested out of the run directory — DoD is exhaustion-plus-harvest,
   and `orchestrate.sh status` decides it, not the orchestrator. Tier→lane preference and
   role→tier overrides live in `.agents/orchestrate/roster.local.yaml`; further doctrine
   overrides in `.agents/orchestrate/orchestrate.local.md`. Both are derivation-owned and

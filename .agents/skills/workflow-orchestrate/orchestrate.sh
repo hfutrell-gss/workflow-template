@@ -1,65 +1,134 @@
 #!/usr/bin/env bash
-# workflow-orchestrate — session task-list mechanics.
+# workflow-orchestrate — run mechanics.
 #
-# The task list at .workflow/<session-slug>/tasklist.md is the durable state of an
-# orchestration run (grammar + anti-cheat rules: references/tasklist.md). This script
-# only scaffolds and reports; it never marks a task done, because recording completion
-# requires judgment about evidence and a script that mutates markers invites marking
-# work done without any.
+# Two strata, never mixed:
+#   workflows/<workflow>/                  DURABLE — the procedure. Never pruned.
+#   workflows/<workflow>/<target>/tasks.md INSTANCE — one run. Disposable after harvest.
 #
+# tasks.md (grammar + anti-cheat rules: references/tasklist.md) is the durable state of
+# a run for as long as the run is open. This script only scaffolds and reports; it
+# never marks a task done, because recording completion requires judgment about
+# evidence and a script that mutates markers invites marking work done without any.
+#
+# Legacy fallback: a run still at .workflow/<slug>/tasklist.md (pre-stratification
+# layout) keeps resolving here for one version — see references/tasklist.md "Legacy
+# layout". New runs never use it. `init` only ever writes the new layout.
+#
+# BEGIN-USAGE
 # Usage:
-#   orchestrate.sh init <name>        scaffold .workflow/<YYYY-MM-DD-name>/
-#   orchestrate.sh status [<slug>]    counts, violations, ready set, DoD verdict
-#   orchestrate.sh ready  [<slug>]    tasks whose deps are all done
-#   orchestrate.sh list               every session with its verdict
+#   orchestrate.sh init <workflow> <target>   scaffold workflows/<workflow>/<target>/
+#   orchestrate.sh status [<key>]             counts, violations, harvest, DoD verdict
+#   orchestrate.sh ready  [<key>]             tasks whose deps are all done
+#   orchestrate.sh list                       every run with its verdict
 #
-# Exit codes (status/ready/list): 0 = exhausted and clean, 2 = NOT exhausted (an
-# ordinary state, not a failure), 1 = usage or IO error.
+# <key> is <workflow>/<target> for a run in the current layout, or a bare slug for a
+# run still at the legacy .workflow/<slug>/ path. Omit it to resolve the only run
+# present, or the only one still open.
+#
+# Exit codes (status/ready/list): 0 = exhausted, clean, and harvested; 2 = NOT done (an
+# ordinary state, not a failure); 1 = usage or IO error.
+# END-USAGE
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$HERE/../../.." && pwd)"
-WF="$ROOT/.workflow"
+WORKFLOWS="$ROOT/workflows"
+WF="$ROOT/.workflow"          # legacy layout — fallback only, see header
 ASSETS="$HERE/assets"
 
 die() { echo "error: $*" >&2; exit 1; }
+note_legacy() { echo "NOTE: legacy run at .workflow/$1/ — migrate to workflows/<workflow>/<target>/ (this fallback is scheduled for removal in a future version)" >&2; }
 
 usage() {
-  sed -n '10,17p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+  sed -n '/^# BEGIN-USAGE/,/^# END-USAGE/p' "${BASH_SOURCE[0]}" | sed '1d;$d;s/^# \{0,1\}//'
   exit "${1:-1}"
 }
 
-# Resolve a session slug: explicit argument, else the only session present, else the
-# only session that is not exhausted. Ambiguity is an error, never a guess.
-resolve_slug() {
-  local want="${1:-}"
-  [ -n "$want" ] && { [ -f "$WF/$want/tasklist.md" ] || die "no such session: $want"; echo "$want"; return; }
-  [ -d "$WF" ] || die "no .workflow/ yet — run: orchestrate.sh init <name>"
-  local all=() open=() d slug
-  for d in "$WF"/*/; do
-    [ -f "$d/tasklist.md" ] || continue
-    slug="$(basename "$d")"
-    all+=("$slug")
-    report "$d/tasklist.md" status >/dev/null 2>&1 || open+=("$slug")
-  done
-  [ "${#all[@]}" -eq 0 ] && die "no sessions under .workflow/ — run: orchestrate.sh init <name>"
-  [ "${#all[@]}" -eq 1 ] && { echo "${all[0]}"; return; }
-  [ "${#open[@]}" -eq 1 ] && { echo "${open[0]}"; return; }
-  die "$( [ "${#open[@]}" -eq 0 ] && echo "all sessions exhausted" || echo "${#open[@]} open sessions" ); name one: ${all[*]}"
+# collect_sessions — populate SESS_KEY[]/SESS_PATH[]/SESS_LEGACY[] with every run found
+# under both layouts. Current layout first, legacy second; order only matters for
+# list's display order.
+collect_sessions() {
+  SESS_KEY=(); SESS_PATH=(); SESS_LEGACY=()
+  local wdir tdir d key
+  if [ -d "$WORKFLOWS" ]; then
+    for wdir in "$WORKFLOWS"/*/; do
+      [ -d "$wdir" ] || continue
+      for tdir in "$wdir"*/; do
+        [ -f "$tdir/tasks.md" ] || continue
+        key="$(basename "$wdir")/$(basename "$tdir")"
+        SESS_KEY+=("$key"); SESS_PATH+=("$tdir/tasks.md"); SESS_LEGACY+=(0)
+      done
+    done
+  fi
+  if [ -d "$WF" ]; then
+    for d in "$WF"/*/; do
+      [ -f "$d/tasklist.md" ] || continue
+      key="$(basename "$d")"
+      SESS_KEY+=("$key"); SESS_PATH+=("$d/tasklist.md"); SESS_LEGACY+=(1)
+    done
+  fi
 }
 
-# report <tasklist.md> <status|ready>  — the whole parser/validator.
+# resolve_session <key> — sets RESOLVED_KEY / RESOLVED_PATH. Explicit key, else the
+# only run present, else the only run that is not exhausted. Ambiguity is an error,
+# never a guess. Emits a NOTE (not a suppression) whenever the resolved run is legacy.
+resolve_session() {
+  local want="${1:-}" i
+  collect_sessions
+  local n="${#SESS_KEY[@]}"
+  if [ -n "$want" ]; then
+    for i in "${!SESS_KEY[@]}"; do
+      if [ "${SESS_KEY[$i]}" = "$want" ]; then
+        RESOLVED_KEY="${SESS_KEY[$i]}"; RESOLVED_PATH="${SESS_PATH[$i]}"
+        if [ "${SESS_LEGACY[$i]}" = "1" ]; then note_legacy "$RESOLVED_KEY"; fi
+        return 0
+      fi
+    done
+    die "no such run: $want (want <workflow>/<target>, or a legacy slug under .workflow/)"
+  fi
+  if [ "$n" -eq 0 ]; then die "no runs under workflows/ or .workflow/ — run: orchestrate.sh init <workflow> <target>"; fi
+  if [ "$n" -eq 1 ]; then
+    RESOLVED_KEY="${SESS_KEY[0]}"; RESOLVED_PATH="${SESS_PATH[0]}"
+    if [ "${SESS_LEGACY[0]}" = "1" ]; then note_legacy "$RESOLVED_KEY"; fi
+    return 0
+  fi
+  local -a open_idx=()
+  for i in "${!SESS_KEY[@]}"; do
+    report "${SESS_PATH[$i]}" status >/dev/null 2>&1 || open_idx+=("$i")
+  done
+  if [ "${#open_idx[@]}" -eq 1 ]; then
+    i="${open_idx[0]}"
+    RESOLVED_KEY="${SESS_KEY[$i]}"; RESOLVED_PATH="${SESS_PATH[$i]}"
+    if [ "${SESS_LEGACY[$i]}" = "1" ]; then note_legacy "$RESOLVED_KEY"; fi
+    return 0
+  fi
+  if [ "${#open_idx[@]}" -eq 0 ]; then
+    die "all runs exhausted; name one: ${SESS_KEY[*]}"
+  else
+    die "${#open_idx[@]} open runs; name one: ${SESS_KEY[*]}"
+  fi
+}
+
+# report <tasks.md> <status|ready>  — the whole parser/validator.
 report() {
   awk -v mode="$2" '
     function has(id, key) { return ((id SUBSEP key) in field) }
     function bad(msg)     { viol[++nv] = msg }
 
-    /^## Directive/        { in_dir = 1; in_tasks = 0; next }
-    /^## Tasks/            { in_tasks = 1; in_dir = 0; next }
-    /^## /                 { in_tasks = 0; in_dir = 0 }
+    /^## Directive/        { in_dir = 1; in_tasks = 0; in_harv = 0; next }
+    /^## Tasks/            { in_tasks = 1; in_dir = 0; in_harv = 0; next }
+    /^## Harvest/          { in_harv = 1; in_tasks = 0; in_dir = 0; next }
+    /^## /                 { in_tasks = 0; in_dir = 0; in_harv = 0 }
     { if (/<!--/) gc = 1 }                                  # HTML comments are never content
     gc                     { if (/-->/) gc = 0; next }
     in_dir                 { if ($0 !~ /^[ \t]*$/) ndir++; next }
+    in_harv {
+      if ($0 ~ /^harvest:/) {
+        v = $0; sub(/^harvest:[ \t]*/, "", v); gsub(/[ \t]+$/, "", v)
+        if (v != "") harvest_val = v
+      }
+      next
+    }
     !in_tasks {
       # A task line filed outside ## Tasks would be silently ignored — and silently
       # ignored work is how a list reaches exhaustion without doing it.
@@ -100,6 +169,18 @@ report() {
       # is NOT done — it is unstarted.
       if (nt == 0)   bad("no tasks — decompose the directive first")
       if (ndir == 0) bad("## Directive is empty — capture the directive verbatim")
+
+      # Harvest gate: a run is not done until its durable output has left the run
+      # directory. Absent section/field defaults to "pending" — so a run written before
+      # this gate existed (or one that forgot it) is reported honestly, not silently
+      # grandfathered in. "done" alone (no destination) is a violation, always: this is
+      # the anti-cheat rule for the harvest gate and it must be checkable the same way
+      # every other marker is.
+      if (harvest_val == "") harvest_val = "pending"
+      harvested = (harvest_val ~ /^done[ \t]+[^ \t]/)
+      if (harvest_val != "pending" && !harvested)
+        bad("harvest: \"" harvest_val "\" is not \"pending\" or \"done <where it went>\"")
+
       for (i = 1; i <= nt; i++) {
         id = order[i]; m = mark[id]
         if (!has(id, "accept"))                  bad(id ": missing accept: (every task needs its acceptance test)")
@@ -145,6 +226,7 @@ report() {
       }
 
       open = count[" "] + count["~"] + count["!"]
+      exhausted = (open == 0 && nv == 0)
       if (mode == "ready") {
         for (i = 1; i <= nr; i++) printf "%s · %s · %s\n", ready[i], tier[ready[i]], title[ready[i]]
         if (nr == 0) printf "(none ready: %d pending, %d in flight, %d blocked)\n", count[" "], count["~"], count["!"]
@@ -152,52 +234,55 @@ report() {
         printf "tasks       %d\n", nt
         printf "  pending   %d\n  in flight %d\n  done      %d\n  blocked   %d\n  dropped   %d\n", \
                count[" "], count["~"], count["x"], count["!"], count["-"]
+        printf "harvest     %s\n", harvest_val
         if (nr > 0) { printf "ready      "; for (i = 1; i <= nr; i++) printf "%s%s", ready[i], (i < nr ? " " : "\n") }
         if (nv > 0) { print  "violations " nv; for (i = 1; i <= nv; i++) print "  ! " viol[i] }
-        if (open == 0 && nv == 0)  print "DoD: EXHAUSTED"
-        else if (nv > 0)           printf "DoD: NOT EXHAUSTED (%d open, %d violation%s)\n", open, nv, (nv == 1 ? "" : "s")
-        else                       printf "DoD: NOT EXHAUSTED (%d open)\n", open
+        if (exhausted && harvested)       print "DoD: EXHAUSTED"
+        else if (exhausted && !harvested) print "DoD: NOT EXHAUSTED (harvest pending)"
+        else if (nv > 0)                  printf "DoD: NOT EXHAUSTED (%d open, %d violation%s)\n", open, nv, (nv == 1 ? "" : "s")
+        else                               printf "DoD: NOT EXHAUSTED (%d open)\n", open
       }
-      exit (open == 0 && nv == 0) ? 0 : 2
+      exit (exhausted && harvested) ? 0 : 2
     }
   ' "$1"
 }
 
 cmd_init() {
-  local name="${1:-}" slug today
-  [ -n "$name" ] || die "usage: orchestrate.sh init <name>"
-  [[ "$name" =~ ^[A-Za-z0-9._-]+$ ]] || die "name may contain only letters, digits, dot, underscore, dash: $name"
+  local workflow="${1:-}" target="${2:-}" today
+  [ -n "$workflow" ] && [ -n "$target" ] || die "usage: orchestrate.sh init <workflow> <target>"
+  [[ "$workflow" =~ ^[A-Za-z0-9._-]+$ ]] || die "workflow name may contain only letters, digits, dot, underscore, dash: $workflow"
+  [[ "$target" =~ ^[A-Za-z0-9._-]+$ ]]   || die "target name may contain only letters, digits, dot, underscore, dash: $target"
   today="$(date +%F)"
-  if [[ "$name" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}- ]]; then slug="$name"; else slug="$today-$name"; fi
-  local dir="$WF/$slug"
-  [ -e "$dir/tasklist.md" ] && die "session already exists: .workflow/$slug/tasklist.md"
-  mkdir -p "$dir/notes"
+  local wdir="$WORKFLOWS/$workflow" dir="$WORKFLOWS/$workflow/$target"
+  [ -e "$dir/tasks.md" ] && die "run already exists: workflows/$workflow/$target/tasks.md"
+  mkdir -p "$wdir" "$dir/notes"
   local f
-  for f in tasklist roster; do
-    sed -e "s/__SLUG__/$slug/g" -e "s/__DATE__/$today/g" "$ASSETS/$f.template.md" > "$dir/$f.md"
+  for f in tasks roster; do
+    sed -e "s/__WORKFLOW__/$workflow/g" -e "s/__TARGET__/$target/g" -e "s/__DATE__/$today/g" \
+      "$ASSETS/$f.template.md" > "$dir/$f.md"
   done
   : > "$dir/notes/.gitkeep"
-  echo "created .workflow/$slug/{tasklist.md,roster.md,notes/}"
+  echo "created workflows/$workflow/$target/{tasks.md,roster.md,notes/}"
   echo "next: paste the directive verbatim, resolve the roster, then decompose."
 }
 
 cmd_list() {
-  [ -d "$WF" ] || die "no .workflow/ yet — run: orchestrate.sh init <name>"
-  local rc=0 d slug verdict
-  for d in "$WF"/*/; do
-    [ -f "$d/tasklist.md" ] || continue
-    slug="$(basename "$d")"
-    verdict="$(report "$d/tasklist.md" status | grep '^DoD:' || true)"
-    report "$d/tasklist.md" status >/dev/null 2>&1 || rc=2
-    printf '%-32s %s\n' "$slug" "${verdict:-DoD: unparseable}"
+  collect_sessions
+  [ "${#SESS_KEY[@]}" -eq 0 ] && die "no runs under workflows/ or .workflow/ — run: orchestrate.sh init <workflow> <target>"
+  local rc=0 i verdict
+  for i in "${!SESS_KEY[@]}"; do
+    verdict="$(report "${SESS_PATH[$i]}" status | grep '^DoD:' || true)"
+    report "${SESS_PATH[$i]}" status >/dev/null 2>&1 || rc=2
+    [ "${SESS_LEGACY[$i]}" = "1" ] && note_legacy "${SESS_KEY[$i]}"
+    printf '%-40s %s\n' "${SESS_KEY[$i]}" "${verdict:-DoD: unparseable}"
   done
   return "$rc"
 }
 
 case "${1:-}" in
-  init)          shift; cmd_init "${1:-}" ;;
-  status|ready)  mode="$1"; shift; slug="$(resolve_slug "${1:-}")"
-                 echo "session: $slug"; report "$WF/$slug/tasklist.md" "$mode" ;;
+  init)          shift; cmd_init "${1:-}" "${2:-}" ;;
+  status|ready)  mode="$1"; shift; resolve_session "${1:-}"
+                 echo "run: $RESOLVED_KEY"; report "$RESOLVED_PATH" "$mode" ;;
   list)          cmd_list ;;
   -h|--help|help) usage 0 ;;
   *)             usage 1 ;;

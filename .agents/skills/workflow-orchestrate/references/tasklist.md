@@ -2,28 +2,67 @@
 
 Your context is not the state of the run. This file is.
 
-## Where it lives
+## Two strata — the whole design
+
+"Workflow" names **reusable procedural knowledge**: the repeatable way of doing a kind of
+work (`refactor`, `create-web-app`, `onboard-app`) — not a log of one time it was done. That
+procedure and any one run of it live at different levels, and the split is load-bearing:
 
 ```
-.workflow/<session-slug>/
-├── tasklist.md     # the run: directive, DoD, tasks
-├── roster.md       # the tiers this session resolved (see model-classes.md)
-└── notes/          # worker artifacts, evidence too big for one line
+workflows/<workflow>/                    # DURABLE — the procedure. Never pruned.
+workflows/<workflow>/<target>/tasks.md   # INSTANCE — one run. Disposable after harvest.
+workflows/<workflow>/<target>/roster.md  # the tiers this run resolved (see model-classes.md)
+workflows/<workflow>/<target>/notes/     # worker artifacts, evidence too big for one line
 ```
 
-- **Always at the workflow repo root** — never inside bound substrate. Session state belongs to
-  the workflow that owns the run; the substrate only receives the work.
-- **`<session-slug>` is `YYYY-MM-DD-<name>`**, matching journal naming. `orchestrate.sh init
-  <name>` prepends today's date if you omit it.
-- **Committed, not gitignored.** That is the entire point: a continuation on another machine, or
-  after a compaction, resumes from the commit. (Contrast `workspace/`, which is per-machine and
-  never committed.)
-- **One session per directive.** A new directive gets a new session, even on the same day. Do
-  not append unrelated work to a live list — that makes exhaustion unreachable by construction.
+- **`<workflow>`** names the way-of-working. Its directory level holds whatever documents
+  that procedure — durable, never keyed to a single run, never pruned by a harvest.
+- **`<target>`** is the repo the work lands in — not a date. One `<workflow>`×`<target>` pair
+  is a long-lived run: "the more-or-less global task set for doing `<workflow>`-shaped work
+  on `<target>`." It is meant to be reopened across sessions, not closed and re-created daily.
+- **The stratification rule: everything under `<target>/` is disposable after harvest, by
+  definition.** If something there is *not* disposable — a lesson that generalizes beyond this
+  one run, a decision future runs of this workflow need — it does not belong there. It belongs
+  one level up in `workflows/<workflow>/`, in `<target>`'s own docs (if the knowledge is the
+  target's), or in the journal (if it is narrative). This is what stops "workflow" from
+  collapsing into "run log" again: pruning `workflows/<workflow>/<target>/` can never damage
+  the procedure, because nothing durable was ever allowed to live there. See "Harvest" below —
+  this is the gate that enforces it.
+- **Both levels always at the workflow repo root** — never inside bound substrate. Run state
+  belongs to the workflow that owns the run; the substrate only receives the work.
+- **Committed, not gitignored**, at both levels. That is the entire point: a continuation on
+  another machine, or after a compaction, resumes from the commit. (Contrast `workspace/`,
+  which is per-machine and never committed.) A closed, harvested instance directory may be
+  **deleted outright** — it is committed, so `git log` is the archive; no graveyard directory
+  is kept.
+- **One instance directory per (workflow, target).** `orchestrate.sh init <workflow> <target>`
+  refuses if `tasks.md` already exists there — resume the existing run instead of starting a
+  parallel one for the same pair.
 
-The harness `TaskCreate`/`TaskUpdate` store may mirror this file for the live UI. It is **never
-the source of truth**: it does not survive a cold tick, and a run whose state lives only there
-cannot be resumed or reviewed.
+The harness `TaskCreate`/`TaskUpdate` store may mirror `tasks.md` for the live UI. It is
+**never the source of truth**: it does not survive a cold tick, and a run whose state lives
+only there cannot be resumed or reviewed.
+
+## Retrieving the procedure stratum
+
+A directory alone cannot be found by a model at the moment of need — `workflows/<workflow>/`
+holds the procedure, but nothing loads it unless something points there. The intended pattern,
+once a `workflows/<workflow>/` has content worth retrieving: a thin, derivation-local skill
+stub (outside the `workflow-*`/`craft-*` reserved prefixes) whose **frontmatter `description`
+is the retrieval surface** — written so a model reaching for this kind of work matches it — and
+whose body does little more than point at `workflows/<workflow>/` for the actual doctrine. This
+skill does not build that stub for any specific workflow; it only names the pattern so the
+stratum stays reachable once a derivation's procedure is worth naming.
+
+## Legacy layout
+
+Runs created before this stratification landed live at `.workflow/<slug>/tasklist.md` (one
+flat, dated directory — no workflow/target split, no harvest gate). `orchestrate.sh status`,
+`ready`, and `list` **keep resolving that path for one version**, so an in-flight legacy run
+is not stranded — it can finish, or be migrated, on its own schedule. A resolved legacy run
+prints a `NOTE:` naming the path; that is not noise to silence, it is the migration reminder.
+**This fallback is scheduled for removal in a future version.** `init` never writes to it —
+every new run goes to `workflows/<workflow>/<target>/` only.
 
 ## Grammar
 
@@ -77,13 +116,14 @@ judged against. A task without one is a wish, and `status` reports it as a viola
 
 ## Exhaustion
 
-**DoD = exhaustion**, and exhaustion is exactly:
+**DoD = exhaustion + harvest**, and that is exactly:
 
-- no `[ ]`, no `[~]`, no `[!]` remains, **and**
-- `orchestrate.sh status` reports **zero violations**.
+- no `[ ]`, no `[~]`, no `[!]` remains,
+- `orchestrate.sh status` reports **zero violations**, **and**
+- `## Harvest` reads `harvest: done <where it went>` — see "Harvest" below.
 
-`orchestrate.sh status` decides this, not you. It exits `0` on exhausted-and-clean, `2` on not
-exhausted (an ordinary state, not a failure), `1` on a real error.
+`orchestrate.sh status` decides this, not you. It exits `0` when all three hold, `2` when they
+do not (an ordinary state, not a failure), `1` on a real error.
 
 ### Anti-cheat
 
@@ -102,31 +142,60 @@ finished. All are mechanically checked:
   task is dropped with a signoff, not erased.
 - **A cycle in `deps:` is a violation**, not a puzzle — it deadlocks the loop. `status` detects
   cycles; break them in the reorganize step.
+- **`harvest:` bare `done` (no destination) is a violation.** Exhausting the task list is not
+  harvest; you must say where the durable output went. `pending` is always valid — it is the
+  honest default — but any other value that isn't `done <where>` is flagged immediately, not
+  only at closing time.
+
+## Harvest
+
+Task-list exhaustion alone used to be DoD. It is not enough: a run can finish every task and
+still leave its durable output stranded in a directory that a later prune deletes. **A run is
+not done until its durable output has left the run directory.**
+
+Before closing a run:
+
+1. Sweep `notes/` and the `## Log` decisions into (a) `workflows/<workflow>/` if a
+   way-of-working stabilized enough to write down, (b) `<target>`'s own docs if the knowledge
+   belongs to the target repo, (c) the journal if it is narrative rather than procedure or
+   target-specific fact.
+2. Record where, in `## Harvest`: `harvest: done <destination(s), briefly>`.
+3. Only then may the instance directory be deleted — it is committed, so `git log` is the
+   archive. No graveyard directory is kept, and none is needed.
+
+Mechanism: the `## Harvest` section's `harvest:` field, defaulting to `pending` when the
+section or field is absent (so a run written before this gate existed is reported honestly
+as un-harvested, never silently grandfathered in). This was chosen over a separate
+`HARVESTED` marker file because it lives in the one file `status` already parses — no second
+place to check, no risk of the marker and the task list disagreeing about whether the run is
+really done.
 
 ## Resuming cold
 
 A fresh tick has no memory of the run. Reconstruct in this order:
 
-1. `orchestrate.sh list` — find sessions that are not exhausted.
-2. Read `tasklist.md`'s header: the **verbatim directive** and the DoD. Do not re-derive the
+1. `orchestrate.sh list` — find runs that are not done (unexhausted, violating, or harvest
+   still pending). Includes legacy `.workflow/<slug>/` runs, each flagged with a NOTE.
+2. Read `tasks.md`'s header: the **verbatim directive** and the DoD. Do not re-derive the
    goal from the task titles.
-3. Read `roster.md` — reuse the tiers this session already resolved. Re-resolve only if a lane
+3. Read `roster.md` — reuse the tiers this run already resolved. Re-resolve only if a lane
    is now unavailable, and record the substitution.
 4. **Validate `[~]` claims.** After a cold start no worker is still in flight: any `[~]` whose
    evidence is not on disk is a stale claim → reset it to `[ ]` and note the retry. Leaving
    stale claims is how a run stalls while appearing busy.
 5. `orchestrate.sh ready` → dispatch. Resume the loop at step 5; do not re-decompose a list
-   that already exists.
+   that already exists. If tasks are exhausted but `status` still reports `harvest pending`,
+   resume at "Harvest" above instead — the loop is not the gap, the sweep is.
 
 ## Git discipline
 
 - `/usr/bin/git` explicitly, always (`AGENTS.CORE.md`).
-- Commit the task list when a batch is verified — an uncommitted task list is not a
+- Commit the run state when a batch is verified — an uncommitted `tasks.md` is not a
   continuation. Small, frequent commits beat one commit at the end of the run.
-- Task-list commits state the transition, not the file: `orchestrate(<slug>): T002,T004 done;
-  T007 blocked on staging creds`.
-- The session dir is committed to the workflow repo. Work products go to the substrate repo, on
-  its own branch, under its own law — two separate commit streams; never mix them.
-- Open the run's journal entry (`journal/YYYY-MM-DD-<slug>.md`) pointing at the session dir.
-  The journal is the human narrative of the run; the task list is its machine state. Neither
-  replaces the other.
+- Run-state commits state the transition, not the file: `orchestrate(<workflow>/<target>):
+  T002,T004 done; T007 blocked on staging creds`.
+- The instance directory is committed to the workflow repo. Work products go to the substrate
+  repo, on its own branch, under its own law — two separate commit streams; never mix them.
+- Open the run's journal entry (`journal/YYYY-MM-DD-<slug>.md`) pointing at
+  `workflows/<workflow>/<target>/`. The journal is the human narrative of the run; the task
+  list is its machine state. Neither replaces the other.

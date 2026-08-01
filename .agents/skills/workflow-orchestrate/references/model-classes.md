@@ -38,9 +38,9 @@ roles:
 
 Per tier, first hit wins:
 
-1. **`.workflow/<session-slug>/roster.md`** — what *this session* resolved. Authoritative for
-   the life of the session, including cold continuations: a resumed run does not silently
-   change fleets mid-flight.
+1. **`workflows/<workflow>/<target>/roster.md`** (or, for a legacy run, `.workflow/<slug>/
+   roster.md`) — what *this run* resolved. Authoritative for the life of the run, including
+   cold continuations: a resumed run does not silently change fleets mid-flight.
 2. **`.agents/orchestrate/roster.local.yaml`** — the workflow's standing preference and local
    roster additions. Derivation-owned, unmanaged, committed; `workflow-template-sync update`
    never touches it.
