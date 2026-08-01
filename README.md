@@ -53,8 +53,8 @@ To pull forward later improvements to the managed set:
 | `journal/` | One dated file per run/decision — never a single growing file |
 | `workflows/` | Workflows and their state, four levels: `<workflow>/SKILL.md` is TIMELESS (the TTPs, never pruned), `<app>/profile.md` is that application's DURABLE particulars, `<app>/tasks.md` is CARRIED work crossing sessions, `<app>/<session>/` is one SESSION, deleted after harvest. **Committed**, so a session resumes after a cold tick or on another machine. See `/workflow-orchestrate` |
 | `.workflow/` | Legacy (pre-stratification) run state — `<slug>/tasklist.md`. Resolved for one version only; new runs never use it |
-| `.agents/skills/` | Canonical skill bodies + scripts. The core ships `workflow-*` machinery only; `craft-*` engineering doctrine arrives from the optional `craft` pack |
-| `.agents/craft/` | Optional, derivation-owned overlays (`<skill>.local.md`) that override `craft-*` defaults — unmanaged, never touched by `update` |
+| `.agents/skills/` | Canonical skill bodies + scripts. The core ships `workflow-*` machinery only; `code-craft-*` engineering doctrine arrives from the optional `code-craft` pack |
+| `.agents/code-craft/` | Optional, derivation-owned overlays (`<skill>.local.md`) that override `code-craft-*` defaults — unmanaged, never touched by `update` |
 | `.agents/orchestrate/` | Optional, derivation-owned overlays for `/workflow-orchestrate`: `roster.local.yaml` (tier→lane preference, role→tier overrides) and `orchestrate.local.md` — unmanaged |
 | `.agents/init/tools.local.d/` | Optional, derivation-owned tool definitions (`<tool>.sh`) that `/workflow-init` sources, so a workflow's own tooling gets the full decide/install/`--check` mechanism — unmanaged. See `example-tool.sh.example` |
 | `.mcp.json` | Optional, derivation-owned MCP server registrations — unmanaged. Point `command` at a `${HOME}/.local/bin/<name>` wrapper so the committed file holds no machine-specific path |
@@ -76,9 +76,10 @@ thin stub Claude Code needs for discovery.
 | `/workflow-bind` | Bind a session: attach default standing binds (and anything else asked for) via `/add-dir` |
 | `/workflow-gateway` | Manage the local opencodex model gateway (start/stop/status) and print the strictly opt-in, per-session `ANTHROPIC_BASE_URL` override |
 | `/workflow-orchestrate` | Task-based orchestration: directive → committed task list (`workflows/<workflow>/<app>/<session>/tasks.md`) → dispatch per model **tier** (`flagship` · `workhorse` · `fleet`, resolved from a lane roster, never a hardcoded model name) → loop until the list is exhausted AND its durable output harvested out of the session directory |
-Two prefixes are reserved: **`workflow-*`** (core machinery that operates on the shapes)
-and **`craft-*`** (the `craft` pack). Name local skills outside both, or an `update` may
-clobber them.
+One prefix is reserved by the core: **`workflow-*`** (machinery that operates on the
+shapes). A pack owns whatever prefix it ships — `code-craft-*` for the `code-craft` pack.
+Name local skills outside every installed prefix, or an `update` may clobber them;
+`new-workflow` reads `.agents/skills/` and refuses a collision rather than trusting a list.
 
 ## Packs
 
@@ -92,11 +93,11 @@ declaring the exact paths it owns, installed with
 **Composition, not more inheritance.** The core cannot know your area of work, so
 anything it ships beyond the shapes is a guess — and guesses belong in things you can
 decline. `craft-*` was 40% of the core by size and none of it was mechanism, so it is now
-the `craft` pack. A workflow repo with no packs is complete, not degraded.
+the `code-craft` pack. A workflow repo with no packs is complete, not degraded.
 
 | Pack | What it carries |
 |---|---|
-| `craft` | `/craft-tdd`, `/craft-code-quality`, `/craft-event-naming`, `/craft-ubiquitous-language` — engineering doctrine for work done *on* substrate |
+| `code-craft` | `/code-craft-tdd`, `/code-craft-quality`, `/code-craft-event-naming`, `/code-craft-ubiquitous-language` — engineering doctrine for work done *on* substrate |
 
 Three invariants, enforced rather than advised: **one owner per path** (a collision is an
 error, refused before any write), **a dropped path is removed** (retiring a skill
@@ -108,12 +109,12 @@ ordering, no version solving). `--audit` re-checks all three offline as `PACK-00
 A pack ships opinion into repos whose area of work it cannot know, so every one declares
 a precedence ladder: **a bound repo's own law wins inside its boundaries → then this
 workflow's overlay → then the pack's defaults.** To change a default, write the overlay:
-`.agents/craft/<skill-name>.local.md` — the skill's full name, prefix included, so
-`/craft-code-quality` overlays at `.agents/craft/craft-code-quality.local.md`. Unmanaged,
+`.agents/code-craft/<skill-name>.local.md` — the skill's full name, prefix included, so
+`/code-craft-quality` overlays at `.agents/code-craft/code-craft-quality.local.md`. Unmanaged,
 so `update` never touches it, and where it conflicts with the skill it wins. No pinning,
 no ejecting, no drift.
 
-The same mechanism serves the core's `/workflow-orchestrate` outside `.agents/craft/`: put tier→lane
+The same mechanism serves the core's `/workflow-orchestrate` outside `.agents/code-craft/`: put tier→lane
 preference and role→tier overrides in `.agents/orchestrate/roster.local.yaml`, further
 doctrine overrides in `.agents/orchestrate/orchestrate.local.md`. Both unmanaged, both win
 over the skill.

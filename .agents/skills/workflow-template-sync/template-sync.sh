@@ -135,7 +135,7 @@ resolve_upstream_root() { # resolve_upstream_root <upstream-string>
     printf '%s\n' "$cache"
   else
     # A relative path is resolved against the REPO ROOT, never the caller's working
-    # directory: `upstream: workspace/pack-craft` in a committed packs.yaml must mean the
+    # directory: `upstream: workspace/pack-code-craft` in a committed packs.yaml must mean the
     # same thing from any cwd, and a lock file that only resolves from one directory is a
     # lock file that breaks the moment a script is invoked by absolute path.
     case "$upstream" in /*) ;; *) upstream="$ROOT/$upstream" ;; esac
@@ -147,10 +147,10 @@ resolve_upstream_root() { # resolve_upstream_root <upstream-string>
 # --- pack manifests ----------------------------------------------------------
 # A pack declares what it provides in `pack.yaml` at its root:
 #
-#   name: craft
+#   name: code-craft
 #   version: 3
 #   provides:
-#     - .agents/skills/craft-tdd/**
+#     - .agents/skills/code-craft-tdd/**
 #
 # The core declares the same thing in `template-manifest.yaml` (`managed:`), and keeps
 # its version in VERSION. Both forms are read here, so nothing below this point branches
@@ -379,11 +379,11 @@ cmd_derive() {
   # The derivation's own ubiquitous language. GLOSSARY.md is managed and holds the
   # system's terms; this file is unmanaged and holds the derivation's. Scaffolded here
   # because an overlay slot nobody knows exists is an overlay slot nobody fills. The
-  # asset ships with craft-ubiquitous-language, which is a pack, not the core — so a
+  # asset ships with code-craft-ubiquitous-language, which is a pack, not the core — so a
   # derivation without that pack simply gets no stub.
   if [ ! -e "$ROOT/GLOSSARY.local.md" ] \
-     && [ -f "$ROOT/.agents/skills/craft-ubiquitous-language/assets/GLOSSARY.local.template.md" ]; then
-    cp "$ROOT/.agents/skills/craft-ubiquitous-language/assets/GLOSSARY.local.template.md" \
+     && [ -f "$ROOT/.agents/skills/code-craft-ubiquitous-language/assets/GLOSSARY.local.template.md" ]; then
+    cp "$ROOT/.agents/skills/code-craft-ubiquitous-language/assets/GLOSSARY.local.template.md" \
        "$ROOT/GLOSSARY.local.md"
   fi
 

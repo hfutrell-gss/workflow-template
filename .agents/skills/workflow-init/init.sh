@@ -33,7 +33,7 @@ RECOMMENDED=(obsidian codegraph opencodex)
 # per-machine decisions, init.lock), so a derivation must NOT fork this script to add
 # a tool of its own — an `update` would overwrite it. Instead it drops a definition
 # into .agents/init/tools.local.d/<tool>.sh, which is unmanaged and never touched by
-# `update`, exactly like .agents/craft/<skill>.local.md and
+# `update`, exactly like .agents/code-craft/<skill>.local.md and
 # .agents/orchestrate/roster.local.yaml.
 #
 # Each overlay file defines, for a tool named <tool>:

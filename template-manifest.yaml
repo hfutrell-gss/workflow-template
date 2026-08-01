@@ -14,7 +14,7 @@
 # This file is itself managed, which is what lets a future core version add or retire a
 # managed path everywhere.
 
-version: 31  # mirrors this repo's VERSION at the time this manifest last changed
+version: 32  # mirrors this repo's VERSION at the time this manifest last changed
              # VERSION is a plain integer; comparison uses sort -n.
 
 managed:
@@ -32,7 +32,7 @@ managed:
   - template-manifest.yaml
   # Canonical skill bodies + scripts (proxy rule: .claude is a proxy for .agents).
   # These are MECHANISM: the shapes, and the operations on them. Engineering opinion is
-  # not here -- it ships as the optional `craft` pack (pack-craft), installed with
+  # not here -- it ships as the optional `code-craft` pack (pack-code-craft), installed with
   # `template-sync.sh add`. A workflow repo with no packs is complete, not degraded.
   - .agents/skills/workflow-init/**
   - .agents/skills/workflow-agents-sync/**

@@ -4,7 +4,7 @@
 # /workflow-init about a tool that only this workflow's area of work needs.
 # Unmanaged: `workflow-template-sync update` never touches this directory, so your
 # tools survive every template update — the same overlay bargain as
-# .agents/craft/<skill>.local.md and .agents/orchestrate/roster.local.yaml.
+# .agents/code-craft/<skill>.local.md and .agents/orchestrate/roster.local.yaml.
 #
 # WHY THIS EXISTS. The categorical rule in AGENTS.CORE.md: the template defines the
 # shapes and owns every operation on them; derivations contribute data and doctrine.

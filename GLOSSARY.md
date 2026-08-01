@@ -7,7 +7,7 @@
 The terms this system is built from. Settled here so they are not re-argued.
 
 We practise DDD, so this repo obeys its own rule: one language, and the code uses the
-words below. `/craft-ubiquitous-language` is the doctrine for holding an application's
+words below. `/code-craft-ubiquitous-language` is the doctrine for holding an application's
 language together; this file is that doctrine applied to the workflow system itself.
 
 The four load-bearing terms — workflow, application, carried work, session — are defined
@@ -50,7 +50,7 @@ finish and someone still wants.
 The one pack a workflow repo cannot decline: it defines the shapes every other pack plugs
 into, and every operation on them. Declared in `.template.lock`. This repo is it.
 
-**Is not:** everything that ships. Engineering opinion is a pack (`craft`), not the core.
+**Is not:** everything that ships. Engineering opinion is a pack (`code-craft`), not the core.
 
 ### Derivation
 
@@ -83,7 +83,7 @@ derivation, however correct it is.
 ### Overlay slot
 
 A path the core or a pack reads but never writes, so a derivation can change a default
-without forking the thing that holds it — `.agents/craft/<skill-name>.local.md`,
+without forking the thing that holds it — `.agents/code-craft/<skill-name>.local.md`,
 `.agents/orchestrate/roster.local.yaml`, `.agents/init/tools.local.d/<tool>.sh`,
 `GLOSSARY.local.md`. The ladder: a bound repo's law → the overlay → the defaults.
 

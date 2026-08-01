@@ -46,7 +46,7 @@ decisions, `init.lock`), so a derivation must not fork `init.sh` (an `update` ov
 it) and must not hand-roll a parallel installer (the same violation with extra steps).
 
 Instead it drops `.agents/init/tools.local.d/<tool>.sh`, unmanaged and never touched by
-`update` — the same overlay bargain as `.agents/craft/<skill>.local.md` and
+`update` — the same overlay bargain as `.agents/code-craft/<skill>.local.md` and
 `.agents/orchestrate/roster.local.yaml`. `init.sh` sources every `*.sh` there at startup.
 See `example-tool.sh.example` in that directory for the annotated contract:
 

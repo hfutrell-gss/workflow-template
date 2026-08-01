@@ -29,7 +29,7 @@ Promote only what passes all four:
    about. A rule that names this derivation's applications is doctrine, not template
    material.
 2. **Shaped, not opinionated.** The core owns shapes and operations, and nothing else.
-   Opinion goes in a **pack** — the `craft` pack is the worked example — and every pack
+   Opinion goes in a **pack** — the `code-craft` pack is the worked example — and every pack
    ships a derivation-owned overlay slot that wins over it. "This is general but it is an
    opinion" is not a reason to skip promotion; it is the answer to *which repo*.
 3. **Owned by a managed set.** Check the destination's manifest —
@@ -47,7 +47,7 @@ a manifest entry first, or a different home.
 | If the concept… | It goes in |
 |---|---|
 | defines a shape, or an operation on one | the core |
-| is engineering opinion about how code is written | the `craft` pack |
+| is engineering opinion about how code is written | the `code-craft` pack |
 | is opinion about something else, general, and nothing existing owns it | a new pack |
 | names this derivation's applications | this repo's `AGENTS.md` — not upstream |
 

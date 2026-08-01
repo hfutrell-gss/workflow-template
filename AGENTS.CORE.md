@@ -102,9 +102,9 @@ scaffolds both halves and the `.claude/skills/<name>/` discovery stub.
 
 **The proxy rule applies unchanged.** `.claude/skills/<name>/SKILL.md` is a stub that
 points at the canonical body. For a workflow the canonical body is
-`workflows/<name>/SKILL.md`, not `.agents/skills/`. `.agents/skills/` holds machinery
-only: the managed `workflow-*` and `craft-*` skills. Both namespaces reach the Skill
-tool, so a workflow must not take a machinery name.
+`workflows/<name>/SKILL.md`, not `.agents/skills/`. `.agents/skills/` holds skill bodies
+only: the core's `workflow-*` machinery, plus whatever a pack installs there. Both
+namespaces reach the Skill tool, so a workflow must not take a skill's name.
 
 **Managed workflows.** The template ships workflows too, not only skills.
 `upstream-workflow-management` is one, present in every derivation: the TTPs for
@@ -142,14 +142,14 @@ the structure is already there, and naming it stops it being re-invented:
 What this asks of a derivation:
 
 - **Keep one language, and write it down.** `GLOSSARY.local.md` at the derivation's root
-  is yours: unmanaged, never touched by `update`, the same overlay mechanism the `craft-*`
+  is yours: unmanaged, never touched by `update`, the same overlay mechanism the `code-craft-*`
   skills use. Put your area's terms there. `GLOSSARY.md` stays the system's terms.
 - **Name a term the first time it is ambiguous, not the third.** The cost of the wrong
   name is paid in every session afterward. This repo learned that by naming a directory
   after the wrong sense of "workflow".
 - **Do not translate at the boundary.** When a bound repo names a thing, use its name
   inside its boundaries. Two names for one concept is the defect, wherever it appears.
-- **`/craft-ubiquitous-language`** carries the full doctrine — from the `craft` pack, so
+- **`/code-craft-ubiquitous-language`** carries the full doctrine — from the `code-craft` pack, so
   a repo without that pack keeps the duty and loses only the guidance. It governs this
   repo as much as any application it stewards.
 
@@ -171,10 +171,10 @@ A workflow repo is **composed from packs**, not inherited from one parent. A **p
 a repo that declares, in `pack.yaml` at its root, the exact set of paths it owns:
 
 ```yaml
-name: craft
+name: code-craft
 version: 3
 provides:
-  - .agents/skills/craft-tdd/**
+  - .agents/skills/code-craft-tdd/**
 ```
 
 Two kinds, and the difference is only that one is required:
@@ -199,8 +199,8 @@ composition safe, and all three are enforced, not advised:
 
 **Why composition and not more inheritance.** The core cannot know your area of work, so
 anything it ships beyond the shapes is a guess. Guesses belong in things you can decline.
-`craft-*` was 40% of the core by size and none of it was mechanism; it is now the `craft`
-pack, and a workflow repo that wants no engineering opinion installs it and nothing
+`craft-*` was 40% of the core by size and none of it was mechanism; it is now the
+`code-craft` pack, and a workflow repo that wants no engineering opinion installs it and nothing
 breaks or warns.
 
 **The categorical rule.** The core owns every operation on its shapes, as managed skills;
@@ -217,7 +217,7 @@ reads an unmanaged, derivation-owned file and lets it win:
 
 | Slot | Overrides |
 |---|---|
-| `.agents/craft/<skill-name>.local.md` | a `craft-*` skill's defaults (full name: `craft-tdd.local.md`) |
+| `.agents/code-craft/<skill-name>.local.md` | a `code-craft-*` skill's defaults (full name: `code-craft-tdd.local.md`) |
 | `.agents/orchestrate/roster.local.yaml` | tier→lane preference, role→tier |
 | `.agents/orchestrate/orchestrate.local.md` | orchestration doctrine |
 | `.agents/init/tools.local.d/<tool>.sh` | adds a tool to init |
@@ -276,8 +276,8 @@ workflow repo:
 Skills that arrive from a pack are not listed here — read `packs.yaml`, or run
 `/workflow-template-sync list`. The one this system publishes:
 
-- **`craft`** — engineering doctrine: `/craft-tdd`, `/craft-code-quality`,
-  `/craft-event-naming`, `/craft-ubiquitous-language`. Optional. Install it in a workflow
+- **`code-craft`** — engineering doctrine: `/code-craft-tdd`, `/code-craft-quality`,
+  `/code-craft-event-naming`, `/code-craft-ubiquitous-language`. Optional. Install it in a workflow
   repo that wants opinions about how code is written; skip it in one that does not.
 
 ## Baked-in workflows

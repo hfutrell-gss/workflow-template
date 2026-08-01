@@ -58,7 +58,7 @@ A directory alone cannot be found by a model at the moment of need. `workflows/<
 holds the TTPs, and `.claude/skills/<workflow>/SKILL.md` is the thin discovery stub that makes
 them reachable: frontmatter `description` written so a model reaching for this kind of work
 matches it, and a body that points at `workflows/<workflow>/SKILL.md`. `/workflow-manage
-new-workflow <name>` scaffolds both. A workflow must not take a `workflow-*` or `craft-*`
+new-workflow <name>` scaffolds both. A workflow must not take the core's `workflow-*` prefix, nor any
 machinery name — both namespaces reach the Skill tool.
 
 ## Legacy layout

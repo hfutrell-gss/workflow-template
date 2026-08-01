@@ -88,7 +88,7 @@ Load a `references/` file when you reach the step that needs it. Keep this page 
    is non-obvious, the graph is large, or two orderings imply materially different work.
 
 5. **Dispatch.** Skill-first, then tier: an existing skill beats raw model work
-   (`/craft-tdd` and `/craft-code-quality` are mandatory before production code in bound
+   (`/code-craft-tdd` and `/code-craft-quality` are mandatory before production code in bound
    substrate). Send every ready, independent task in one message so the fleet runs
    concurrently. Mark each `[~]` with the agent that holds it.
 

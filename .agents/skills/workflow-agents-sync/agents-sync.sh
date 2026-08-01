@@ -147,7 +147,7 @@ check_root_chain() {
   # holds its terms. Same discriminator derive uses -- a VERSION with no .template.lock
   # is the template, anything with a .template.lock is a derivation.
   local gl="$dir/GLOSSARY.local.md"
-  local gl_tpl="$dir/.agents/skills/craft-ubiquitous-language/assets/GLOSSARY.local.template.md"
+  local gl_tpl="$dir/.agents/skills/code-craft-ubiquitous-language/assets/GLOSSARY.local.template.md"
   local is_template=0
   [ -f "$dir/VERSION" ] && [ ! -f "$dir/.template.lock" ] && is_template=1
   if [ "$is_template" = "0" ] && [ ! -e "$gl" ] && [ -f "$gl_tpl" ]; then

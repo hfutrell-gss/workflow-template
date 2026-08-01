@@ -15,11 +15,16 @@
 # Usage:
 #   new-workflow.sh <name>
 #
-# Refuses: reserved workflow-*/craft-* machinery prefixes (both namespaces reach the
-# Skill tool, and a future `workflow-template-sync update` may silently clobber a
-# collision), the managed workflow names, illegal names, and overwriting either half.
+# Refuses: the core-owned `workflow-*` prefix, any name an installed skill already
+# holds (core or pack -- both namespaces reach the Skill tool, and a future
+# `workflow-template-sync update` would silently clobber the collision), the managed
+# workflow names, illegal names, and overwriting either half.
 #
-# Exit codes: 0 success, 1 error (bad usage, reserved prefix, bad name, already exists).
+# It does NOT hardcode any pack's prefix. Which prefixes are taken is a fact about what
+# this repo has installed, and it is read from disk rather than from a list that goes
+# stale the moment a pack is added or removed.
+#
+# Exit codes: 0 success, 1 error (bad usage, reserved name, bad name, already exists).
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -38,16 +43,23 @@ case "$name" in
 esac
 
 case "$name" in
-  workflow-*|craft-*)
-    echo "error: '$name' uses a reserved machinery prefix (workflow-* or craft-*)." >&2
-    echo "       Those namespaces are template-owned (AGENTS.CORE.md, 'Template link, the" >&2
-    echo "       categorical rule, and the covenant'). Both machinery skills and" >&2
-    echo "       workflows reach the Skill tool, so the names must not collide, and a" >&2
-    echo "       collision may be silently overwritten the next time" >&2
-    echo "       'workflow-template-sync update' runs. Pick a name outside both prefixes." >&2
+  workflow-*)
+    echo "error: '$name' uses the reserved 'workflow-*' prefix, which the core owns" >&2
+    echo "       (AGENTS.CORE.md, 'Composition'). Machinery skills and workflows both" >&2
+    echo "       reach the Skill tool, so the names must not collide, and a collision is" >&2
+    echo "       silently overwritten the next time 'workflow-template-sync update' runs." >&2
     exit 1
     ;;
 esac
+
+# A pack owns whatever prefix it ships; asking disk beats keeping a list.
+if [ -e "$ROOT/.agents/skills/$name" ]; then
+  echo "error: '$name' is already an installed skill (.agents/skills/$name) — it came" >&2
+  echo "       from the core or from a pack, and a workflow of the same name would" >&2
+  echo "       collide with it in the Skill tool. Run 'workflow-template-sync list' to" >&2
+  echo "       see what is installed, then pick another name." >&2
+  exit 1
+fi
 
 case "$name" in
   -*) echo "error: name may not start with a dash: $name" >&2; exit 1 ;;

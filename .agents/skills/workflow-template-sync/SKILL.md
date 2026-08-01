@@ -53,7 +53,7 @@ Run this **inside a fresh copy or clone of the core** — nothing else. It:
    run state under `.workflow/`. All of it is **committed** (unlike `workspace/`), so a
    derive-by-clone would otherwise carry the core's own applications and in-flight
    sessions into the new repo. A session belongs to the repo that performed it.
-3. Scaffolds `GLOSSARY.local.md` if absent and the `craft` pack's asset is present —
+3. Scaffolds `GLOSSARY.local.md` if absent and the `code-craft` pack's asset is present —
    unmanaged, never overwritten (`GLOSSARY.md` holds the system's terms).
 4. Removes the root `VERSION` file — that describes the *core's* own version; a
    derivation's relationship to it lives entirely in `.template.lock`.
@@ -69,8 +69,8 @@ Asks nothing interactively.
 
 ### `add` — install a pack
 ```sh
-$S add git@host:org/pack-craft
-$S add ../pack-craft --name craft
+$S add git@host:org/pack-code-craft
+$S add ../pack-code-craft --name craft
 ```
 Refuses anything without a `pack.yaml` at its root, a name already declared, and the
 reserved core name `workflow-core`. On success: appends to `packs.yaml` (created if
@@ -121,7 +121,7 @@ Edit `upstream:` in `.template.lock` (core) or in the pack's `packs.yaml` entry.
 path or URL, either direction. No re-derive needed.
 
 A **relative** local path resolves against the repo root, not the caller's working
-directory — so `upstream: workspace/pack-craft` means the same thing from anywhere. Note
+directory — so `upstream: workspace/pack-code-craft` means the same thing from anywhere. Note
 that `workspace/` is gitignored and per-machine: a pack referenced there works on this
 machine only. Publish the pack and repoint at its URL before the repo travels.
 
@@ -134,11 +134,11 @@ anything is behind — a constraint result (`TEMPLATE-001`), consumed by `/workf
 A pack is an ordinary repo with `pack.yaml` at its root:
 
 ```yaml
-name: craft
+name: code-craft
 version: 1
 provides:
-  - .agents/skills/craft-tdd/**
-  - .claude/skills/craft-tdd/SKILL.md
+  - .agents/skills/code-craft-tdd/**
+  - .claude/skills/code-craft-tdd/SKILL.md
 ```
 
 Rules that keep a pack composable:

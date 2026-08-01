@@ -21,7 +21,7 @@ contributes only its data and its judgment about it, never hand-rolled tooling.
    actually attaches repos to a session.
 2. **Workflows** — the TTPs of one nature of work (`AGENTS.CORE.md`, "The shapes"),
    which live as a skill with state. Scaffolding one correctly means knowing the proxy
-   rule, the reserved `workflow-*`/`craft-*` machinery prefixes, and the managed
+   rule, the core-reserved `workflow-*` prefix, names an installed pack already holds, and the managed
    workflow names; `new-workflow.sh` is the one tool for it.
 
 ## Scaffold a workflow
@@ -35,7 +35,7 @@ description is the whole retrieval surface, plus a thin body pointing at
 mirrored, body only the pointer import — the proxy rule), and an empty `references/`
 dir. Applications, their profiles, their carried work, and sessions arrive later, from
 `orchestrate.sh init <name> <app>`.
-Refuses: a `workflow-*`/`craft-*` name (those prefixes are template-owned; a
+Refuses: a `workflow-*` name (the core owns that prefix), a name an installed skill already holds (read from `.agents/skills/`, so a pack's prefix needs no hardcoded list; a
 derivation-local skill so named risks being clobbered by a future
 `workflow-template-sync update`), an illegal name, or overwriting an existing skill.
 Exit 0 on success, 1 on any refusal. Run `/workflow-agents-sync --check` afterward, same

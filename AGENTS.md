@@ -25,8 +25,8 @@ Area of work: **<one sentence: what whole area this workflow owns>.**
 ## Packs
 <!-- What this repo composes in beyond the core. Managed by /workflow-template-sync;
      `template-sync.sh list` prints the live answer. -->
-- `craft` — engineering doctrine (`/craft-tdd`, `/craft-code-quality`,
-  `/craft-event-naming`, `/craft-ubiquitous-language`). Optional; drop this line and the
+- `craft` — engineering doctrine (`/code-craft-tdd`, `/code-craft-quality`,
+  `/code-craft-event-naming`, `/code-craft-ubiquitous-language`). Optional; drop this line and the
   pack together if this area of work does not want it.
 
 ## Workflows
@@ -34,22 +34,22 @@ Area of work: **<one sentence: what whole area this workflow owns>.**
   from this repo upstream — into the core if it is a shape, into a pack if it is opinion.
 - `/<workflow-name>` — <the nature of work it covers>. A workflow is
   `workflows/<name>/SKILL.md` plus its `.claude/skills/<name>/` discovery stub. Scaffold one
-  with `/workflow-manage new-workflow <name>`; name it outside the reserved `workflow-*` and
-  `craft-*` machinery prefixes.
+  with `/workflow-manage new-workflow <name>`; name it outside the core's reserved
+  `workflow-*` prefix and outside any prefix an installed pack ships.
 <!-- executable procedures go in .agents/skills/<name>/SKILL.md (scoped: "<area>:<name>"),
      with a .claude/skills/<name>/SKILL.md proxy stub for Claude Code discovery -->
 
 ## Craft defaults
 <!-- Scaffold — this section is yours: keep, edit, or delete it. It exists because a skill
-     that never fires is worth nothing, and nothing else nudges the craft-* skills into
+     that never fires is worth nothing, and nothing else nudges the code-craft-* skills into
      play. Deliberately a suggestion here rather than a rule in AGENTS.CORE.md: a
      mandatory always-loaded trigger would re-create the static-context cost these skills
-     exist to avoid. Delete the section outright if this repo does not install the craft
+     exist to avoid. Delete the section outright if this repo does not install the code-craft
      pack. -->
-Requires the **craft pack** (`/workflow-template-sync add <pack-craft>`). Before writing
-or changing production code in bound substrate, invoke `/craft-tdd` and
-`/craft-code-quality`. Override their defaults for this workflow in
-`.agents/craft/craft-tdd.local.md` and `.agents/craft/craft-code-quality.local.md` — a bound repo's
+Requires the **code-craft pack** (`/workflow-template-sync add <pack-code-craft>`). Before writing
+or changing production code in bound substrate, invoke `/code-craft-tdd` and
+`/code-craft-quality`. Override their defaults for this workflow in
+`.agents/code-craft/code-craft-tdd.local.md` and `.agents/code-craft/code-craft-quality.local.md` — a bound repo's
 own law still wins inside its boundaries.
 
 ## Orchestration
