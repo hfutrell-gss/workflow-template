@@ -11,14 +11,33 @@ description: >-
 
 # workflow-manage
 
-Standing binds (`binds.yaml`) are a **registry**, not a session state — see
-`AGENTS.CORE.md` ("Bind law"). This skill owns two things: editing that registry with
-`yq`, and assembling the substrate it describes onto disk (`sync-binds.sh`). Both are
-managed capabilities — see AGENTS.CORE.md's categorical rule: the template defines
-`binds.yaml`'s shape, so the template owns every operation on it; a derivation
-contributes only its entries (data) and its judgment about them (doctrine), never
-hand-rolled tooling. `/workflow-bind` is the companion skill that actually attaches
-repos to a session.
+This skill owns two managed shapes — see AGENTS.CORE.md's categorical rule: the
+template defines a shape, so the template owns every operation on it; a derivation
+contributes only its data and its judgment about it, never hand-rolled tooling.
+
+1. **Standing binds** (`binds.yaml`) — a **registry**, not a session state (see
+   `AGENTS.CORE.md`, "Bind law"). Editing it is `yq`; assembling the substrate it
+   describes onto disk is `sync-binds.sh`. `/workflow-bind` is the companion skill that
+   actually attaches repos to a session.
+2. **Procedures** — a reusable way of working (`AGENTS.CORE.md`, "The shapes"), which
+   lives as a derivation-local skill. Scaffolding one correctly means knowing the proxy
+   rule and the reserved `workflow-*`/`craft-*` prefixes; `new-procedure.sh` is the one
+   tool for it.
+
+## Scaffold a procedure
+```sh
+.agents/skills/workflow-manage/new-procedure.sh <name>
+```
+Creates the canonical body (`.agents/skills/<name>/SKILL.md`, TODO-scaffolded — a
+frontmatter `description` prompting for concrete trigger phrases, since that
+description is the whole retrieval surface, plus a thin body pointing at
+`references/`), the proxy stub (`.claude/skills/<name>/SKILL.md`, frontmatter mirrored,
+body only the pointer import — the proxy rule), and an empty `references/` dir.
+Refuses: a `workflow-*`/`craft-*` name (those prefixes are template-owned; a
+derivation-local skill so named risks being clobbered by a future
+`workflow-template-sync update`), an illegal name, or overwriting an existing skill.
+Exit 0 on success, 1 on any refusal. Run `/workflow-agents-sync --check` afterward, same
+as after any bind edit.
 
 ## Review binds
 ```sh
