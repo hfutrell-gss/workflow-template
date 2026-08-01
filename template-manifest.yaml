@@ -9,7 +9,7 @@
 # This file is itself managed: a derivation gets it kept in sync too, and it's what
 # lets a future template version add or retire a managed path in every derivation.
 
-version: 26  # mirrors this repo's VERSION at the time this manifest last changed
+version: 27  # mirrors this repo's VERSION at the time this manifest last changed
              # VERSION is a plain integer; comparison uses sort -n.
 
 managed:

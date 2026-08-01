@@ -139,6 +139,26 @@ check_root_chain() {
       note "DRIFT   $label: AGENTS.md does not import @AGENTS.CORE.md -- the managed core won't load this session"
     fi
   fi
+  # The derivation's own ubiquitous language. Managed GLOSSARY.md holds the system's
+  # terms; this file holds the derivation's and update(1) never touches it. derive
+  # scaffolds it, so only derivations predating the slot are missing one -- created here
+  # from the same asset rather than left to a hand edit.
+  # Not in the template itself: its area of work IS this system, so GLOSSARY.md already
+  # holds its terms. Same discriminator derive uses -- a VERSION with no .template.lock
+  # is the template, anything with a .template.lock is a derivation.
+  local gl="$dir/GLOSSARY.local.md"
+  local gl_tpl="$dir/.agents/skills/craft-ubiquitous-language/assets/GLOSSARY.local.template.md"
+  local is_template=0
+  [ -f "$dir/VERSION" ] && [ ! -f "$dir/.template.lock" ] && is_template=1
+  if [ "$is_template" = "0" ] && [ ! -e "$gl" ] && [ -f "$gl_tpl" ]; then
+    if [ "$MODE" = "--fix" ]; then
+      cp "$gl_tpl" "$gl"
+      echo "FIXED   $label: created GLOSSARY.local.md (this workflow's own terms; GLOSSARY.md stays the system's)"
+    else
+      note "MISSING $label: GLOSSARY.local.md — this workflow has no glossary of its own (--fix creates it)"
+    fi
+  fi
+
   if [ -f "$voice" ] && ! grep -q '@VOICE.md' "$core"; then
     note "DRIFT   $label: AGENTS.CORE.md does not import @VOICE.md -- the mandated voice loads nowhere (fix upstream, not here)"
   fi
