@@ -527,7 +527,9 @@ cmd_close() {
   drop_n="$(grep -cE '^- \[-\] ' "$tasks" || true)"
   carry_n="$(grep -cE '^- \[\^\] ' "$tasks" || true)"
   block_n="$(grep -cE '^- \[!\] ' "$tasks" || true)"
-  directive="$(awk '/^## Directive/{f=1;next} /^## /{f=0} f && NF && $0 !~ /^<!--/ {print; exit}' "$tasks" | cut -c1-140)"
+  # The directive is captured as a blockquote, so strip the leading '> ' — the marker is
+  # how it is quoted, not part of what was asked.
+  directive="$(awk '/^## Directive/{f=1;next} /^## /{f=0} f && NF && $0 !~ /^<!--/ {sub(/^[[:space:]]*>[[:space:]]?/,""); print; exit}' "$tasks" | cut -c1-140)"
   harvest_line="$(awk '/^harvest:/{sub(/^harvest:[ \t]*done[ \t]*(—|--)?[ \t]*/,""); print; exit}' "$tasks" | cut -c1-160)"
 
   grep -q '^## History' "$ledger" || printf '\n## History\n\nOne line per session closed against this application, appended by `orchestrate.sh\nclose`. Permanent: the session directory is deleted, and this is what remains of it\nbesides `git log`. Do not hand-write entries here — a line nobody earned by passing\nthe DoD gate is a claim, not a record.\n' >> "$ledger"
