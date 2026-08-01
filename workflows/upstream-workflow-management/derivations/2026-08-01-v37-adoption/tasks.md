@@ -248,8 +248,26 @@ Closing is `orchestrate.sh close`. It re-checks this DoD, writes the ledger line
       accept: same as T015, minus the legacy-session clause (that repo has none).
 - [ ] T017 · fleet · deps:T014 · Re-converge sandbox onto the core's released version
       accept: same as T016. No pack, no remote.
-- [~] T018 · fleet · deps:- · Survey the plugin marketplace and recommend a registry
-      agent: fleet/sonnet (dispatched 18:13)
+- [x] T018 · fleet · deps:- · Survey the plugin marketplace and recommend a registry
+      evidence: notes/T018-plugins.md. Orchestrator re-derived the counts from
+                `.claude-plugin/marketplace.json` and the filesystem: 276 entries, 53 with a
+                local string source (38 first-party listed + 15 under `external_plugins/`),
+                223 pointing at unfetched third-party repos. 39 dirs exist under `plugins/`;
+                the 39th is `example-plugin`, which the marketplace does not list — so the
+                worker's 38+15=53 is correct. Hook-registering plugins verified by
+                `grep -rl '"hooks"'`: exactly the six named — security-guidance, hookify,
+                claude-security, explanatory-output-style, learning-output-style, ralph-loop.
+                Two strongest claims checked against source: security-guidance/hooks/hooks.json
+                registers SessionStart (timeout 180), UserPromptSubmit, and PostToolUse on
+                `Edit|Write|MultiEdit|NotebookEdit` plus `if: Bash(git commit:*)`;
+                security_reminder_hook.py reads ANTHROPIC_API_KEY / ANTHROPIC_AUTH_TOKEN
+                (lines 50-51, 123) and reaches api.anthropic.com (1113, 1916);
+                external_plugins/github/.mcp.json:6 reads GITHUB_PERSONAL_ACCESS_TOKEN.
+                No plugins.yaml written, as instructed.
+      recommend: workflow-template none · stewardship none certain (github/gitlab plausible,
+                needs a substrate-specific follow-up) · workflow-monolith csharp-lsp is a clean
+                fit for a large .NET codebase, code-modernization worth a design look ·
+                sandbox none. Every one of these stays the user's call.
       accept: notes/T018-plugins.md lists every plugin available in `claude-plugins-official`
               (registered on this machine today at 16:29 local; nothing enabled anywhere), and
               for each: what it executes — HOOKS FIRST, then egress, then credential reads —
