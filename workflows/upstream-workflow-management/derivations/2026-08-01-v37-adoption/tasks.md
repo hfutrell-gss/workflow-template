@@ -90,8 +90,17 @@ Closing is `orchestrate.sh close`. It re-checks this DoD, writes the ledger line
               `gh` account is `henningfutrell`, the `github-gss` SSH alias is `hfutrell-gss` —
               say which key reaches it), the pack's `pack.yaml` version and full `provides:`
               list, and `template-sync.sh scan` findings against it. No install here.
-- [~] T005 · fleet · deps:T002,T004 · Converge workflow-monolith to v37
-      agent: fleet/sonnet (dispatched 16:39)
+- [x] T005 · fleet · deps:T002,T004 · Converge workflow-monolith to v37
+      evidence: notes/T005-monolith-converge.md; commits 241706c (README alone) and 6719782
+                "core: converge v19 -> v37, install code-craft pack". Orchestrator re-verified:
+                `.template.lock` = 37; `--check` "up to date" for core AND code-craft;
+                `list` shows workflow-core 37 + code-craft 2; `packs.lock` records all 8 pack
+                paths; `--audit` silent (exit 0); `check.sh` all five groups ok;
+                CLAUDE.md:4 `@AGENTS.md`, AGENTS.md:4 `@AGENTS.CORE.md`; no gateway or
+                bare-craft path on disk; tree clean. Worker also closed PACK-005 (missing
+                `.agents/code-craft/` overlay dir), a stale init.lock, a missing
+                GLOSSARY.local.md, and LAYOUT-001 (empty `.workflow/`).
+                Discovered work split out as T013 rather than absorbed here.
       method: BOOTSTRAP FIRST — copy the v37 `.agents/skills/workflow-template-sync/` (both
               template-sync.sh and pack-scan.sh) into the derivation BEFORE running update,
               while its manifest is still the old one. Only then does `update` compute the
@@ -140,6 +149,19 @@ Closing is `orchestrate.sh close`. It re-checks this DoD, writes the ledger line
       accept: notes/T009-verify.md carries, per repo, the literal output of `check.sh`,
               `orchestrate.sh check`, `agents-sync.sh`, and `template-sync.sh --check --audit`;
               any non-clean result named as a finding rather than summarized as pass.
+- [~] T013 · fleet · deps:T005 · Re-point workflow-monolith's static-analysis skill at the pack
+      agent: fleet/sonnet (dispatched 16:44)
+      accept: `.agents/skills/static-analysis/SKILL.md` names `code-craft-quality` everywhere it
+              now says `craft-code-quality` (lines 32, 36, 43, 45, 51, 67, 112, 122), and the
+              relative link at line 45 resolves — it currently points at
+              `../craft-code-quality/references/loc-budgets.md`, which does not exist; the real
+              file is `.agents/skills/code-craft-quality/references/loc-budgets.md`, confirmed
+              present. Verify by resolving the link from the file's own directory, not by
+              eyeballing it. `journal/2026-07-30-derived-and-ndepend.md` is a dated record and
+              is NOT rewritten. Committed in that repo, not pushed.
+      found:  raised by T005's worker as outside its assigned scope. Correct call — a dangling
+              relative link in a derivation-owned skill is real work, and widening T005 to
+              absorb it would have hidden the growth.
 - [ ] T012 · workhorse · deps:T005,T006,T007 · Promote the update-bootstrap defect into the core
       accept: the core (this repo) states the ordering constraint where an operator will hit it
               — `.agents/skills/workflow-template-sync/SKILL.md` and, if the shape allows,
