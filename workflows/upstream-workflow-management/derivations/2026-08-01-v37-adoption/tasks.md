@@ -90,7 +90,8 @@ Closing is `orchestrate.sh close`. It re-checks this DoD, writes the ledger line
               `gh` account is `henningfutrell`, the `github-gss` SSH alias is `hfutrell-gss` —
               say which key reaches it), the pack's `pack.yaml` version and full `provides:`
               list, and `template-sync.sh scan` findings against it. No install here.
-- [ ] T005 · fleet · deps:T002,T004 · Converge workflow-monolith to v37
+- [~] T005 · fleet · deps:T002,T004 · Converge workflow-monolith to v37
+      agent: fleet/sonnet (dispatched 16:39)
       method: BOOTSTRAP FIRST — copy the v37 `.agents/skills/workflow-template-sync/` (both
               template-sync.sh and pack-scan.sh) into the derivation BEFORE running update,
               while its manifest is still the old one. Only then does `update` compute the
@@ -99,15 +100,23 @@ Closing is `orchestrate.sh close`. It re-checks this DoD, writes the ledger line
       accept: `.template.lock` reads 37; `template-sync.sh --check` reports no drift;
               `check.sh` and `orchestrate.sh check` both clean; AGENTS chain is
               CLAUDE.md→AGENTS.md→AGENTS.CORE.md→VOICE.md; committed with /usr/bin/git.
-- [ ] T006 · workhorse · deps:T001,T004 · Converge stewardship to v37
+- [~] T006 · workhorse · deps:T001,T004 · Converge stewardship to v37
+      agent: workhorse/opus (dispatched 16:39)
       method: same BOOTSTRAP FIRST step as T005. Additionally: the craft-* references in the
               unmanaged overlays (.agents/orchestrate/roster.local.yaml:21-25,
               orchestrate.local.md:85) are renamed to the pack's `code-craft-*` names, not
               deleted — the doctrine is not being dropped, it is being re-sourced from the pack.
-      accept: same as T005, plus every legacy `.workflow/<slug>/` session either migrated to
-              `workflows/<workflow>/<app>/<session>/` or closed through `orchestrate.sh close`
-              — never deleted by hand — and `orchestrate.sh list` shows no stranded run.
-- [ ] T007 · fleet · deps:T003,T004 · Converge sandbox to v37
+      accept: same as T005, plus all four legacy `.workflow/<slug>/` sessions still resolve
+              through `orchestrate.sh list` (each with its legacy NOTE), no task marker in any
+              of them altered, craft-* skill names inside those task lists re-pointed to the
+              pack's names, and what a migration to the new layout would require reported.
+      revised: the original accept demanded each legacy session be migrated or closed in this
+              task. Wrong scope, corrected before dispatch: naming the workflow and app for four
+              in-flight sessions holding 44 open tasks is per-session judgment and the user's
+              call, not a side effect of a core bump. Migration is carried out to ../tasks.md at
+              harvest rather than done here.
+- [~] T007 · fleet · deps:T003,T004 · Converge sandbox to v37
+      agent: fleet/sonnet (dispatched 16:39)
       method: same BOOTSTRAP FIRST step as T005, which is what makes 13 -> 37 viable and
               retires the worker's re-derive recommendation (Log). No craft-* to handle here;
               `workflow-gateway` is the path being dropped.
@@ -133,7 +142,13 @@ Closing is `orchestrate.sh close`. It re-checks this DoD, writes the ledger line
               `workflows/upstream-workflow-management/SKILL.md` before any edit; if it fails
               one, that is the finding and the task records which. VERSION and
               template-manifest.yaml bumped together per that skill's step 3.
-- [ ] T011 · fleet · deps:T004 · Correct the recorded pack-code-craft clone URL in the core
+- [x] T011 · fleet · deps:T004 · Correct the recorded pack-code-craft clone URL in the core
+      evidence: journal/2026-08-01-code-craft-published.md now carries a dated
+                "## Correction — 2026-08-01, under T004" section, original text intact above it.
+                Orchestrator read the appended section directly: it states the working
+                `ssh://github-personal/...` URL, that the repo is private, the identity that
+                reaches it, the is_url_upstream scp-form caveat with the file:line, the
+                corrected `gh` account, and the CI provisioning consequence.
       accept: `journal/2026-08-01-code-craft-published.md` states the URL that actually works
               (`github-personal:henningfutrell/pack-code-craft.git`), that the repo is
               PRIVATE, and which SSH identity reaches it — correcting the entry's claims that

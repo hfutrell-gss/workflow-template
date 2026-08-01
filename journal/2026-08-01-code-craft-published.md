@@ -58,3 +58,28 @@ One is reserved; the rest belong to whatever is installed.
 
 None. The core is at v32, the pack at v1 with a remote, and this repo's derivation
 converges next.
+
+## Correction — 2026-08-01, under T004
+
+Two claims above are wrong on this machine. Verified under T004; full evidence at
+`workflows/upstream-workflow-management/derivations/2026-08-01-v37-adoption/notes/T004-pack.md`.
+Original text above is left as written.
+
+- **Clone URL.** `git@github.com:henningfutrell/pack-code-craft` fails here:
+  `ssh -T git@github.com` → `Permission denied (publickey)`. The repo is **private**.
+  The only form that clones it from this machine is
+  `ssh://github-personal/henningfutrell/pack-code-craft.git` — SSH alias
+  `github-personal`, key `id_github-personal`, account `henningfutrell`. Verified by
+  direct clone: `EXIT=0`.
+- **scp-style form is not tooling-safe.** `github-personal:henningfutrell/pack-code-craft.git`
+  clones fine by hand, but `is_url_upstream` in
+  `.agents/skills/workflow-template-sync/template-sync.sh:72-77` matches only
+  `https:// http:// git@ ssh:// file://` — the scp form matches none of them and would
+  be misread as a local path by `template-sync.sh add`/`update`. Use the `ssh://` form
+  for anything `packs.yaml` or tooling reads.
+- **`gh` account.** Not `henningfutrell`. `gh auth status` reports account
+  `hfutrell-gss`. That account also owns `workflow-template` and, separately, the
+  `github-gss` SSH alias authenticates as `hfutrell-gss` too — and gets "Repository not
+  found" against `pack-code-craft` (it has no access; the repo is private).
+- **Consequence.** Any other machine or CI running `update` against this pack needs the
+  `github-personal` key provisioned, or the pack silently stops updating.
