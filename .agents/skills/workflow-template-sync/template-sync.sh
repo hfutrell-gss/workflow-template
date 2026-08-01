@@ -134,6 +134,11 @@ resolve_upstream_root() { # resolve_upstream_root <upstream-string>
     refresh_remote_cache "$upstream" "$cache" 1>&2
     printf '%s\n' "$cache"
   else
+    # A relative path is resolved against the REPO ROOT, never the caller's working
+    # directory: `upstream: workspace/pack-craft` in a committed packs.yaml must mean the
+    # same thing from any cwd, and a lock file that only resolves from one directory is a
+    # lock file that breaks the moment a script is invoked by absolute path.
+    case "$upstream" in /*) ;; *) upstream="$ROOT/$upstream" ;; esac
     [ -d "$upstream" ] || { echo "error: upstream '$upstream' not found" >&2; exit 1; }
     printf '%s\n' "$upstream"
   fi

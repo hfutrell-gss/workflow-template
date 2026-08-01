@@ -120,6 +120,11 @@ All git operations use `/usr/bin/git` explicitly.
 Edit `upstream:` in `.template.lock` (core) or in the pack's `packs.yaml` entry. Local
 path or URL, either direction. No re-derive needed.
 
+A **relative** local path resolves against the repo root, not the caller's working
+directory — so `upstream: workspace/pack-craft` means the same thing from anywhere. Note
+that `workspace/` is gitignored and per-machine: a pack referenced there works on this
+machine only. Publish the pack and repoint at its URL before the repo travels.
+
 ### `--check` — report drift
 One line per pack: installed vs available, and `[pinned]` where it applies. Exit 1 if
 anything is behind — a constraint result (`TEMPLATE-001`), consumed by `/workflow-check`.
