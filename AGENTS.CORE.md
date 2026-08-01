@@ -69,7 +69,7 @@ Six kinds of thing live here; one home each — the wrong home makes it unfindab
 | **Doctrine** | this workflow's standing judgment | `AGENTS.md` | always loaded |
 | **Procedure** | a reusable way of working (sense 3) | a derivation-local skill | **lazily, by the Skill tool** |
 | **Knowledge** | what is true, and why | substrate repo's docs, or `knowledge/` if cross-app | index line, then on demand |
-| **Run** | a task list and working notes | `.workflow/<session-slug>/` | only the run that owns it |
+| **Run** | a task list and working notes | `workflows/<workflow>/<target>/` | only the run that owns it |
 | **Narrative** | what happened on a given day | `journal/` | humans, archaeology |
 
 **Procedures are skills; derivation-local skills are expected** — frontmatter
