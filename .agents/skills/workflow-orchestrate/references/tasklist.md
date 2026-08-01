@@ -104,6 +104,9 @@ One line per task, exact separators (` · `), so it parses mechanically and merg
 | `[^]` | carried | `carried:` — its entry in `<app>/tasks.md`, and why it could not finish here |
 | `[-]` | dropped | `why:` **and** `signoff:` — who authorized it, when |
 
+`[-]` and `[^]` take one more field **at harvest**: `landed:` — where the decision's
+rationale went. See the harvest gate below.
+
 Every task carries `accept:` from the moment it is created — the acceptance test it will be
 judged against. A task without one is a wish, and `status` reports it as a violation.
 
@@ -152,6 +155,23 @@ finished. All are mechanically checked:
   work never blocks a session forever.**
 - **`[-]` requires `why:` and `signoff:`** — you cannot drop your way to exhaustion. Dropping a
   task is the user's call, and the signoff records that they made it.
+- **`[-]` and `[^]` require `landed:` at harvest** — a decision to refuse work is a fact about
+  the application, and it is the fact most easily lost. Name the destination: the stewarded
+  repo's own docs (`workspace/<app>/docs/...`) when the workflow stewards it,
+  `<app>/profile.md` otherwise, or `disposable — <reason>` when the rationale genuinely adds
+  nothing. Checked only once `harvest:` says done, so it is never noise on work in flight.
+  Without it, an application's status section reading *not built* cannot be told apart from a
+  gap awaiting closure, and the next session re-opens a settled question.
+
+  ```markdown
+  - [-] T045 · fleet · deps:- · Split the app server out of the dev host
+        accept: `createAppServer` holds what an application needs.
+        why:    de-scoped from this run.
+        signoff: user, 2026-07-31 — "ejecting isn't a prime concern, it was just a
+                 modeling constraint"
+        landed: workspace/tempest/docs/ejectability.md — recorded as a decision taken,
+                so the status section is not read as a gap awaiting closure
+  ```
 - **`[!]` blocks DoD.** A blocked task must be unblocked or escalated. Converting it to `[-]` to
   clear the board without a signoff is the exact failure this design prevents.
 - **Discovered work becomes a new task** — with its own ID, tier, and `accept:`. Never widen an

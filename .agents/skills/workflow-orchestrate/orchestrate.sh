@@ -223,6 +223,20 @@ report() {
           else if (mark[d[j]] == "^") bad(id ": depends on carried " d[j] " — carry this one too, or it can never start")
         }
       }
+      # Harvest completeness. A decision to NOT do work is a fact about the application,
+      # and it is the fact most likely to be lost: de-scoping five tasks with a sign-off
+      # tells the next reader why a "gap" is not a gap, and it dies with this directory
+      # unless something names where it went. Checked only once harvest says done --
+      # requiring it mid-run would be noise on work still in flight.
+      # "landed: disposable — <reason>" is a legitimate answer. Silence is not.
+      if (harvested)
+        for (i = 1; i <= nt; i++) {
+          id = order[i]; m = mark[id]
+          if (m != "-" && m != "^") continue
+          if (!has(id, "landed"))
+            bad(id ": [" m "] without landed: — at harvest, a dropped or carried decision must name where its rationale went (a stewarded repo\047s own docs, <app>/profile.md, or \047disposable — <reason>\047)")
+        }
+
       # Kahn: unknown deps count as satisfied (already reported), so what is left is a cycle.
       do {
         moved = 0

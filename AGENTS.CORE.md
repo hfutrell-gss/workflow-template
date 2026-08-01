@@ -119,8 +119,27 @@ session directory:
 |--------|---------|
 | a stabilized way of working | the workflow's `SKILL.md` or `references/` |
 | understanding of an application | that repo's own docs, or `<app>/profile.md` |
+| **a decision to refuse or de-scope work** | **the same place, with its sign-off** |
 | work not finished, still wanted | `<app>/tasks.md` — carried, not lost |
 | what merely happened | `journal/` |
+
+**Where a decision lands depends on the bind.** For a repo this workflow **stewards** (or
+`co-change`s), it goes in that repo's own docs — the reasoning must travel with the thing
+it explains, and be readable by someone bound only to that repo. For `reference`,
+`upstream`, or anything read-only, it goes in `<app>/profile.md`: you do not write
+bookkeeping into a repo you do not steward.
+
+**Why refusals get their own row.** "We decided not to build this, and here is who signed
+off" is the fact most easily lost and most expensive to lose. Without it a status section
+reading *not built* is indistinguishable from a gap awaiting closure, and the next session
+re-opens a question that was already answered. This system lost exactly that: five
+ejectability tasks de-scoped with a sign-off, and the app's own record still read as an
+unclosed gap. `orchestrate.sh` now refuses to call a session harvested until every `[-]`
+and `[^]` names where its rationale went.
+
+**What does NOT leave the session.** Dispatch bookkeeping — tier, agent, order, the
+dependency graph. That is how the work was organized, not a fact about the application,
+and copying it into substrate makes a repo about its own tooling. `git log` holds it.
 
 Then the session directory closes and is **deleted**, not archived — `git log` is the
 archive. Unfinished work never blocks a session forever: it is promoted to carried work
