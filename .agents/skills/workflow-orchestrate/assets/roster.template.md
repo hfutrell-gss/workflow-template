@@ -1,6 +1,6 @@
-# Resolved roster: __SLUG__
+# Resolved roster: __WORKFLOW__ · __TARGET__
 
-Resolved __DATE__. Authoritative for this session, including cold continuations — a resumed run
+Resolved __DATE__. Authoritative for this run, including cold continuations — a resumed run
 reuses these rather than re-deciding. Resolution order and the `prefer:` schema:
 `.agents/skills/workflow-orchestrate/references/model-classes.md`.
 

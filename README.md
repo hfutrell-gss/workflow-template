@@ -50,7 +50,8 @@ To pull forward later improvements to the managed set:
 | `template-manifest.yaml` | The exact managed-set path list `workflow-template-sync` owns |
 | `VERSION` | This template's own version (absent in a derivation — see `.template.lock` there instead) |
 | `journal/` | One dated file per run/decision — never a single growing file |
-| `.workflow/` | Orchestration session state (`<session-slug>/tasklist.md` + `roster.md`) — **committed**, so a run resumes after a cold tick or on another machine. See `/workflow-orchestrate` |
+| `workflows/` | Orchestration state, two strata: `<workflow>/` is the DURABLE procedure (never pruned), `<workflow>/<target>/` (`tasks.md` + `roster.md` + `notes/`) is one run's disposable INSTANCE state, closed only after harvest. **Committed**, so a run resumes after a cold tick or on another machine. See `/workflow-orchestrate` |
+| `.workflow/` | Legacy (pre-stratification) run state — `<slug>/tasklist.md`. Resolved for one version only; new runs never use it |
 | `.agents/skills/` | Canonical skill bodies + scripts (`workflow-*` machinery, `craft-*` engineering doctrine) |
 | `.agents/craft/` | Optional, derivation-owned overlays (`<skill>.local.md`) that override `craft-*` defaults — unmanaged, never touched by `update` |
 | `.agents/orchestrate/` | Optional, derivation-owned overlays for `/workflow-orchestrate`: `roster.local.yaml` (tier→lane preference, role→tier overrides) and `orchestrate.local.md` — unmanaged |
@@ -72,7 +73,7 @@ thin stub Claude Code needs for discovery.
 | `/workflow-manage` | Administer this workflow: add/remove/edit standing binds, assemble/refresh the substrate (`sync-binds.sh`) |
 | `/workflow-bind` | Bind a session: attach default standing binds (and anything else asked for) via `/add-dir` |
 | `/workflow-gateway` | Manage the local opencodex model gateway (start/stop/status) and print the strictly opt-in, per-session `ANTHROPIC_BASE_URL` override |
-| `/workflow-orchestrate` | Task-based orchestration: directive → committed task list (`.workflow/<session-slug>/tasklist.md`) → dispatch per model **tier** (`flagship` · `workhorse` · `fleet`, resolved from a lane roster, never a hardcoded model name) → loop until the list is exhausted |
+| `/workflow-orchestrate` | Task-based orchestration: directive → committed task list (`workflows/<workflow>/<target>/tasks.md`) → dispatch per model **tier** (`flagship` · `workhorse` · `fleet`, resolved from a lane roster, never a hardcoded model name) → loop until the list is exhausted AND its durable output harvested out of the run directory |
 | `/craft-tdd` | Test-first protocol: failing test before production code, integration focus, seams at every EUD, never mock business logic |
 | `/craft-code-quality` | Module size budgets, mandatory lint/static analysis, ports and adapters, pragmatic SOLID/DDD, no implicit fallbacks, required observability — plus a ratcheting path for repos that start nowhere near any of it |
 

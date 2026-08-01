@@ -41,8 +41,9 @@ own law still wins inside its boundaries.
 
 ## Orchestration
 For anything beyond a single step, invoke `/workflow-orchestrate`: the directive becomes a
-committed task list under `.workflow/<session-slug>/`, work is dispatched per model tier
-(`flagship` · `workhorse` · `fleet`), and the run is done only when the list is exhausted.
+committed task list under `workflows/<workflow>/<target>/`, work is dispatched per model tier
+(`flagship` · `workhorse` · `fleet`), and the run is done only when the list is exhausted AND
+its durable output harvested out of the run directory.
 Set this workflow's tier→lane preference in `.agents/orchestrate/roster.local.yaml`.
 
 ## Typical checkouts

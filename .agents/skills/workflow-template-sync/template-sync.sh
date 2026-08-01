@@ -170,10 +170,17 @@ cmd_derive() {
   # here at derive time is the template's own example/test material, not this derivation's.
   find "$ROOT/journal" -type f ! -name '.gitkeep' -delete 2>/dev/null || true
 
-  # Orchestration session state is identity too, and it is COMMITTED (unlike workspace/),
-  # so a derive-by-clone carries the template's own in-flight runs into the new workflow —
+  # Orchestration run state is identity too, and it is COMMITTED (unlike workspace/), so
+  # a derive-by-clone carries the template's own in-flight runs into the new workflow —
   # task lists and notes for work that has nothing to do with it. Clear it for the same
-  # reason as journal/: a run belongs to the repo that performed it.
+  # reason as journal/: a run belongs to the repo that performed it. Two strata to clear
+  # differently: workflows/<workflow>/<target>/ is INSTANCE state (clear it); a bare
+  # workflows/<workflow>/ with no target subdirs is the DURABLE procedure and must
+  # survive derive, same as .agents/skills/ does. .workflow/<slug>/ is the legacy
+  # (pre-stratification) layout, kept only as a one-version fallback — clear it too.
+  for d in "$ROOT"/workflows/*/*/; do
+    [ -f "$d/tasks.md" ] && rm -rf "$d"
+  done
   rm -rf "$ROOT/.workflow"/*/ 2>/dev/null || true
 
   # VERSION describes the TEMPLATE's own version, not a derivation's — the

@@ -9,7 +9,7 @@
 # This file is itself managed: a derivation gets it kept in sync too, and it's what
 # lets a future template version add or retire a managed path in every derivation.
 
-version: 19  # mirrors this repo's VERSION at the time this manifest last changed
+version: 20  # mirrors this repo's VERSION at the time this manifest last changed
              # VERSION is a plain integer; comparison uses sort -n.
 
 managed:
@@ -26,7 +26,8 @@ managed:
   - .agents/skills/workflow-gateway/**
   # Task-based orchestration. Managed, but tier→lane preference and role→tier overrides
   # live in the derivation-owned overlay .agents/orchestrate/roster.local.yaml, and its
-  # session state in .workflow/ — neither is managed, neither is touched by `update`.
+  # run state in workflows/ (plus legacy .workflow/) — none of it managed, none touched
+  # by `update`.
   - .agents/skills/workflow-orchestrate/**
   # Engineering doctrine (craft-*): defaults for work done ON substrate. Managed, but
   # every craft-* skill defers to a bound repo's own law and to a derivation's unmanaged
