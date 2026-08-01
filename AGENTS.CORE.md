@@ -190,12 +190,32 @@ Agents adopt `VOICE.md`'s reduced voice for output, reports, commit bodies, PR
 descriptions. Loaded every session: this file imports it, so it arrives wherever the
 constitution does.
 
+## Enforcement
+
+Organizational constraints are **checked, not merely stated.** A rule nothing verifies is
+a rule that decays, and every constraint here decayed at least once before it was
+mechanized — the harvest law was broken by this repo, in its own directory, for ten
+versions.
+
+`/workflow-check` runs every constraint in one pass and returns one verdict. Each rule has
+a stable ID (`LAYOUT-007`, `AGENTS-003`) that can be cited in a commit or a task list.
+
+**Each skill owns the constraints for the shapes it defines** — the categorical rule
+applied to enforcement. `/workflow-check` dispatches and aggregates; it implements
+nothing. A constraint added to the aggregator instead of its owner is the fragmentation it
+exists to end. The registry, with every rule and why it matters:
+`.agents/skills/workflow-check/references/constraints.md`.
+
+An unmet constraint is an ordinary result (exit 2). Only a checker that cannot run is a
+failure (exit 1).
+
 ## Baked-in skills
 
 Index only — descriptions load via frontmatter:
 
 - `/workflow-init` — tooling, `init.lock`, tool tiers, MCP wrapper doctrine.
 - `/workflow-agents-sync` — canonical-format enforcement.
+- `/workflow-check` — every organizational constraint in one pass; the rule registry.
 - `/workflow-template-sync` — the upstream link.
 - `/workflow-manage` — bind registry, workspace assembly.
 - `/workflow-bind` — attach standing binds to a session.

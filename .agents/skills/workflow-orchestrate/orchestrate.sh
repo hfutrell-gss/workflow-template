@@ -30,6 +30,7 @@
 #   orchestrate.sh status [<key>]             counts, violations, harvest, DoD verdict
 #   orchestrate.sh ready  [<key>]             tasks whose deps are all done
 #   orchestrate.sh list                       every session with its verdict
+#   orchestrate.sh check                      LAYOUT constraints (see references/constraints.md)
 #
 # <key> is <workflow>/<app>/<session>, or a bare slug for a session still at the legacy
 # .workflow/<slug>/ path. Omit it to resolve the only session present, or the only one
@@ -313,6 +314,75 @@ cmd_init() {
   echo "next: paste the directive verbatim, resolve the roster, then decompose."
 }
 
+# cmd_check -- LAYOUT constraints. Rule IDs are stable and citable; see
+# references/constraints.md. This owns the shapes orchestrate defines (workflow,
+# application, session) and nothing else -- other tools own theirs.
+cmd_check() {
+  local nv=0 wdir adir sdir wf app sess
+  v() { echo "  ! $1"; nv=$((nv+1)); }
+
+  if [ -d "$ROOT/.workflow" ]; then
+    v "LAYOUT-001 .workflow/ still exists — sessions live at workflows/<workflow>/<app>/<session>/"
+  fi
+
+  [ -d "$WORKFLOWS" ] || { echo "layout     no workflows/ directory"; return 0; }
+
+  for wdir in "$WORKFLOWS"/*/; do
+    [ -d "$wdir" ] || continue
+    wf="$(basename "$wdir")"
+    [ -f "$wdir/SKILL.md" ] \
+      || v "LAYOUT-002 workflows/$wf/ has no SKILL.md — a workflow with no TTPs is a directory, not a workflow"
+    [ -f "$ROOT/.claude/skills/$wf/SKILL.md" ] \
+      || v "LAYOUT-003 workflows/$wf/ has no .claude/skills/$wf/ stub — unreachable by the Skill tool, so it will never be found at the moment of need"
+
+    for adir in "$wdir"*/; do
+      [ -d "$adir" ] || continue
+      app="$(basename "$adir")"
+      [ "$app" = "references" ] && continue
+      [ "$app" = "assets" ] && continue
+      [ -f "$adir/tasks.md" ] \
+        || v "LAYOUT-004 workflows/$wf/$app/ has no tasks.md — carried work has nowhere to land when a session closes"
+      [ -f "$adir/profile.md" ] \
+        || v "LAYOUT-005 workflows/$wf/$app/ has no profile.md — this application's operational picture is unrecorded"
+
+      for sdir in "$adir"*/; do
+        [ -d "$sdir" ] || continue
+        sess="$(basename "$sdir")"
+        [ -f "$sdir/tasks.md" ] || continue
+        case "$sess" in
+          [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]-?*) ;;
+          *) v "LAYOUT-006 session $wf/$app/$sess is not named <date>-<slug>" ;;
+        esac
+        # The harvest law: a session that is exhausted AND harvested must be deleted, not
+        # left on disk. Nothing checked this, and the template itself violated it for ten
+        # versions.
+        if report "$sdir/tasks.md" status >/dev/null 2>&1; then
+          v "LAYOUT-007 session $wf/$app/$sess is exhausted and harvested but still on disk — delete it; git log is the archive"
+        fi
+      done
+    done
+  done
+
+  # TASK-* -- grammar and anti-cheat violations inside each open session. An OPEN session
+  # is not a violation; work in progress is the normal state. Only a malformed or
+  # self-contradicting list is.
+  local i out
+  collect_sessions
+  for i in "${!SESS_KEY[@]}"; do
+    # report exits 2 for a session that is merely open, and pipefail would propagate
+    # that into the assignment and trip set -e -- aborting the whole check silently.
+    out="$( { report "${SESS_PATH[$i]}" status 2>/dev/null || true; } | sed -n 's/^  ! //p' )"
+    [ -n "$out" ] || continue
+    while IFS= read -r line; do
+      [ -n "$line" ] && v "TASK-001 ${SESS_KEY[$i]}: $line"
+    done <<< "$out"
+  done
+
+  if [ "$nv" -eq 0 ]; then echo "layout     all conforming"; return 0; fi
+  echo "layout     $nv violation$([ "$nv" -eq 1 ] || echo s)"
+  return 2
+}
+
 cmd_list() {
   collect_sessions
   [ "${#SESS_KEY[@]}" -eq 0 ] && die "no sessions under workflows/ or .workflow/ — run: orchestrate.sh init <workflow> <app> <slug>"
@@ -331,6 +401,7 @@ case "${1:-}" in
   status|ready)  mode="$1"; shift; resolve_session "${1:-}"
                  echo "session: $RESOLVED_KEY"; report "$RESOLVED_PATH" "$mode" ;;
   list)          cmd_list ;;
+  check)         cmd_check ;;
   -h|--help|help) usage 0 ;;
   *)             usage 1 ;;
 esac

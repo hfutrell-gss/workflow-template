@@ -68,6 +68,7 @@ thin stub Claude Code needs for discovery.
 | Skill | Purpose |
 |-------|---------|
 | `/workflow-init` | Install/verify required tooling (git, yq); record per-machine decisions on recommended, opt-in tools (Obsidian, codegraph, opencodex); writes per-machine `init.lock` |
+| `/workflow-check` | Every organizational constraint in one pass — tooling, file format, layout, task grammar, template drift — with stable rule IDs. Owns none of them; each skill owns the constraints for its own shapes |
 | `/workflow-agents-sync` | Enforce the AGENTS-canonical format here and across standing-bind repos present on disk |
 | `/workflow-template-sync` | The upstream link: `derive` a new workflow, `update` a derivation's managed set, `--check` report drift |
 | `/workflow-manage` | Administer this workflow: add/remove/edit standing binds, assemble/refresh the substrate (`sync-binds.sh`) |
