@@ -19,7 +19,7 @@ Where the state lives:
 
 - **Machine-checkable ratchet state belongs in the substrate repo** — the baseline file, the
   frozen counts, the threshold values in lint config. That is the whole point of invariant 1.
-- **The workflow's overlay** (`.agents/craft/code-quality.local.md`) records only what
+- **The workflow's overlay** (`.agents/craft/craft-code-quality.local.md`) records only what
   differs from default: a target other than the standard budgets, or an agreed cadence. It
   never holds the current position — that would put the ratchet back into memory.
 

@@ -87,7 +87,8 @@ Name derivation-local skills outside both, or a future `update` may clobber them
 into derivations whose area of work the template cannot know. Each one declares a
 precedence ladder: **a bound repo's own law wins inside its boundaries → then this
 workflow's overlay → then the skill's defaults.** To change a default, write
-`.agents/craft/<skill-name>.local.md` (e.g. `.agents/craft/code-quality.local.md`); it is
+`.agents/craft/<skill-name>.local.md` — the skill's full name, prefix included, so
+`/craft-code-quality` overlays at `.agents/craft/craft-code-quality.local.md`; it is
 unmanaged, so `update` never touches it, and where it conflicts with the skill it wins.
 No pinning, no ejecting, no drift.
 
