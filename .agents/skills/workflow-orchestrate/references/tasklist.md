@@ -117,7 +117,7 @@ judged against. A task without one is a wish, and `status` reports it as a viola
       evidence: 14 sites, notes/T001-callsites.md
 - [~] T002 · fleet · deps:T001 · Extract the config loader
       accept: single loader; existing suite green
-      agent: ocx-gpt-5-6-luna (dispatched 14:20)
+      agent: fleet/haiku (dispatched 14:20)
 - [ ] T003 · workhorse · deps:T002 · Reconcile conflicting loader semantics
       accept: both call sites resolve identical config; parity test passes
 - [!] T004 · fleet · deps:T003 · Migrate prod callers

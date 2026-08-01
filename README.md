@@ -68,13 +68,12 @@ thin stub Claude Code needs for discovery.
 
 | Skill | Purpose |
 |-------|---------|
-| `/workflow-init` | Install/verify required tooling (git, yq); record per-machine decisions on recommended, opt-in tools (Obsidian, codegraph, opencodex); writes per-machine `init.lock` |
+| `/workflow-init` | Install/verify required tooling (git, yq); record per-machine decisions on recommended, opt-in tools (Obsidian, codegraph); writes per-machine `init.lock` |
 | `/workflow-check` | Every organizational constraint in one pass — tooling, file format, layout, task grammar, template drift — with stable rule IDs. Owns none of them; each skill owns the constraints for its own shapes |
 | `/workflow-agents-sync` | Enforce the AGENTS-canonical format here and across standing-bind repos present on disk |
 | `/workflow-template-sync` | Composition: `derive` a new workflow repo, `add`/`remove` a pack, `update` the core and every pack, `list`, `--audit` composition integrity, `--check` version drift |
 | `/workflow-manage` | Administer this workflow: add/remove/edit standing binds, assemble/refresh the substrate (`sync-binds.sh`) |
 | `/workflow-bind` | Bind a session: attach default standing binds (and anything else asked for) via `/add-dir` |
-| `/workflow-gateway` | Manage the local opencodex model gateway (start/stop/status) and print the strictly opt-in, per-session `ANTHROPIC_BASE_URL` override |
 | `/workflow-orchestrate` | Task-based orchestration: directive → committed task list (`workflows/<workflow>/<app>/<session>/tasks.md`) → dispatch per model **tier** (`flagship` · `workhorse` · `fleet`, resolved from a lane roster, never a hardcoded model name) → loop until the list is exhausted AND its durable output harvested out of the session directory |
 One prefix is reserved by the core: **`workflow-*`** (machinery that operates on the
 shapes). A pack owns whatever prefix it ships — `code-craft-*` for the `code-craft` pack.
@@ -141,7 +140,7 @@ over the skill.
 ### Required vs recommended tools
 
 `/workflow-init` ensures two tiers: **required** tools (`git`, `yq`) that every
-procedure here assumes, and **recommended** tools (Obsidian, codegraph, opencodex) that
+procedure here assumes, and **recommended** tools (Obsidian, codegraph) that
 are opt-in per machine — nothing recommended is installed until you explicitly decide so
 (`init.sh decide <tool> install`). An undecided or skipped recommended tool is never a
 failure, only an informational note pointing at how to opt in.

@@ -3,7 +3,7 @@ name: workflow-init
 description: >-
   Initialize (or verify) this machine for this workflow repo: ensure required tools
   (git, yq) and record per-machine decisions about recommended tools (Obsidian,
-  codegraph, opencodex), then write init.lock at the repo root. Also the home of MCP
+  codegraph), then write init.lock at the repo root. Also the home of MCP
   server registration doctrine (.mcp.json, tools.local.d wrapper rules). Use when the
   root AGENTS.CORE.md init check fails (init.lock missing or stale), when asked to run
   /workflow-init, when opting a recommended tool in or out, when setting up a fresh
@@ -29,7 +29,7 @@ message on any other platform (macOS/arm64, native Windows, etc.).
 
 - **REQUIRED** — `git`, `yq`. Every procedure in this repo assumes these. Missing on a
   plain run → installed automatically. Missing on `--check` → hard failure.
-- **RECOMMENDED** — `obsidian`, `codegraph`, `opencodex`. Useful, but opt-in **per
+- **RECOMMENDED** — `obsidian`, `codegraph`. Useful, but opt-in **per
   machine**, one tool at a time, via a recorded decision (below). A recommended tool
   with no decision, or a recorded `skip`, is **never** installed automatically and
   **never** fails anything — a plain run and `--check` both just print an informational
@@ -78,7 +78,7 @@ either.
 ```sh
 .agents/skills/workflow-init/init.sh decide <tool> install   # or: skip
 ```
-`<tool>` must be one of the RECOMMENDED tools — `obsidian`, `codegraph`, `opencodex`, plus
+`<tool>` must be one of the RECOMMENDED tools — `obsidian`, `codegraph`, plus
 anything a derivation registered in `.agents/init/tools.local.d/` (see above). Required
 tools aren't decided, they're mandatory. This only records the decision into
 `init.lock`'s `decisions:` section (creating the file if it doesn't exist yet); it does
@@ -86,7 +86,7 @@ not itself install or remove anything. Follow it with a plain `init.sh` run to a
 
 Typical opt-in flow for a recommended tool:
 ```sh
-.agents/skills/workflow-init/init.sh decide opencodex install
+.agents/skills/workflow-init/init.sh decide codegraph install
 .agents/skills/workflow-init/init.sh
 ```
 
@@ -118,17 +118,6 @@ Typical opt-in flow for a recommended tool:
   packages share the bare name `codegraph`; this default is scoped to that repo
   specifically. Override with `CODEGRAPH_INSTALL="<command>" .agents/skills/workflow-init/init.sh`
   if a different install method is ever needed.
-- **opencodex** — a local model-gateway proxy (Codex/Claude Code/Claude Desktop → 40+
-  providers; see https://github.com/lidge-jun/opencodex). Installs the pinned npm
-  package `@bitkyc08/opencodex` (CLI: `ocx`), user-scope (`npm install -g`). Vetted
-  2026-07-28: MIT license, ~5.5k GitHub stars, actively released — but an
-  **individual-maintainer project whose whole purpose is to sit in the path of every
-  LLM request a routed session makes.** That's a materially different trust posture
-  than yq/Obsidian/codegraph, which is exactly why it's opt-in by design, not merely by
-  default-recommended: nobody gets this installed without deciding so explicitly (`init.sh
-  decide opencodex install`). Once installed, see `/workflow-gateway` for the
-  strictly-opt-in-per-session usage doctrine — installing the tool is not the same as
-  routing any traffic through it.
 
 ## MCP servers
 
@@ -148,24 +137,12 @@ keep a committed registration shareable across machines:
   That is the intended resting state on a machine with no use for it, not an error to
   chase.
 
-## Migration note (v4 → v5)
+## Grandfathering
 
-v5 adds `.agents/init/tools.local.d/` and the platform-limited carve-out. Purely additive:
-a derivation with no overlay directory behaves exactly as v4 did. Bumping to 5 invalidates
-every machine's `init.lock`, so each re-runs init once — which is also when a derivation's
-newly added tools first get offered.
-
-## Migration note (v3 → v4)
-
-Versions before 4 installed Obsidian and codegraph unconditionally (no decision
-concept existed). A pre-v4 `init.lock` — one that exists but has no `decisions:`
-section at all — is **grandfathered**: any of Obsidian/codegraph already present on
-that machine is recorded as a `decisions:` entry of `install` (dated at the time of this
-first v4 run, annotated `grandfathered`), and anything absent starts undecided.
-`opencodex` is never grandfathered under any circumstance — it's new in v4; there is no
-prior init.sh run for it to inherit a decision from. A genuinely fresh machine (no
-`init.lock` at all yet) is never grandfathered either — everything recommended starts
-undecided there, same as `opencodex`.
+An `init.lock` that exists but carries no `decisions:` section records `install` for any
+recommended tool already present on that machine, annotated `grandfathered`; anything
+absent starts undecided. A machine with no `init.lock` at all is never grandfathered —
+everything recommended starts undecided there.
 
 ## Versioning
 `VERSION` is bumped when the init procedure changes (new tool, changed install, tiering

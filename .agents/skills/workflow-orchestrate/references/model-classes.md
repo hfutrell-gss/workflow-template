@@ -8,7 +8,7 @@ is correct forever; a model name in either is a maintenance debt.
 
 | Concept | What it is | Examples |
 |---------|-----------|----------|
-| **lane** | a provider family plus **how it is dispatched** | `anthropic` (native, via the Agent tool's `model:`), `ocx-openai` (routed, via `agentType: ocx-*`) |
+| **lane** | a provider family plus **how it is dispatched** | `anthropic` (native, via the Agent tool's `model:`); a routed lane reached by `agentType:` is declared in the overlay |
 | **tier** | a capability class *within* a lane — what the model is | `flagship` · `workhorse` · `fleet` |
 | **role** | the job it does in an orchestration | `consultant` · `orchestrator` · `worker` |
 
@@ -54,9 +54,9 @@ it:
 ```yaml
 # .agents/orchestrate/roster.local.yaml
 prefer:
-  flagship:  [anthropic, ocx-openai]   # keep judgment native, fall back if unavailable
-  workhorse: [anthropic]               # single lane: no fallback, fail loudly instead
-  fleet:     [ocx-openai, anthropic]   # run the fleet on the cheaper routed lane
+  flagship:  [anthropic]               # single lane: no fallback, fail loudly instead
+  workhorse: [anthropic]
+  fleet:     [anthropic, vendor-x]     # ordered; the first available lane fills the tier
 
 roles:
   orchestrator: workhorse              # optional role→tier override
@@ -68,9 +68,6 @@ lanes:                                 # optional: teach a lane this file has ne
       flagship: some-agent-name
       fleet:    [another-agent, cheaper-agent]
 ```
-
-A copy-ready version of this file ships at `.agents/orchestrate/roster.local.yaml.example` —
-copy it to `roster.local.yaml` to activate it.
 
 Rules:
 - A tier with **one** lane and that lane unavailable is a **hard stop for that tier** — report
@@ -89,13 +86,11 @@ authoritative list of natively dispatchable classes for this harness version. As
 is `opus | sonnet | haiku | fable`. If a name in the seed table is absent from the enum, the
 harness cannot dispatch it; treat it as unavailable, not as a bug in the harness.
 
-**Routed lanes.** Two things must both hold:
-- The routed agent types exist in this session's available-agent-types list (they are generated
-  by `ocx claude` into `~/.claude/agents/ocx-*.md`).
-- The gateway is actually up. Check with `/workflow-gateway`; `ocx models live` lists the models
-  the proxy will serve.
-
-If a routed lane is preferred but its gateway is down, fall back per `prefer:` and say so.
+**Routed lanes.** A lane the overlay declares with `dispatch: agentType` is available only
+when its agent types appear in this session's available-agent-types list. Presence in the list
+is necessary, not sufficient — a routed agent whose backing service has no credential fails at
+dispatch, not at discovery, so check the provider's own health command before the first batch.
+A preferred lane that is unavailable falls back per `prefer:` and is stated to the user.
 
 ## Classifying a model this file has never heard of
 
@@ -118,15 +113,14 @@ The common case, by design. Rules:
 
 **Data, not doctrine. Verified 2026-07-30 — assume it is stale and re-check discovery.**
 
-| tier | `anthropic` (via `model:`) | `ocx-openai` (via `agentType:`) |
-|------|---------------------------|---------------------------------|
-| `flagship` | `fable` | `ocx-gpt-5-6-sol` |
-| `workhorse` | `opus` | `ocx-gpt-5-6-terra` |
-| `fleet` | `sonnet`, `haiku` (cheap end) | `ocx-gpt-5-6-luna`, `ocx-gpt-5-4-mini` (cheap end) |
+| tier | `anthropic` (via `model:`) |
+|------|---------------------------|
+| `flagship` | `fable` |
+| `workhorse` | `opus` |
+| `fleet` | `sonnet`, `haiku` (cheap end) |
 
-Provenance for the routed lane: GPT-5.6 ships Sol (flagship) / Terra (balanced) / Luna
-(fast-cheap) as *durable capability tiers advancing on their own cadence* — exactly the shape
-this file models — GA 2026-07-09, <https://openai.com/index/gpt-5-6/>.
+A routed lane is the derivation's to declare, in `.agents/orchestrate/roster.local.yaml`
+under `lanes:`. The core ships no routed lane and names no provider.
 
 ## Dispatch mechanics
 
@@ -134,7 +128,7 @@ Tier chooses *who*. These choose *how*.
 
 **Native lane** — `Agent` tool with an explicit `model:`.
 
-**Routed lane** — `Agent` tool with `agentType: ocx-<model>`. The routed agent's real model is
+**Routed lane** — `Agent` tool with `agentType: <name>`. The routed agent's real model is
 **pinned in its own definition; the `model:` argument is ignored.** Pass `agentType:` and treat
 `model:` as a placeholder. Relying on `model:` for a routed lane sends the work to a model you
 did not choose, and nothing in the transcript will say so.
@@ -153,9 +147,9 @@ effort beats a `workhorse` at default on many well-scoped tasks, at lower cost.
   no-op. Full procedure and the hand-cut alternative: `references/worktrees.md`.
 - **Agent types over raw tiers** where a specialist fits better than a capability class —
   `Explore` for broad read-only search, `Plan` for design.
-- **Routed lanes have skills blocked** (their generated definitions name which — e.g.
-  `claude-api`). Do not brief a routed worker to invoke a blocked skill; give it the facts
-  inline or dispatch that slice to the native lane.
+- **A routed lane may have skills blocked** — its agent definition names which. Do not brief a
+  routed worker to invoke a blocked skill; give it the facts inline, or dispatch that slice to
+  the native lane.
 - **Every worker starts cold.** A briefing carries: the task's acceptance test, the paths it
   may touch, the bound repo's law that applies, and what to return as evidence. Tier is not a
   substitute for a briefing.

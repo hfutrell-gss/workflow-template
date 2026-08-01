@@ -9,9 +9,9 @@
 #   workhorse — balanced agentic default. The orchestrator sits here.
 #   fleet     — fast and cheap enough to run many at once. The workers sit here.
 prefer:
-  flagship:  [anthropic, ocx-openai]
-  workhorse: [anthropic]              # single lane = no fallback; fail loudly instead
-  fleet:     [ocx-openai, anthropic]  # e.g. run the fleet on the cheaper routed lane
+  flagship:  [anthropic]              # single lane = no fallback; fail loudly instead
+  workhorse: [anthropic]
+  fleet:     [anthropic]              # add a routed lane here once one is declared below
 
 # Optional: re-point a role at a different tier. Defaults are
 # consultant→flagship, orchestrator→workhorse, worker→fleet.

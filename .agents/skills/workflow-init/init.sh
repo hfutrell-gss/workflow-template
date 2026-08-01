@@ -25,7 +25,7 @@ VERSION="$(tr -d '[:space:]' < "$HERE/VERSION")"
 LOCK="$ROOT/init.lock"
 
 REQUIRED=(git yq)
-RECOMMENDED=(obsidian codegraph opencodex)
+RECOMMENDED=(obsidian codegraph)
 
 # ---- derivation-owned tool overlays ------------------------------------------
 # The categorical rule: the template defines the shapes and owns every operation on
@@ -78,7 +78,7 @@ register_tool() {
 }
 
 # ---- platform gate ------------------------------------------------------------
-# init.sh's install_* functions (yq/obsidian/codegraph/opencodex binaries, WSLg
+# init.sh's install_* functions (yq/obsidian/codegraph binaries, WSLg
 # wrapper) are only written/vetted for Linux x86_64 (incl. WSL2). Fail loudly before
 # attempting any install on anything else, rather than partially installing the wrong
 # arch.
@@ -94,7 +94,6 @@ have() { command -v "$1" >/dev/null 2>&1; }
 check_yq()       { have yq && yq --version 2>/dev/null | grep -o 'v[0-9][0-9.]*' | head -1; }
 check_obsidian() { have obsidian && echo present; }
 check_codegraph(){ have codegraph && (codegraph --version 2>/dev/null || echo present) | head -1; }
-check_opencodex(){ have ocx && (ocx --version 2>/dev/null || echo present) | head -1; }
 
 # git is special: on this machine's history, `git` was aliased/PATH-resolved to the
 # Windows binary (/mnt/c/.../Git/bin/git.exe), which behaves differently enough from
@@ -257,41 +256,6 @@ install_codegraph() {
   eval "$cmd"
 }
 
-install_opencodex() {
-  # opencodex (https://github.com/lidge-jun/opencodex, npm @bitkyc08/opencodex) — a
-  # local model-gateway proxy (Codex/Claude Code/Claude Desktop -> 40+ providers).
-  # Vetted 2026-07-28: MIT license, ~5.5k GitHub stars, actively released (npm
-  # dist-tag "latest" resolved to 2.7.42 on the vetting date). PROVENANCE NOTE: this
-  # is an individual-maintainer project (bitkyc08/lidge-jun) whose whole purpose is
-  # to sit directly in the path of every LLM request a routed session makes — that is
-  # a materially different trust posture than yq/Obsidian/codegraph. It is
-  # RECOMMENDED-tier, never auto-installed: this function only runs when this
-  # machine's init.lock decisions: section says `opencodex: install` (see
-  # `init.sh decide opencodex install`). See workflow-gateway's SKILL.md for the
-  # opt-in-per-session usage doctrine once installed.
-  #
-  # Pinned to the exact version verified above rather than "latest", so a future
-  # publish can't silently swap in unvetted code.
-  #
-  # User-scoped, never sudo: this repo's other installers (yq, Obsidian, codegraph)
-  # all land in ~/.local/{bin,opt} with no root required, and a system-package npm
-  # (e.g. Debian/Ubuntu's) commonly defaults its global prefix to a root-owned path
-  # like /usr/lib/node_modules — a bare `npm install -g` there fails EACCES for a
-  # non-root user. Use an explicit user-owned --prefix instead, and symlink the
-  # resulting binaries into ~/.local/bin (same landing spot as codegraph) so
-  # check_opencodex's `have ocx` finds them the same way every other tool here does.
-  local pin="2.7.42"
-  local prefix="$HOME/.local/share/npm-global"
-  command -v npm >/dev/null 2>&1 || { echo "error: npm not found — opencodex requires Node 18+ (npm on PATH). Install Node first." >&2; return 1; }
-  mkdir -p "$prefix" "$HOME/.local/bin"
-  echo "installing opencodex (pinned @bitkyc08/opencodex@$pin) via 'npm install -g --prefix $prefix' ..." >&2
-  npm install -g --prefix "$prefix" "@bitkyc08/opencodex@$pin"
-  local bin
-  for bin in ocx opencodex; do
-    [ -e "$prefix/bin/$bin" ] && ln -sf "$prefix/bin/$bin" "$HOME/.local/bin/$bin"
-  done
-}
-
 # ---- source derivation tool overlays ----------------------------------------
 # Deliberately here, not up beside the tier declaration: everything above is now
 # defined, so an overlay may use `have`/`resolve_git_bin`, and the validation below can
@@ -439,14 +403,11 @@ for tool in "${RECOMMENDED[@]}"; do
     decision_raw[$tool]="$raw"
     decision[$tool]="$(printf '%s\n' "$raw" | sed -E 's/^[[:space:]]*//; s/[[:space:]]*#.*$//')"
   elif [ -f "$LOCK" ] && ! has_decisions_section && { [ "$tool" = "obsidian" ] || [ "$tool" = "codegraph" ]; } && [ -n "$v" ]; then
-    # Migration: a pre-v4 init.lock that EXISTS but has no decisions: section at all
-    # implicitly ran these two tools unconditionally. Grandfather this machine as
-    # having decided "install" for whichever of the two are already present, rather
-    # than silently dropping tools a prior init already installed. Guarded on
-    # [ -f "$LOCK" ] so a genuinely fresh machine (no lock at all yet) is NOT
-    # grandfathered — it starts undecided like opencodex, which is never
-    # grandfathered under any circumstance (it's new; there is no prior init.sh run
-    # to inherit a decision from).
+    # An init.lock that exists but carries no decisions: section records "install"
+    # for whichever of these two are already on the machine, rather than silently
+    # dropping a tool a prior init put there. Guarded on [ -f "$LOCK" ]: a machine
+    # with no lock at all starts undecided, because there is no prior run to inherit
+    # a decision from.
     decision[$tool]="install"
   fi
 

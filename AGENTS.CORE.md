@@ -342,7 +342,6 @@ workflow repo:
   for packs.
 - `/workflow-manage` — bind registry, workspace assembly.
 - `/workflow-bind` — attach standing binds to a session.
-- `/workflow-gateway` — local opencodex gateway, opt-in per session.
 - `/workflow-orchestrate` — directive → task list → tiered dispatch → loop; DoD is
   exhaustion **plus** harvest, decided by `orchestrate.sh status`.
 
