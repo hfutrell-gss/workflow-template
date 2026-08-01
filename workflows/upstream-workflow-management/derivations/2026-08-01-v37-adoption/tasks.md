@@ -200,7 +200,8 @@ Closing is `orchestrate.sh close`. It re-checks this DoD, writes the ledger line
       found:  raised by T005's worker as outside its assigned scope. Correct call — a dangling
               relative link in a derivation-owned skill is real work, and widening T005 to
               absorb it would have hidden the growth.
-- [ ] T012 · workhorse · deps:T005,T006,T007 · Promote the update-bootstrap defect into the core
+- [~] T012 · workhorse · deps:T005,T006,T007 · Promote the update-bootstrap defect into the core
+      agent: workhorse/opus (dispatched 18:13)
       accept: the core (this repo) states the ordering constraint where an operator will hit it
               — `.agents/skills/workflow-template-sync/SKILL.md` and, if the shape allows,
               handled in `template-sync.sh` itself rather than documented around. The defect:
@@ -247,7 +248,8 @@ Closing is `orchestrate.sh close`. It re-checks this DoD, writes the ledger line
       accept: same as T015, minus the legacy-session clause (that repo has none).
 - [ ] T017 · fleet · deps:T014 · Re-converge sandbox onto the core's released version
       accept: same as T016. No pack, no remote.
-- [ ] T018 · fleet · deps:- · Survey the plugin marketplace and recommend a registry
+- [~] T018 · fleet · deps:- · Survey the plugin marketplace and recommend a registry
+      agent: fleet/sonnet (dispatched 18:13)
       accept: notes/T018-plugins.md lists every plugin available in `claude-plugins-official`
               (registered on this machine today at 16:29 local; nothing enabled anywhere), and
               for each: what it executes — HOOKS FIRST, then egress, then credential reads —
