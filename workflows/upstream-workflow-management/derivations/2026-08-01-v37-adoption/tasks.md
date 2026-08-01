@@ -115,8 +115,16 @@ Closing is `orchestrate.sh close`. It re-checks this DoD, writes the ledger line
               in-flight sessions holding 44 open tasks is per-session judgment and the user's
               call, not a side effect of a core bump. Migration is carried out to ../tasks.md at
               harvest rather than done here.
-- [~] T007 · fleet · deps:T003,T004 · Converge sandbox to v37
-      agent: fleet/sonnet (dispatched 16:39)
+- [x] T007 · fleet · deps:T003,T004 · Converge sandbox to v37
+      evidence: notes/T007-sandbox-converge.md; commit 235ce48 "chore: converge template core
+                from v13 to v37". Orchestrator re-ran the checks rather than accepting the
+                report: `.template.lock` = 37; `--check` "up to date (37)" / "status: up to
+                date"; `check.sh` TOOL/AGENTS/LAYOUT/PACK/TEMPLATE all ok, "all constraints
+                met"; `agents-sync: all conforming`; `find` for workflow-gateway returns
+                nothing; AGENTS.md:5 `@AGENTS.CORE.md`, CLAUDE.md:4 `@AGENTS.md`; tree clean.
+                Bootstrap worked as designed — update printed `removed
+                .agents/skills/workflow-gateway/**` rather than orphaning it.
+                No pack installed, deliberately: no craft content here to re-source.
       method: same BOOTSTRAP FIRST step as T005, which is what makes 13 -> 37 viable and
               retires the worker's re-derive recommendation (Log). No craft-* to handle here;
               `workflow-gateway` is the path being dropped.
