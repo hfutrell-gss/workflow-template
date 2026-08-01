@@ -34,6 +34,10 @@
 #   - a path a pack stops providing is REMOVED, not left behind.
 set -euo pipefail
 
+# The argv this process was started with, kept for the self-staging re-exec in
+# update_core (see "the stale-script problem" below).
+ORIG_ARGV=("$@")
+
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$HERE/../../.." && pwd)"
 LOCK="$ROOT/.template.lock"
@@ -423,11 +427,62 @@ cmd_derive() {
   echo "next: add the packs this area of work needs — 'template-sync.sh add <url>'"
 }
 
+# --- the stale-script problem ------------------------------------------------
+# An update is performed by the DERIVATION'S OWN copy of this script — whatever version
+# it last received. The logic that decides what an update DOES is therefore always the
+# logic of the release before the one being applied, and a change to update semantics
+# reaches a repo one release later than the manifest it is supposed to govern.
+#
+# The concrete failure this was written for: dropped-path removal in update_core (the
+# `comm -23` + remove_paths pair) arrived in core v30. A derivation still on a pre-v30
+# core runs an update whose script only copies the paths the NEW manifest lists and never
+# diffs against the old one. Every path the new manifest retired is left orphaned on
+# disk, `.template.lock` is then stamped with the new version, every later `update`
+# reports "up to date", and the derivation's own manifest — the only record of what the
+# core previously owned — has been overwritten. The information needed to compute the
+# removal is gone, and nothing reports any of it.
+#
+# The fix is to make the update self-hosting: stage the upstream's copy of this skill
+# FIRST, then re-exec it, so the release's own logic applies its own manifest. Staging
+# rewrites only `.agents/skills/workflow-template-sync/` and never
+# `template-manifest.yaml`, so the OLD manifest is still on disk when the new script
+# reads it and the dropped-path diff computes correctly.
+#
+# What this cannot reach: a derivation whose installed script predates this staging step
+# — that script stages nothing, so its first update still runs old logic. Stage by hand
+# before that update. SKILL.md, "The stale-script constraint", holds the procedure.
+SYNC_SKILL_REL=".agents/skills/workflow-template-sync"
+
+# Replaces this repo's sync skill with the upstream's. Returns 1 and copies NOTHING when
+# there is nothing to stage: the two are already identical, the upstream does not manage
+# the path, or the upstream has no script there. The staged copy is parsed before it
+# replaces anything — a half-written or unparseable stage would leave the repo with no
+# working sync skill at all, which is worse than the stale one it replaced.
+stage_sync_skill() { # stage_sync_skill <upstream-root> <upstream-manifest>
+  local up_root="$1" up_mf="$2" src tmp
+  src="$up_root/$SYNC_SKILL_REL"
+  [ -f "$src/template-sync.sh" ] || return 1
+  grep -qxF "$SYNC_SKILL_REL/**" <<<"$(manifest_paths "$up_mf")" || return 1
+  diff -r -q "$src" "$ROOT/$SYNC_SKILL_REL" >/dev/null 2>&1 && return 1
+
+  tmp="$(mktemp -d)"
+  cp -r "$src" "$tmp/staged"
+  if ! bash -n "$tmp/staged/template-sync.sh"; then
+    rm -rf "$tmp"
+    echo "error: upstream $SYNC_SKILL_REL/template-sync.sh does not parse — refusing to stage it" >&2
+    exit 1
+  fi
+  rm -rf "$ROOT/$SYNC_SKILL_REL"
+  mkdir -p "$(dirname "$ROOT/$SYNC_SKILL_REL")"
+  cp -r "$tmp/staged" "$ROOT/$SYNC_SKILL_REL"
+  rm -rf "$tmp"
+}
+
 # Updates the core. The removal source is the derivation's OWN copy of the core
 # manifest, read before it is overwritten: a path it lists that the new manifest does
 # not is a path the core gave up.
 update_core() {
-  local pinned upstream upstream_root template_version upstream_version derived
+  local pinned upstream upstream_root template_version upstream_version derived upstream_mf
   pinned="$(lock_get pinned)"
   upstream="$(lock_get upstream)"
   template_version="$(lock_get template_version)"
@@ -435,6 +490,8 @@ update_core() {
   upstream_root="$(resolve_upstream_root "$upstream")"
   [ -f "$upstream_root/VERSION" ] || { echo "error: no VERSION file at upstream root '$upstream_root' (upstream: $upstream)" >&2; exit 1; }
   upstream_version="$(tr -d '[:space:]' < "$upstream_root/VERSION")"
+  upstream_mf="$(manifest_file "$upstream_root")"
+  [ -n "$upstream_mf" ] || { echo "error: upstream core has no manifest (pack.yaml or template-manifest.yaml)" >&2; exit 1; }
 
   if [ "$pinned" = "true" ]; then
     echo "$CORE_NAME: pinned — not updating. installed=$template_version, available=$upstream_version"
@@ -450,11 +507,20 @@ update_core() {
   fi
 
   echo "$CORE_NAME: $template_version -> $upstream_version"
-  local old new gone local_mf upstream_mf
+
+  # Self-host the update: apply the release with the release's OWN logic, not with
+  # whatever logic this derivation happens to hold. See "the stale-script problem".
+  # This runs AFTER the pinned / up-to-date / upstream-behind gates above — a run that
+  # is not going to update anything must not rewrite this repo's script either.
+  if [ -z "${WORKFLOW_TEMPLATE_SYNC_RESTAGED:-}" ] && stage_sync_skill "$upstream_root" "$upstream_mf"; then
+    echo "  staged $SYNC_SKILL_REL from upstream — re-running update with it"
+    export WORKFLOW_TEMPLATE_SYNC_RESTAGED=1
+    exec bash "$ROOT/$SYNC_SKILL_REL/template-sync.sh" ${ORIG_ARGV[@]+"${ORIG_ARGV[@]}"}
+  fi
+
+  local old new gone local_mf
   old="$(mktemp)"; new="$(mktemp)"; gone="$(mktemp)"
   local_mf="$(manifest_file "$ROOT")"
-  upstream_mf="$(manifest_file "$upstream_root")"
-  [ -n "$upstream_mf" ] || { echo "error: upstream core has no manifest (pack.yaml or template-manifest.yaml)" >&2; exit 1; }
   if [ -n "$local_mf" ]; then manifest_paths "$local_mf" | sort > "$old"; else : > "$old"; fi
   manifest_paths "$upstream_mf" | sort > "$new"
   comm -23 "$old" "$new" > "$gone"

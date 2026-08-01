@@ -132,6 +132,45 @@ path list. For the core, the derivation's own copy of `template-manifest.yaml` i
 record — it is itself a managed path, so the pre-update copy on disk states what the core
 previously owned.
 
+### The stale-script constraint
+
+**An update is run by the derivation's own copy of this script.** So the logic that
+decides what an update DOES is the logic of the release *before* the one being applied. A
+change to update semantics would otherwise reach a repo one release late — governing the
+manifest after the one it was written for.
+
+`update` closes that gap itself: when the core is behind and not pinned, it **stages the
+upstream's `.agents/skills/workflow-template-sync/` over this repo's copy and re-execs
+it** before doing anything else. Staging rewrites only that directory — never
+`template-manifest.yaml` — so the old manifest is still on disk when the new script reads
+it, and the dropped-path diff computes correctly. It happens once per run
+(`WORKFLOW_TEMPLATE_SYNC_RESTAGED` guards the re-exec), only after the pinned /
+up-to-date / upstream-behind gates, and only if the upstream copy differs and parses.
+
+**What it cannot reach: a derivation whose installed script predates the staging step.**
+That script stages nothing, so its first update still runs old logic. The case that costs
+real work is a core older than **v30**, where `update_core` gained dropped-path removal
+(`comm -23` against the old manifest, then `remove_paths`). Before v30 the script only
+copies what the NEW manifest lists. Every path the new manifest retired is left orphaned
+on disk, `.template.lock` is stamped with the new version, every later `update` reports
+"up to date", and the old manifest — the only record of what the core used to own — has
+been overwritten. Nothing reports any of it.
+
+**Stage by hand before the first update of any pre-v30 derivation**, while its manifest is
+still the old one:
+
+```sh
+cp -r <upstream>/.agents/skills/workflow-template-sync/. \
+      <derivation>/.agents/skills/workflow-template-sync/
+bash <derivation>/.agents/skills/workflow-template-sync/template-sync.sh update
+```
+
+Correct order matters: copy the skill, do **not** touch `template-manifest.yaml`, then
+run `update`. Each retired path then prints as `removed <path>`. No `removed` line where
+the release retired a path means the stage did not take.
+
+Read `.template.lock`'s `template_version` before deciding — v30 and later needs nothing.
+
 ### Remote upstreams
 A URL upstream (core or pack) resolves through a cache checkout at
 `${XDG_CACHE_HOME:-$HOME/.cache}/workflow-template-sync/<sha1 of the url>`:

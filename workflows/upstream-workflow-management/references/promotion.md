@@ -90,6 +90,12 @@ denied` where a documented gate should run. Check:
 
 Prefer `workflow-template-sync update` in the derivation.
 
+**Read the derivation's `template_version` before you run it.** The update is performed by
+the derivation's OWN copy of `template-sync.sh`, so a core older than v30 runs an update
+that cannot delete the paths your release retired — it orphans them silently and then
+reports "up to date" forever. `/workflow-template-sync` SKILL.md, "The stale-script
+constraint", owns that rule and the hand-stage that fixes it.
+
 When `update` is gated — a live session, a script the update would swap mid-run — you may
 hand-apply the change to the derivation's managed copy **only** when the result is
 byte-identical to upstream. Verify it, and say in the commit message that the copy is
