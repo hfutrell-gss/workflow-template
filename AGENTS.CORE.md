@@ -106,7 +106,8 @@ everything outside the managed set is entirely the derivation's, ejectable any t
 its shapes, as managed skills; a derivation contributes data/doctrine only, never a
 parallel tool (`binds.yaml`: template owns the operations, a derivation owns only its
 entries and why). **Craft overlays:** a precedence ladder — bound repo's law → the
-workflow's `.agents/craft/<skill>.local.md` overlay, which wins → skill defaults — in
+workflow's `.agents/craft/<skill-name>.local.md` overlay (full name, prefix included:
+`craft-tdd.local.md`), which wins → skill defaults — in
 full at `/craft-tdd` or `/craft-code-quality`.
 
 ## Tiers (RBAC)
