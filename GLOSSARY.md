@@ -40,10 +40,12 @@ attached to the running session, by `/add-dir`.
 ### Carried work
 
 Epics, deferred tasks, and threads that cross sessions. Lives in
-`workflows/<workflow>/<app>/tasks.md`. Reached by promoting a task with the `[^]` marker.
+`workflows/<workflow>/<app>/tasks.md`, under `## Open`. Reached by promoting a task with
+the `[^]` marker.
 
 **Is not:** a *backlog* of everything wanted. It is what a closing session could not
-finish and someone still wants.
+finish and someone still wants. Also not the *ledger*, which shares the file and records
+what already happened.
 
 ### Core
 
@@ -64,11 +66,29 @@ before the session may be deleted. See `AGENTS.CORE.md` "Harvest law".
 
 **Is not:** archiving. Nothing is kept. `git log` is the archive.
 
+### Journal
+
+`journal/YYYY-MM-DD-slug.md` — one dated file per **decision about this workflow repo**:
+why the system is shaped as it is, when the reason would not survive in a diff.
+
+**Is not:** a record of a run. That is the *ledger*. A journal entry answers "why is the
+system built this way?"; a ledger line answers "what has been done to this application?".
+
 ### Lane
 
 A route to a model — an API, a gateway, a local proxy. A **tier** resolves to a lane
 through the roster. A lane that answers 401 is not available, however many times it is
 retried.
+
+### Ledger
+
+The `## History` section of `workflows/<workflow>/<app>/tasks.md`. One permanent line per
+session closed against that application — directive, counts by disposition, where the
+harvest landed. Written only by `orchestrate.sh close`, derived from the session's own
+task list.
+
+**Is not:** hand-written, and not a narrative. A line nobody earned by passing the DoD
+gate is a claim, not a record.
 
 ### Managed set
 
@@ -117,7 +137,8 @@ pointing at a canonical body: `.agents/skills/<name>/` for machinery,
 ### Session
 
 One discrete instantiation of a workflow against an application. Temporal, and disposable
-once harvested. Lives at `workflows/<workflow>/<app>/<session>/`.
+once harvested. Lives at `workflows/<workflow>/<app>/<session>/`. Ends with
+`orchestrate.sh close`, which leaves one *ledger* line behind and deletes the directory.
 
 **Is not:** a *workflow*. A workflow is timeless and knows nothing about when it runs.
 Naming session directories after the workflow concept is the mistake that produced this

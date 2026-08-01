@@ -98,9 +98,16 @@ Load a `references/` file when you reach the step that needs it. Keep this page 
 
 7. **Check DoD.** Run `orchestrate.sh status`. Not done → return to the step that owns the gap
    (new work found → 3; ordering wrong → 4; tasks ready → 5; tasks exhausted but `harvest
-   pending` → sweep `notes/` and the `## Log` into the procedure, the target's docs, or the
-   journal, then record `harvest: done <where>`). Exhausted, clean, and harvested → report,
-   then stop the loop.
+   pending` → sweep `notes/` and the `## Log` into the workflow's own `SKILL.md`, the target's
+   docs, or `<app>/profile.md`, then record `harvest: done <where>`). Exhausted, clean, and
+   harvested → step 8.
+
+8. **Close.** Run `orchestrate.sh close`. It re-checks the DoD, appends one line to the
+   application ledger (`<app>/tasks.md` `## History`) — directive, counts by disposition, where
+   the harvest landed — and deletes the session directory. Commit the ledger line and the
+   deletion together, then report and stop the loop. **Do not delete a session by hand**: the
+   ledger line is what remains of the run, and a manual `git rm` is exactly how this system
+   spent ten versions with no answer to *what has been done to this app?*.
 
 ## Continuation
 
@@ -130,13 +137,16 @@ Load a `references/` file when you reach the step that needs it. Keep this page 
 
 ## Script
 
-`orchestrate.sh` — the only mechanical part. Reporting is read-only; `init` is the one write.
+`orchestrate.sh` — the only mechanical part. Reporting is read-only; `init` and `close` are
+the two writes, and they are the start and the end of a session's life.
 
 ```sh
 .agents/skills/workflow-orchestrate/orchestrate.sh init <workflow> <app> <slug>  # scaffold <date>-<slug>
 .agents/skills/workflow-orchestrate/orchestrate.sh status [<key>]   # counts, violations, harvest, DoD verdict
 .agents/skills/workflow-orchestrate/orchestrate.sh ready  [<key>]   # tasks whose deps are all done
 .agents/skills/workflow-orchestrate/orchestrate.sh list             # every run + its verdict
+.agents/skills/workflow-orchestrate/orchestrate.sh check            # LAYOUT constraints
+.agents/skills/workflow-orchestrate/orchestrate.sh close  [<key>]   # ledger line + delete the session
 ```
 
 `<key>` is `<workflow>/<app>/<session>`, or a bare slug for a session still at the legacy

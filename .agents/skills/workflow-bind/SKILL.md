@@ -3,7 +3,7 @@ name: workflow-bind
 description: >-
   Bind repos to the current session: attach this workflow's default standing binds
   (binds.yaml) plus anything else asked for, via /add-dir, and record what got bound in
-  today's journal entry. Use when asked to bind a repo, start a session against this
+  the session's own task list. Use when asked to bind a repo, start a session against this
   workflow's substrate, or attach standing binds for today's work. No separate CLI —
   this is a procedure for Claude to run in-session.
 ---
@@ -38,9 +38,11 @@ session itself (`/add-dir`), which a helper process can't do on your behalf.
 4. **On each bind, obey the bind law**: read the target's `AGENTS.md` before doing
    anything in it, and honor its acknowledgement protocol if it has one. Repo law wins
    inside that repo's own boundaries.
-5. **Record it.** Append (or create) today's journal entry —
-   `journal/YYYY-MM-DD-<slug>.md` — noting which repos got session-bound and why. Don't
-   edit a previous day's file; one dated file per run.
+5. **Record it where the work is.** Note which repos got session-bound, and why, in the
+   session's own task list (`workflows/<workflow>/<app>/<session>/tasks.md`, `## Log`).
+   Session binds are run state, not a decision about this repo, so they do **not** go in
+   `journal/`. Write a journal entry only if the bind *registry* changed — a new standing
+   bind, a `kind:` reclassified — and say why.
 
 ## Notes
 - Standing binds are declarative only — being listed in `binds.yaml` (even with

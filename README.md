@@ -50,7 +50,7 @@ To pull forward later improvements to the managed set:
 | `template-manifest.yaml` | The CORE pack's manifest — the exact path list it owns in every workflow repo |
 | `packs.yaml` / `packs.lock` | The additional packs a workflow repo composes in, and what each one installed. Derivation-owned; edited through `/workflow-template-sync add`/`remove` (absent in this repo — the core is not composed into itself) |
 | `VERSION` | This template's own version (absent in a derivation — see `.template.lock` there instead) |
-| `journal/` | One dated file per run/decision — never a single growing file |
+| `journal/` | One dated file per **decision about this repo** — why the system is shaped as it is. Never a run narrative: a closed session leaves one line in `<app>/tasks.md` `## History`, written by `orchestrate.sh close` |
 | `workflows/` | Workflows and their state, four levels: `<workflow>/SKILL.md` is TIMELESS (the TTPs, never pruned), `<app>/profile.md` is that application's DURABLE particulars, `<app>/tasks.md` is CARRIED work crossing sessions, `<app>/<session>/` is one SESSION, deleted after harvest. **Committed**, so a session resumes after a cold tick or on another machine. See `/workflow-orchestrate` |
 | `.workflow/` | Legacy (pre-stratification) run state — `<slug>/tasklist.md`. Resolved for one version only; new runs never use it |
 | `.agents/skills/` | Canonical skill bodies + scripts. The core ships `workflow-*` machinery only; `code-craft-*` engineering doctrine arrives from the optional `code-craft` pack |

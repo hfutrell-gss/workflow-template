@@ -4,8 +4,10 @@
 # Four levels, never mixed (AGENTS.CORE.md "The shapes"):
 #   workflows/<workflow>/SKILL.md              TIMELESS — the TTPs. Never pruned.
 #   workflows/<workflow>/<app>/profile.md      DURABLE  — that application's particulars.
-#   workflows/<workflow>/<app>/tasks.md        CARRIED  — epics, deferred work. Crosses
-#                                                         sessions. Never a session list.
+#   workflows/<workflow>/<app>/tasks.md        CARRIED  — epics, deferred work, and the
+#                                                         ledger of sessions closed.
+#                                                         Crosses sessions. Never a
+#                                                         session list.
 #   workflows/<workflow>/<app>/<session>/tasks.md  SESSION — one run. Deleted after harvest.
 #
 # A session tasks.md (grammar + anti-cheat rules: references/tasklist.md) is the durable
@@ -31,6 +33,11 @@
 #   orchestrate.sh ready  [<key>]             tasks whose deps are all done
 #   orchestrate.sh list                       every session with its verdict
 #   orchestrate.sh check                      LAYOUT constraints (see references/constraints.md)
+#   orchestrate.sh close [<key>]              append the session's line to the application
+#                                             ledger (<app>/tasks.md "## History"), then
+#                                             delete the session directory. Refuses unless
+#                                             DoD is met. One operation, so the ledger
+#                                             entry and the deletion cannot come apart.
 #
 # <key> is <workflow>/<app>/<session>, or a bare slug for a session still at the legacy
 # .workflow/<slug>/ path. Omit it to resolve the only session present, or the only one
@@ -354,8 +361,18 @@ cmd_check() {
       app="$(basename "$adir")"
       [ "$app" = "references" ] && continue
       [ "$app" = "assets" ] && continue
-      [ -f "$adir/tasks.md" ] \
-        || v "LAYOUT-004 workflows/$wf/$app/ has no tasks.md — carried work has nowhere to land when a session closes"
+      if [ -f "$adir/tasks.md" ]; then
+        # Both sections must exist BEFORE they are needed. `close` appends History if it
+        # is missing, but Open has no such writer: a session that ends with carried work
+        # and no place to put it loses it silently, which is the failure this level exists
+        # to prevent.
+        grep -q '^## Open' "$adir/tasks.md" \
+          || v "LAYOUT-008 workflows/$wf/$app/tasks.md has no '## Open' section — carried work promoted out of a closing session has nowhere to land"
+        grep -q '^## History' "$adir/tasks.md" \
+          || v "LAYOUT-008 workflows/$wf/$app/tasks.md has no '## History' section — the record that a session ran against this application has nowhere to land (orchestrate.sh close writes it)"
+      else
+        v "LAYOUT-004 workflows/$wf/$app/ has no tasks.md — carried work has nowhere to land when a session closes"
+      fi
       [ -f "$adir/profile.md" ] \
         || v "LAYOUT-005 workflows/$wf/$app/ has no profile.md — this application's operational picture is unrecorded"
 
@@ -397,6 +414,69 @@ cmd_check() {
   return 2
 }
 
+# close — the only supported way a session ends.
+#
+# Deletion used to be a manual `git rm`, and the record of the run went with it: harvest
+# names WHERE output landed but nothing recorded THAT the session ran, against what, or
+# with what result. So the answer to "what has been done to this app?" was `git log` and
+# nothing else -- retained, but not readable by anyone who did not already know to look.
+#
+# The ledger fixes that at the APPLICATION level, which is where a reader stands. One
+# line per session, permanent, next to the carried work it produced. Dispatch mechanics
+# still do not survive -- tier, agent, ordering, the dependency graph are how the work was
+# organized, not a fact about the application (AGENTS.CORE.md "Harvest law").
+#
+# Ledger and deletion are one command precisely because they were two steps before, and
+# the second one is the step nobody forgets.
+cmd_close() {
+  resolve_session "${1:-}"
+  # RESOLVED_PATH is the task FILE (collect_sessions), so the session directory is its
+  # parent and the application directory is the grandparent.
+  local path="$RESOLVED_KEY" tasks="$RESOLVED_PATH"
+  local dir app_dir ledger
+  dir="$(dirname "$tasks")"
+  app_dir="$(dirname "$dir")"
+
+  # DoD first: exhausted, harvested, no violations. report exits 2 when not done.
+  local out
+  if ! out="$(report "$tasks" status 2>&1)"; then
+    echo "$out"
+    die "refusing to close $path — it is not done. Fix what is reported above, or promote the remainder with [^]."
+  fi
+
+  # A legacy .workflow/<slug>/ session has no application level, so it has nowhere to
+  # write a ledger line. Migrate it rather than closing it into a void.
+  [ "$app_dir" = "$WF" ] && die "cannot close a legacy session at .workflow/$path — it has no application level, so the ledger line has nowhere to go. Move it to workflows/<workflow>/<app>/<session>/ first."
+
+  ledger="$app_dir/tasks.md"
+  [ -f "$ledger" ] || die "no application ledger at ${ledger#"$ROOT"/} — every application has a tasks.md (LAYOUT-004)"
+
+  # One line, built from the list itself so it cannot flatter the run.
+  local done_n drop_n carry_n block_n directive harvest_line
+  done_n="$(grep -cE '^- \[x\] ' "$tasks" || true)"
+  drop_n="$(grep -cE '^- \[-\] ' "$tasks" || true)"
+  carry_n="$(grep -cE '^- \[\^\] ' "$tasks" || true)"
+  block_n="$(grep -cE '^- \[!\] ' "$tasks" || true)"
+  directive="$(awk '/^## Directive/{f=1;next} /^## /{f=0} f && NF && $0 !~ /^<!--/ {print; exit}' "$tasks" | cut -c1-140)"
+  harvest_line="$(awk '/^harvest:/{sub(/^harvest:[ \t]*done[ \t]*(—|--)?[ \t]*/,""); print; exit}' "$tasks" | cut -c1-160)"
+
+  grep -q '^## History' "$ledger" || printf '\n## History\n\nOne line per session closed against this application, appended by `orchestrate.sh\nclose`. Permanent: the session directory is deleted, and this is what remains of it\nbesides `git log`. Do not hand-write entries here — a line nobody earned by passing\nthe DoD gate is a claim, not a record.\n' >> "$ledger"
+
+  printf -- '\n- **%s** — %s\n  %s done · %s dropped · %s carried · %s blocked. Harvest: %s\n' \
+    "$(basename "$dir")" "${directive:-<no directive captured>}" \
+    "$done_n" "$drop_n" "$carry_n" "$block_n" "${harvest_line:-<unrecorded>}" >> "$ledger"
+
+  echo "ledger: appended $(basename "$dir") to ${ledger#"$ROOT"/}"
+
+  if [ -d "$ROOT/.git" ] && /usr/bin/git -C "$ROOT" ls-files --error-unmatch "$dir" >/dev/null 2>&1; then
+    /usr/bin/git -C "$ROOT" rm -rq "$dir"
+  else
+    rm -rf "$dir"
+  fi
+  echo "closed: $path — session directory deleted. git log is the archive."
+  echo "next:   commit the ledger line and the deletion together."
+}
+
 cmd_list() {
   collect_sessions
   [ "${#SESS_KEY[@]}" -eq 0 ] && die "no sessions under workflows/ or .workflow/ — run: orchestrate.sh init <workflow> <app> <slug>"
@@ -416,6 +496,7 @@ case "${1:-}" in
                  echo "session: $RESOLVED_KEY"; report "$RESOLVED_PATH" "$mode" ;;
   list)          cmd_list ;;
   check)         cmd_check ;;
+  close)         shift; cmd_close "${1:-}" ;;
   -h|--help|help) usage 0 ;;
   *)             usage 1 ;;
 esac

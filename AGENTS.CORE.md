@@ -71,7 +71,7 @@ or throws it away:
 |-------|-----------|----------|------|
 | **Workflow** | the TTPs of one nature of work (`web-app-development`, `refactor`) | timeless | `workflows/<workflow>/SKILL.md` |
 | **Application** | a thing the workflow acts on, with its own particulars | durable | `workflows/<workflow>/<app>/profile.md` |
-| **Carried work** | epics, deferred tasks, threads that link sessions | outlives any session | `workflows/<workflow>/<app>/tasks.md` |
+| **Carried work** | epics, deferred tasks, threads that link sessions, **and the history of sessions closed** | outlives any session | `workflows/<workflow>/<app>/tasks.md` |
 | **Session** | one discrete instantiation of a workflow against an application | temporal | `workflows/<workflow>/<app>/<session>/tasks.md` |
 
 A workflow does not know when it runs. A session does not know anything but its own
@@ -92,7 +92,17 @@ Six kinds of thing live here; one home each:
 | **Workflow** | the TTPs of a nature of work | `workflows/<workflow>/SKILL.md` | **lazily, by the Skill tool** |
 | **Knowledge** | what is true, and why | substrate repo's docs; `<app>/profile.md` for operational particulars | index line, then on demand |
 | **Session** | one run's task list and notes | `workflows/<workflow>/<app>/<session>/` | only the session that owns it |
-| **Narrative** | what happened on a given day | `journal/` | humans, archaeology |
+| **Narrative** | a decision about **this workflow repo** — why the system is shaped as it is | `journal/` | humans, archaeology |
+
+**Where the record of a run lives, and why it is not the journal.** Orchestration is
+task-based, so the durable record of a run is task-shaped: `orchestrate.sh close` writes
+one line per session into `<app>/tasks.md` under `## History` — directive, counts by
+disposition, where the harvest landed — and then deletes the session directory. That line
+sits at the application, which is where a reader stands when asking *what has been done to
+this thing?*. The journal answers a different question — *why is the system built this
+way?* — and it is about the workflow repo, never about a run against an application. A
+session narrative in `journal/` is duplicated bookkeeping: `git log` already has it
+verbatim, and the ledger already has the part worth reading.
 
 **A workflow is a skill with state.** Its body is the timeless part — frontmatter
 description, thin body, `references/` for depth, retrieved lazily. Its directory also
@@ -120,8 +130,9 @@ session directory:
 | a stabilized way of working | the workflow's `SKILL.md` or `references/` |
 | understanding of an application | that repo's own docs, or `<app>/profile.md` |
 | **a decision to refuse or de-scope work** | **the same place, with its sign-off** |
-| work not finished, still wanted | `<app>/tasks.md` — carried, not lost |
-| what merely happened | `journal/` |
+| work not finished, still wanted | `<app>/tasks.md` `## Open` — carried, not lost |
+| that the session ran at all, and with what result | `<app>/tasks.md` `## History` — **written by `close`, not by hand** |
+| a decision about this workflow repo itself | `journal/` |
 
 **Where a decision lands depends on the bind.** For a repo this workflow **stewards** (or
 `co-change`s), it goes in that repo's own docs — the reasoning must travel with the thing
@@ -144,6 +155,11 @@ and copying it into substrate makes a repo about its own tooling. `git log` hold
 Then the session directory closes and is **deleted**, not archived — `git log` is the
 archive. Unfinished work never blocks a session forever: it is promoted to carried work
 and the session closes.
+
+**Closing is one command: `orchestrate.sh close`.** It refuses unless the DoD holds,
+writes the ledger line, and deletes the directory in the same step. It was two steps
+before, and the ledger was the step nobody did — which is why this system could ask "what
+has been done to this app?" and have no answer but `git log`.
 
 ## DDD, applied to a workflow repo
 
@@ -174,8 +190,13 @@ What this asks of a derivation:
 
 ## Journal, session state, git
 
-- **Journal** — one dated file per session/decision (`journal/YYYY-MM-DD-slug.md`),
-  never one growing file. A day's session binds belong in that day's entry.
+- **Journal** — one dated file per **decision about this workflow repo**
+  (`journal/YYYY-MM-DD-slug.md`), never one growing file. Write an entry when the *system*
+  changes and the reason would not survive in a diff: a shape renamed, a constraint added
+  and why, a mechanism rejected. Do **not** write one for a run against an application —
+  that is the ledger's job (`<app>/tasks.md` `## History`), and duplicating it produces
+  two records that drift. Test before writing: *would this still matter to someone who
+  never touched the application it came from?* If no, it is a ledger line.
 - **Session state** — **committed** (unlike `workspace/`) so it survives compaction or
   a machine change. Sessions predating this layout resolve for one more version at
   `.workflow/<slug>/`. See
