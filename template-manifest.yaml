@@ -9,7 +9,7 @@
 # This file is itself managed: a derivation gets it kept in sync too, and it's what
 # lets a future template version add or retire a managed path in every derivation.
 
-version: 24  # mirrors this repo's VERSION at the time this manifest last changed
+version: 25  # mirrors this repo's VERSION at the time this manifest last changed
              # VERSION is a plain integer; comparison uses sort -n.
 
 managed:
@@ -22,6 +22,7 @@ managed:
   - workflows/upstream-workflow-management/references/**
   - .claude/skills/upstream-workflow-management/SKILL.md
   - VOICE.md
+  - GLOSSARY.md
   - CLAUDE.md
   - template-manifest.yaml
   # Canonical skill bodies + scripts (proxy rule: .claude is a proxy for .agents).
@@ -42,6 +43,7 @@ managed:
   - .agents/skills/craft-tdd/**
   - .agents/skills/craft-code-quality/**
   - .agents/skills/craft-event-naming/**
+  - .agents/skills/craft-ubiquitous-language/**
   # Discovery-frontmatter proxy stubs — Claude Code needs these under .claude/skills/
   # to find each skill; each stub's body only points at its canonical file above.
   - .claude/skills/workflow-init/SKILL.md
@@ -54,3 +56,4 @@ managed:
   - .claude/skills/craft-tdd/SKILL.md
   - .claude/skills/craft-code-quality/SKILL.md
   - .claude/skills/craft-event-naming/SKILL.md
+  - .claude/skills/craft-ubiquitous-language/SKILL.md

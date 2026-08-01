@@ -79,6 +79,11 @@ run. Carried work is the only thing that crosses sessions, and it is the reason 
 application level exists: delete a session and its unfinished work must survive, or the
 next session starts blind.
 
+These four are defined again in `GLOSSARY.md`, with every other term this system uses —
+bind, substrate, derivation, harvest, tier, lane, overlay, promotion. Look a term up
+there rather than re-deriving it. We practise DDD, so this repo keeps one language and
+holds itself to `/craft-ubiquitous-language` like any other codebase.
+
 Six kinds of thing live here; one home each:
 
 | Kind | What it is | Home | Retrieved by |
@@ -175,3 +180,11 @@ Index only — descriptions load via frontmatter:
 - `/craft-event-naming` — canonical event/command naming, progressive omission.
 - `/craft-tdd` — test-first protocol.
 - `/craft-code-quality` — size budgets, lint, architecture, ratchet.
+- `/craft-ubiquitous-language` — the glossary as a domain's single source of terms.
+
+## Baked-in workflows
+
+The template ships workflows too, not only skills:
+
+- `/upstream-workflow-management` — promote a generalizable concept from a derivation to
+  the template. Application: `self`.

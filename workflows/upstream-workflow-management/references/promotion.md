@@ -93,7 +93,8 @@ next session.
 
 ## Files that `update` cannot carry
 
-`CLAUDE.md` and `AGENTS.md` are derivation-owned. A change to their required shape must
-ship as a `--fix` path in `agents-sync.sh`, or every existing derivation keeps the old
-shape forever. Ask, for any shape change: *what mechanism moves existing derivations?*
+Check the manifest before assuming. `CLAUDE.md` **is** managed and `update` carries it.
+`AGENTS.md` is derivation-owned and it does not. A change to `AGENTS.md`'s required shape
+must therefore ship as a `--fix` path in `agents-sync.sh`, or every existing derivation
+keeps the old shape forever. Ask, for any shape change: *what mechanism moves existing derivations?*
 If the answer is "a person edits it by hand", the change is not finished.

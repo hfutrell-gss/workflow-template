@@ -75,6 +75,7 @@ thin stub Claude Code needs for discovery.
 | `/workflow-gateway` | Manage the local opencodex model gateway (start/stop/status) and print the strictly opt-in, per-session `ANTHROPIC_BASE_URL` override |
 | `/workflow-orchestrate` | Task-based orchestration: directive → committed task list (`workflows/<workflow>/<app>/<session>/tasks.md`) → dispatch per model **tier** (`flagship` · `workhorse` · `fleet`, resolved from a lane roster, never a hardcoded model name) → loop until the list is exhausted AND its durable output harvested out of the session directory |
 | `/craft-tdd` | Test-first protocol: failing test before production code, integration focus, seams at every EUD, never mock business logic |
+| `/craft-ubiquitous-language` | The glossary as a domain's single source of terms; one language per bounded context; how code, tests, events, and UI stay in step with it, and how drift is reported |
 | `/craft-code-quality` | Module size budgets, mandatory lint/static analysis, ports and adapters, pragmatic SOLID/DDD, no implicit fallbacks, required observability — plus a ratcheting path for repos that start nowhere near any of it |
 
 Two prefixes are reserved for the template: **`workflow-*`** (machinery that operates on
