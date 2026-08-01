@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # workflow-agents-sync — enforce the canonical-format invariant:
 #   AGENTS.md (and .agents/) are canonical; CLAUDE.md is at most a header bridge
-#   importing @AGENTS.md (root also imports @AGENTS.CORE.md and @VOICE.md, ahead of
-#   @AGENTS.md).
+#   importing @AGENTS.md, in one form everywhere including the root — see
+#   AGENTS.CORE.md "Canonical file format". The AGENTS chain does the composing:
+#   AGENTS.md -> AGENTS.CORE.md -> VOICE.md, checked by check_root_chain below.
 #   Also enforces the proxy rule for skills: .claude/skills/<name>/SKILL.md must be a
 #   thin stub (frontmatter + short pointer) whose canonical body + scripts live at
 #   .agents/skills/<name>/SKILL.md — never the reverse, and never scripts under

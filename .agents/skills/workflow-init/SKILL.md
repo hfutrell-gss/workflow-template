@@ -48,14 +48,14 @@ it) and must not hand-roll a parallel installer (the same violation with extra s
 Instead it drops `.agents/init/tools.local.d/<tool>.sh`, unmanaged and never touched by
 `update` — the same overlay bargain as `.agents/code-craft/<skill>.local.md` and
 `.agents/orchestrate/roster.local.yaml`. `init.sh` sources every `*.sh` there at startup.
-See `example-tool.sh.example` in that directory for the annotated contract:
+The contract, in full:
 
 | Function | | Contract |
 | --- | --- | --- |
-| `check_<tool>()` | required | print a version or `present` and return 0 when installed; non-zero/empty when not |
-| `install_<tool>()` | required | install it; non-zero on failure |
-| `unsupported_reason_<tool>()` | optional | print why *this machine* can't host it and return 0; return 1 when it can |
-| `register_tool <tool>` | required | appends the tool to the RECOMMENDED tier |
+| `check_<tool>()` | define — required | print a version or `present` and return 0 when installed; non-zero/empty when not |
+| `install_<tool>()` | define — required | install it; non-zero on failure |
+| `unsupported_reason_<tool>()` | define — optional | print why *this machine* can't host it and return 0; return 1 when it can |
+| `register_tool <tool>` | **call** — required | `init.sh` defines it; the overlay calls it once, at the end, to append the tool to the RECOMMENDED tier. Redefining it breaks registration |
 
 Overlay tools are **always RECOMMENDED** — opt-in per machine, never automatic. A
 derivation cannot make its own tool mandatory: `--check` failing on a tool the template

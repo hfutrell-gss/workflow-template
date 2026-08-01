@@ -59,24 +59,32 @@ the core because no pack exists yet is the failure this structure was built to s
 Full step list, including the failure modes that cost the most time:
 `references/promotion.md`. In short:
 
-1. Bind the template. It is a standing bind in `binds.yaml` with `kind: upstream`,
+1. Open a session. A promotion is a run against the application `self`, not an inline
+   checklist: `orchestrate.sh init upstream-workflow-management self <slug>`. The steps
+   below become its tasks, and the DoD gate applies to them.
+2. Bind the template. It is a standing bind in `binds.yaml` with `kind: upstream`,
    cloned to `workspace/workflow-template`. Confirm `.template.lock` names a reachable
    upstream and that you can push to it.
-2. Make the change upstream, in `workspace/workflow-template`. Never in the derivation's
+3. Make the change upstream, in `workspace/workflow-template`. Never in the derivation's
    own managed copy.
-3. Bump the version: `VERSION` **and** `template-manifest.yaml`'s `version:` for the
-   core, or `pack.yaml`'s `version:` for a pack. Add any new path to the manifest
-   **before** you bump, or `update` will skip the new file in every repo. Removing a
-   path from the manifest now deletes it downstream — intended, and worth stating in the
-   commit.
-4. Run the checks the change touches: `agents-sync.sh`, `bash -n` on any script,
-   `orchestrate.sh status` on a live session.
-5. Push.
-6. Converge the derivation. Prefer `workflow-template-sync update`. When `update` is
+4. Bump the version: `VERSION` **and** `template-manifest.yaml`'s `version:` for the
+   core, or `pack.yaml`'s `version:` for a pack. Confirm every new path is covered by the
+   manifest **before** you bump, or `update` will skip the new file in every repo. Most
+   new files land inside a `path/**` glob and need no new entry — verify coverage rather
+   than adding one (`references/promotion.md` §3 gives the check that works for globs).
+   Removing a path from the manifest deletes it downstream — intended, and worth stating
+   in the commit.
+5. Run the checks the change touches: `agents-sync.sh`, `bash -n` on any script,
+   `orchestrate.sh status` on a live session. Each check records its output as
+   `evidence:` on its task.
+6. Push.
+7. Converge the derivation. Prefer `workflow-template-sync update`. When `update` is
    gated, hand-apply only the bytes that match upstream exactly, and record that the
    copy is converged rather than edited.
-7. State any gate that remains — a stale script in the derivation, a live session that
+8. State any gate that remains — a stale script in the derivation, a live session that
    blocks the update — instead of leaving it to be discovered.
+9. Close the session with `orchestrate.sh close`, which writes the ledger line into
+   `self/tasks.md` `## History` and deletes the session directory.
 
 ## What this workflow refuses
 

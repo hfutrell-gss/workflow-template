@@ -629,6 +629,12 @@ cmd_list() {
 
 # --check reports installed vs available for the core and every pack. Exit 1 if anything
 # is behind — a constraint result, consumed by /workflow-check.
+#
+# A pinned thing that is behind reports PINNED and does NOT count toward the failing
+# exit. `pinned: true` freezes updates without ejecting (AGENTS.CORE.md, "The covenant"),
+# so the drift it produces is the decision working, not a violation. The fact stays
+# loud on stdout — a deliberate pin that reports permanent red teaches an operator to
+# ignore the checker, which costs more than the drift it reports.
 cmd_check() {
   [ -f "$LOCK" ] || { echo "error: no $LOCK — this doesn't look like a derivation" >&2; exit 1; }
   local behind=0 pinned upstream upstream_root template_version upstream_version
@@ -640,8 +646,16 @@ cmd_check() {
   upstream_version="$(tr -d '[:space:]' < "$upstream_root/VERSION")"
   if [ "$template_version" = "$upstream_version" ]; then
     echo "$CORE_NAME: up to date ($template_version)$( [ "$pinned" = "true" ] && echo " [pinned]" )"
+  elif [ "$pinned" = "true" ]; then
+    # Core versions are plain integers, so the distance is reportable.
+    local gap=""
+    case "$template_version$upstream_version" in
+      *[!0-9]*) ;;
+      *) gap=" ($((upstream_version - template_version)) behind)" ;;
+    esac
+    echo "$CORE_NAME: PINNED$gap — installed $template_version, available $upstream_version; 'update' only reports"
   else
-    echo "$CORE_NAME: behind — installed $template_version, available $upstream_version$( [ "$pinned" = "true" ] && echo " [pinned: update only reports]" )"
+    echo "$CORE_NAME: behind — installed $template_version, available $upstream_version"
     behind=1
   fi
 
@@ -654,8 +668,11 @@ cmd_check() {
     p_ver="$(pack_version_at "$p_root")"
     if [ "$p_inst" = "$p_ver" ]; then
       echo "$p: up to date ($p_ver)$( [ "$p_pin" = "true" ] && echo " [pinned]" )"
+    elif [ "$p_pin" = "true" ]; then
+      # Pack versions compare for equality only, so state the two versions, not a gap.
+      echo "$p: PINNED — installed ${p_inst:-<none>}, available $p_ver; 'update' only reports"
     else
-      echo "$p: behind — installed ${p_inst:-<none>}, available $p_ver$( [ "$p_pin" = "true" ] && echo " [pinned]" )"
+      echo "$p: behind — installed ${p_inst:-<none>}, available $p_ver"
       behind=1
     fi
   done
@@ -665,7 +682,7 @@ cmd_check() {
 }
 
 # --audit checks the composition itself, offline: no upstream is contacted and no
-# version is compared (that is --check / TEMPLATE-001). Reports on stdout in the
+# version is compared (that is --check / TEMPLATE-*). Reports on stdout in the
 # DRIFT/MISSING form /workflow-check consumes, and always exits 0 — an unmet constraint
 # is a result, not a tool failure.
 cmd_audit() {
@@ -725,6 +742,16 @@ cmd_audit() {
     locked_packs | grep -qxF "$q" \
       || echo "MISSING PACK-003: pack '$q' is declared in packs.yaml but never installed — run 'update $q'"
   done
+
+  # PACK-005 -- every installed pack has its overlay directory. An overlay is the
+  # derivation's answer to a pack (AGENTS.CORE.md, "Overlay slots"). With no directory,
+  # per-application instance data has nowhere to live and lands in a bound repo's own
+  # AGENTS.md instead, where bind law makes it legal but a second application inherits
+  # nothing, and no signal appears anywhere.
+  for p in $(declared_packs); do
+    [ -d "$ROOT/.agents/$p" ] \
+      || echo "MISSING PACK-005: pack '$p' is installed but its overlay directory '.agents/$p/' does not exist — create it; it is where this repo's answers to '$p' live, and without it that content lands in a bound repo and is inherited by nothing"
+  done
 }
 
 MODE="${1:---check}"; [ "$#" -gt 0 ] && shift || true
@@ -737,5 +764,26 @@ case "$MODE" in
   list)     cmd_list "$@" ;;
   --audit)  cmd_audit "$@" ;;
   --check)  cmd_check "$@" ;;
-  *) echo "usage: template-sync.sh derive [--upstream PATH] | update [<pack>] | add <url> [--name N] [--reviewed] | scan <url> | remove <pack> | list | --audit | --check" >&2; exit 1 ;;
+  *) cat >&2 <<'USAGE'
+usage: template-sync.sh <mode>
+
+  derive [--upstream PATH]              turn a fresh core copy/clone into a workflow repo
+  update [<pack>]                       pull the core and every pack forward
+  add <url> [--name N] [--reviewed]     install a pack
+  scan <url-or-path-or-name>            what a pack would install, and does it look wrong
+  remove <pack>                         uninstall a pack and delete its paths
+  list                                  what is installed, from where, what version
+  --audit                               composition integrity: PACK-001..PACK-005 —
+                                        one owner per path, claimed paths present on
+                                        disk, packs.yaml/packs.lock agreement, each
+                                        pack's requires_core still satisfied, and each
+                                        pack's overlay directory present. OFFLINE: reads
+                                        .template.lock, packs.yaml, packs.lock and the
+                                        disk only; no upstream is contacted. Always
+                                        exits 0 — findings print as DRIFT/MISSING lines.
+  --check                               version drift: installed vs available for the
+                                        core and every pack. Contacts each upstream.
+                                        Exit 1 if anything unpinned is behind.
+USAGE
+     exit 1 ;;
 esac

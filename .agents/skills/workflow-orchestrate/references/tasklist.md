@@ -70,10 +70,9 @@ stranded. A resolved legacy session prints a `NOTE:` naming the path; that is th
 reminder, not noise to silence. **This fallback is scheduled for removal in a future
 version.** `init` never writes to it.
 
-The two-segment form `workflows/<workflow>/<app>/tasks.md` shipped in v22 only, and that
-path is now carried work. No fallback is provided for it: the shape existed for hours and no
-session was ever stored in it. If one was, move it down one level into a `<session>/`
-directory before running `status`.
+`workflows/<workflow>/<app>/tasks.md` is carried work, never a session list. A session
+found stored directly there moves down one level into a `<session>/` directory before
+running `status`.
 
 ## Grammar
 
@@ -89,9 +88,16 @@ One line per task, exact separators (` · `), so it parses mechanically and merg
 | `<marker>` | one of ` ` `~` `x` `!` `^` `-` (below) |
 | `<ID>` | `T` + digits, unique in the file, never reused or renumbered |
 | `<tier>` | `flagship` · `workhorse` · `fleet` — a tier, never a model name |
-| `<deps>` | `-`, or comma-separated IDs with no spaces: `deps:T001,T004` |
+| `<deps>` | `-`, or comma-separated IDs with no spaces: `deps:T001,T004`. The hyphen is ASCII (`-`); an em dash reads identically in rendered markdown and is silently wrong |
 | `<title>` | imperative, one line, what done looks like |
 | `<key>: <value>` | continuation fields, indented at least two spaces |
+
+**A task ID is session-local and never appears in substrate.** A comment, doc, commit
+message, or test name in a bound repo that cites `T039` — or cites a path under
+`workflows/` or `.workflow/` — is a dead reference by construction: the session directory
+is deleted at close, so the citation points at nothing the moment the run ends. Substrate
+cites its own repo's paths, its own issues, and the facts themselves. `orchestrate.sh
+check` reports escaped identifiers as `SUBSTRATE-001`.
 
 ## Markers
 
@@ -187,9 +193,9 @@ finished. All are mechanically checked:
 
 ## Harvest
 
-Task-list exhaustion alone used to be DoD. It is not enough: a run can finish every task and
-still leave its durable output stranded in a directory that a later prune deletes. **A run is
-not done until its durable output has left the run directory.**
+Exhaustion alone is not DoD: a run can finish every task and still leave its durable output
+stranded in a directory that a later prune deletes. **A run is not done until its durable
+output has left the run directory.**
 
 Before closing a run:
 
@@ -207,12 +213,10 @@ result is the ledger's job — `close` derives that line from the task list itse
 flatter the run. A hand-written account of the same session in `journal/` is a second record
 that will drift from `git log` and from the ledger both.
 
-Mechanism: the `## Harvest` section's `harvest:` field, defaulting to `pending` when the
-section or field is absent (so a run written before this gate existed is reported honestly
-as un-harvested, never silently grandfathered in). This was chosen over a separate
-`HARVESTED` marker file because it lives in the one file `status` already parses — no second
-place to check, no risk of the marker and the task list disagreeing about whether the run is
-really done.
+Mechanism: the `## Harvest` section's `harvest:` field. It defaults to `pending` when the
+section or the field is absent, so a run that omits it is reported as un-harvested rather
+than passed. It lives in the one file `status` already parses — no second place to check,
+and nothing that can disagree with the task list about whether the run is done.
 
 ## Resuming cold
 

@@ -34,7 +34,7 @@ description is the whole retrieval surface, plus a thin body pointing at
 `references/`), the discovery stub (`.claude/skills/<name>/SKILL.md`, frontmatter
 mirrored, body only the pointer import — the proxy rule), and an empty `references/`
 dir. Applications, their profiles, their carried work, and sessions arrive later, from
-`orchestrate.sh init <name> <app>`.
+`orchestrate.sh init <name> <app> <slug>`.
 Refuses: a `workflow-*` name (the core owns that prefix), a name an installed skill already holds (read from `.agents/skills/`, so a pack's prefix needs no hardcoded list; a
 derivation-local skill so named risks being clobbered by a future
 `workflow-template-sync update`), an illegal name, or overwriting an existing skill.
@@ -121,12 +121,12 @@ Override the binds file for testing with `BINDS_FILE=/path/to/binds.yaml`.
 
 ### Reading the report
 - `cloning` / `up to date` — healthy, no action needed.
-- `~ dirty working tree — fetch only` — someone's in-flight work; leave it. Note it in
-  the journal only if it's been dirty a long time (that's drift, not activity).
+- `~ dirty working tree — fetch only` — someone's in-flight work; leave it. Report it to
+  the operator only if it's been dirty a long time (that's drift, not activity).
 - `~ on <X> (binds.yaml tracks <Y>)` — expected for active feature work; only worth
   flagging if it's stale.
-- `~ diverged — resolve manually` — always surface to the repo's owner and journal it.
-  Never force a resolution.
+- `~ diverged — resolve manually` — always surface it to the repo's owner and to the
+  operator. Never force a resolution.
 - `! clone/fetch failed` — auth or registry rot; fix the cause (credentials, a stale
   URL), not the symptom.
 

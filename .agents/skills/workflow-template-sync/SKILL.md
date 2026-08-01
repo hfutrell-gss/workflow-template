@@ -6,9 +6,9 @@ description: >-
   (declared in packs.yaml, each with its own pack.yaml). `derive` turns a fresh
   copy/clone of the core into a workflow repo. `add`/`remove` install and uninstall a
   pack. `update` pulls the core and every pack forward. `list` shows what is installed.
-  `--check` reports versions. Use when asked to derive a new workflow repo, to add or
-  drop a pack, to sync a repo's managed paths, to check whether anything is behind, or
-  to pin/unpin.
+  `--check` reports versions. `--audit` checks composition integrity offline. Use when
+  asked to derive a new workflow repo, to add or drop a pack, to sync a repo's managed
+  paths, to check whether anything is behind, or to pin/unpin.
 ---
 
 # workflow-template-sync
@@ -22,7 +22,8 @@ $S scan <url-or-path-or-name>    # what would it install, and does it look wrong
 $S remove <pack>                 # uninstall a pack and delete its paths
 $S update [<pack>]               # pull the core and every pack forward
 $S list                          # what is installed, from where, what version
-$S --check                       # versions; exit 1 if anything is behind
+$S --audit                       # composition integrity (PACK-*); offline
+$S --check                       # versions; exit 1 if anything unpinned is behind
 ```
 
 ## The model
@@ -129,8 +130,7 @@ With no argument: the core, then every declared pack. With a pack name (or
 **How removal knows what to remove.** For a pack, `packs.lock` holds the exact installed
 path list. For the core, the derivation's own copy of `template-manifest.yaml` is that
 record — it is itself a managed path, so the pre-update copy on disk states what the core
-previously owned. This closes the orphan problem that structural moves caused through
-v29: retiring a path upstream now retires it in every repo.
+previously owned.
 
 ### Remote upstreams
 A URL upstream (core or pack) resolves through a cache checkout at
@@ -153,9 +153,32 @@ directory — so `upstream: workspace/pack-code-craft` means the same thing from
 that `workspace/` is gitignored and per-machine: a pack referenced there works on this
 machine only. Publish the pack and repoint at its URL before the repo travels.
 
+### `--audit` — composition integrity
+Checks the composition itself, and reports `PACK-001` … `PACK-005`:
+
+| | |
+|---|---|
+| `PACK-001` | one owner per path — no path claimed by the core and a pack, or by two packs |
+| `PACK-002` | every path a pack's `packs.lock` entry claims is present on disk |
+| `PACK-003` | `packs.yaml` and `packs.lock` agree — nothing installed undeclared, nothing declared uninstalled |
+| `PACK-004` | every installed pack's `requires_core:` is still satisfied by this repo's core |
+| `PACK-005` | every installed pack has its overlay directory `.agents/<pack-name>/` |
+
+**Offline.** It reads `.template.lock`, `packs.yaml`, `packs.lock`, and the disk. No
+upstream is contacted, so it is cheap and works with no network. Findings print as
+`DRIFT`/`MISSING` lines and it always exits 0 — an unmet constraint is a result, not a
+tool failure. This is the mode `/workflow-check` runs, and the only path that reports the
+`PACK-*` family. Statements and rationale live in the registry:
+`.agents/skills/workflow-check/references/constraints.md`.
+
 ### `--check` — report drift
-One line per pack: installed vs available, and `[pinned]` where it applies. Exit 1 if
-anything is behind — a constraint result (`TEMPLATE-001`), consumed by `/workflow-check`.
+One line per pack: installed vs available. Exit 1 if anything is behind — a constraint
+result (`TEMPLATE-*`), consumed by `/workflow-check`. Contacts every upstream.
+
+**A pinned thing is not a violation.** A `pinned: true` core or pack that is behind
+reports `PINNED` with both versions and does not count toward the failing exit: pinning
+freezes updates without ejecting, so the drift is the decision working. The fact stays on
+stdout — visible, not red.
 
 ## Authoring a pack
 

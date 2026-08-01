@@ -113,7 +113,9 @@ Each application this workflow acts on gets a directory beside this file:
 
 - \`<app>/profile.md\` — its operational particulars
 - \`<app>/tasks.md\` — carried work: epics and deferred tasks that cross sessions
-- \`<app>/<session>/\` — one session, created by \`orchestrate.sh init $name <app>\`
+- \`<app>/<session>/\` — one session, created by
+  \`orchestrate.sh init $name <app> <slug>\` (\`<slug>\` names what the session is for; the
+  date is added for you)
 
 ## References
 
@@ -139,4 +141,4 @@ echo "  ${stub_dir#"$ROOT"/}/SKILL.md"
 echo
 echo
 echo "next: fill in the TODOs, then start a session:"
-echo "  .agents/skills/workflow-orchestrate/orchestrate.sh init $name <app>"
+echo "  .agents/skills/workflow-orchestrate/orchestrate.sh init $name <app> <slug>"

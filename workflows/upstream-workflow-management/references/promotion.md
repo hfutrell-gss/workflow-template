@@ -1,7 +1,6 @@
 # Promotion — the full procedure and its failure modes
 
-Every failure below was paid for in a real session. They are listed with the symptom
-first, because the symptom is what you will see.
+Read each failure mode symptom first — the symptom is what you will see.
 
 ## 1. Bind and verify the upstream
 
@@ -30,9 +29,11 @@ approach and every task built on it.
 ## 2. Change upstream, never in place
 
 Work in `workspace/workflow-template`. If parallel workers touch the template, give each
-one a git worktree. The Agent tool's `isolation: 'worktree'` flag isolates the
-**session's own** repo, which is the wrong repo in a workflow-over-substrate layout. See
-`/workflow-orchestrate` `references/worktrees.md`.
+one a git worktree; a change one worker makes to files no concurrent worker touches needs
+no worktree, and adding one there costs setup and a merge for nothing. The Agent tool's
+`isolation: 'worktree'` flag isolates the **session's own** repo, which is the wrong repo
+in a workflow-over-substrate layout. See `/workflow-orchestrate`
+`references/worktrees.md`.
 
 **Failure mode: a wholesale rewrite on a stale base.** A worker that rewrites a managed
 file loses concurrent edits **without conflicting** — git merges the rewrite cleanly and
@@ -51,13 +52,23 @@ emptied parent directories pruned. That is how a retired skill actually leaves; 
 means an accidental deletion from the manifest destroys the path in every repo. Diff the
 manifest, not just the files.
 
-**Failure mode: a new skill or workflow that no derivation ever receives.** Bumping the
-manifest `version:` in one task while the new path is added in a later task ships a
-version number with nothing behind it. Add the path first. Verify:
+**Most new files need coverage verified, not an entry added.** Manifest entries are
+mostly directory globs (`.agents/skills/<name>/**`), so a new file inside an existing
+glob is already carried and a literal `grep` for its path returns nothing — which reads
+as a failure and invites a duplicate entry. Ask whether some entry covers the path:
 
 ```sh
-grep -n '<new-path>' template-manifest.yaml
+new=.agents/skills/workflow-agents-sync/agents-sync.sh
+yq -r '.managed[]' template-manifest.yaml | while read -r p; do
+  case "$new" in ${p%\*\*}*) echo "covered by: $p" ;; esac
+done
 ```
+
+No output means no entry covers it — add one, then bump.
+
+**Failure mode: a new skill or workflow that no derivation ever receives.** Bumping the
+manifest `version:` in one task while its coverage is added in a later task ships a
+version number with nothing behind it. Cover the path first, bump second.
 
 ## 4. Run the checks the change touches
 
@@ -89,6 +100,17 @@ diff -q <derivation>/<file> workspace/workflow-template/<file>
 ```
 
 Anything less than identical is drift wearing a convergence label.
+
+**A rename of a managed skill lands with a grep of every standing bind for the old
+name.** `update` carries the managed paths and nothing else, so a rename propagates to
+zero substrate: a bound repo's own `AGENTS.md`, docs, and task lists keep citing a skill
+name that no longer resolves, and nothing reports it. Run the grep as part of the
+release, and fix or list every hit:
+
+```sh
+/usr/bin/git grep -n '<old-skill-name>' -- . ; \
+  for r in workspace/*/; do /usr/bin/git -C "$r" grep -n '<old-skill-name>' || true; done
+```
 
 ## 6. State the remaining gate
 

@@ -21,11 +21,6 @@ decision about this workflow repo itself (that is `journal/`).
 
 <!-- - **<short title>** — raised by <session>. <why it is still open, what unblocks it.> -->
 
-## Closed
-
-<!-- Move an entry here with the session that finished it. Delete nothing: the next
-     session needs to know a thread was closed, not merely that it vanished. -->
-
 ## History
 
 One line per session closed against __APP__, appended by `orchestrate.sh close`.

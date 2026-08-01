@@ -37,9 +37,9 @@ echo node_modules >> "$(/usr/bin/git -C workspace/<repo>-wt/<TASK> rev-parse --g
 **The exclude line is not optional.** A repo's `.gitignore` conventionally says `node_modules/`
 with a trailing slash, which matches a *directory* and **not a symlink** — so the symlink you
 just created shows up as untracked in the worker's `git status` even though the real directory
-it points at is ignored. Consequences, both observed: a worker distrusts the `git add -A` its
-briefing told it was safe and hand-builds a pathspec list instead, and `worktree remove` later
-refuses on "modified or untracked files". `.git/info/exclude` is the right home for it — it is
+it points at is ignored. Consequences: a worker distrusts the `git add -A` its briefing told it
+was safe and hand-builds a pathspec list instead, and `worktree remove` later refuses on
+"modified or untracked files". `.git/info/exclude` is the right home for it — it is
 worktree-local and per-machine, so nothing is added to the substrate repo's committed ignore
 rules for scaffolding that is ours, not the app's.
 
@@ -114,17 +114,21 @@ a harness death: resume what exists, migrate the next batch.
 
 ## Why this is doctrine and not a preference
 
-A derivation running ~10 concurrent fleet workers against a shared substrate checkout logged
-seven distinct interference incidents in a single day — a worker's stash landing in another's
-file, a live type flickering under `tsc` for two unrelated workers, `git stash` unusable for an
-entire task against another worker's unmerged file, files reverting under a worker that never
-touched them. Only one of the seven was a worker mistake; the rest were competent workers paying
-a tax for a resource none of them knew they were contending over.
+**A shared index is a global lock held by people who cannot know they hold it.**
 
-The shape is the argument, not the count: **a shared index is a global lock held by people who
-cannot know they hold it.** The cost lands as tokens spent investigating other workers'
-transients, not as broken code — which is why it is nearly invisible in the artifact afterward
-and easy to under-price in advance.
+Concurrent workers in one checkout interfere through three shared resources, none of which a
+worker can see it is contending over:
+
+- **the stash** — one worker's `git stash` carries another's file, and is unusable for a whole
+  task while another worker's work sits unmerged
+- **the index** — files revert under a worker that never touched them; `git add -A` is unsafe
+  because the staging area is not the worker's own
+- **the type-checker** — a live type flickers under `tsc` for two unrelated workers, so a build
+  error is a fact about timing, not about the code
+
+The cost lands as tokens spent investigating another worker's transients, not as broken code.
+That is why it is nearly invisible in the artifact afterward, and easy to under-price in
+advance: the work looks fine at the end, and nothing records what it cost to get there.
 
 The argument that loses to this is merge cost. It measures the wrong thing: merges are cheap,
 legible, and happen once per task, under an orchestrator that is already verifying that task.

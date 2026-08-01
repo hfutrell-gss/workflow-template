@@ -143,10 +143,8 @@ bookkeeping into a repo you do not steward.
 **Why refusals get their own row.** "We decided not to build this, and here is who signed
 off" is the fact most easily lost and most expensive to lose. Without it a status section
 reading *not built* is indistinguishable from a gap awaiting closure, and the next session
-re-opens a question that was already answered. This system lost exactly that: five
-ejectability tasks de-scoped with a sign-off, and the app's own record still read as an
-unclosed gap. `orchestrate.sh` now refuses to call a session harvested until every `[-]`
-and `[^]` names where its rationale went.
+re-opens a question that was already answered. `orchestrate.sh` refuses to call a session
+harvested until every `[-]` and `[^]` names where its rationale went.
 
 **What does NOT leave the session.** Dispatch bookkeeping — tier, agent, order, the
 dependency graph. That is how the work was organized, not a fact about the application,
@@ -157,9 +155,9 @@ archive. Unfinished work never blocks a session forever: it is promoted to carri
 and the session closes.
 
 **Closing is one command: `orchestrate.sh close`.** It refuses unless the DoD holds,
-writes the ledger line, and deletes the directory in the same step. It was two steps
-before, and the ledger was the step nobody did — which is why this system could ask "what
-has been done to this app?" and have no answer but `git log`.
+writes the ledger line, and deletes the directory in the same step. Separating them makes
+the ledger the step nobody does, and an application with no ledger has no answer to "what
+has been done to this app?" but `git log`.
 
 ## DDD, applied to a workflow repo
 
@@ -180,8 +178,7 @@ What this asks of a derivation:
   is yours: unmanaged, never touched by `update`, the same overlay mechanism the `code-craft-*`
   skills use. Put your area's terms there. `GLOSSARY.md` stays the system's terms.
 - **Name a term the first time it is ambiguous, not the third.** The cost of the wrong
-  name is paid in every session afterward. This repo learned that by naming a directory
-  after the wrong sense of "workflow".
+  name is paid in every session afterward.
 - **Do not translate at the boundary.** When a bound repo names a thing, use its name
   inside its boundaries. Two names for one concept is the defect, wherever it appears.
 - **`/code-craft-ubiquitous-language`** carries the full doctrine — from the `code-craft` pack, so
@@ -238,15 +235,19 @@ composition safe, and all three are enforced, not advised:
   version solving — a pack that needs another pack's file is asking for the wrong shape.
 
 **Why composition and not more inheritance.** The core cannot know your area of work, so
-anything it ships beyond the shapes is a guess. Guesses belong in things you can decline.
-`craft-*` was 40% of the core by size and none of it was mechanism; it is now the
-`code-craft` pack, and a workflow repo that wants no engineering opinion installs it and nothing
-breaks or warns.
+anything it ships beyond the shapes is a guess. Guesses belong in things you can decline:
+a workflow repo that wants no engineering opinion declines the `code-craft` pack, and
+nothing breaks or warns.
 
 **The categorical rule.** The core owns every operation on its shapes, as managed skills;
 a derivation contributes data and doctrine only, never a parallel tool (`binds.yaml`: the
 core owns the operations, a derivation owns only its entries and why). A pack owns the
 operations on the shapes *it* introduces, by the same rule.
+
+**One file owns a rule; every other file points at it.** A managed file names the file
+that owns a rule and stops there — it does not restate it. A restatement drifts in the
+copy, never in the canonical file, so the reader who finds the copy first reads the
+version nothing enforces.
 
 **The covenant.** The core facilitates, never constrains. Everything outside the managed
 set is entirely the derivation's, ejectable any time (delete `.template.lock`);
@@ -314,9 +315,7 @@ constitution does.
 ## Enforcement
 
 Organizational constraints are **checked, not merely stated.** A rule nothing verifies is
-a rule that decays, and every constraint here decayed at least once before it was
-mechanized — the harvest law was broken by this repo, in its own directory, for ten
-versions.
+a rule that decays.
 
 `/workflow-check` runs every constraint in one pass and returns one verdict. Each rule has
 a stable ID (`LAYOUT-007`, `AGENTS-003`) that can be cited in a commit or a task list.

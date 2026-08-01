@@ -32,7 +32,8 @@
 #   orchestrate.sh status [<key>]             counts, violations, harvest, DoD verdict
 #   orchestrate.sh ready  [<key>]             tasks whose deps are all done
 #   orchestrate.sh list                       every session with its verdict
-#   orchestrate.sh check                      LAYOUT constraints (see references/constraints.md)
+#   orchestrate.sh check                      LAYOUT, TASK, and SUBSTRATE constraints
+#                                             (see references/constraints.md)
 #   orchestrate.sh close [<key>]              append the session's line to the application
 #                                             ledger (<app>/tasks.md "## History"), then
 #                                             delete the session directory. Refuses unless
@@ -170,10 +171,16 @@ report() {
       if (n < 4 || id !~ /^T[0-9]+$/ || f[3] !~ /^deps:/) { bad("malformed task line: " $0); last = ""; next }
       if (id in mark) { bad(id ": duplicate id"); last = ""; next }
       t = f[4]; for (i = 5; i <= n; i++) t = t " · " f[i]   # a title may contain the separator
+      # "no dependencies" is written with an ASCII hyphen, but a rendered task list makes
+      # an em dash indistinguishable from one and the reduced voice trains writers toward
+      # it. Normalize here, once, so every later reader of deps[] sees the ASCII form.
+      dp = substr(f[3], 6)
+      gsub(/^[ \t]+/, "", dp); gsub(/[ \t]+$/, "", dp)
+      if (dp == "" || dp == "—" || dp == "–") dp = "-"
       order[++nt] = id
       mark[id]  = marker
       tier[id]  = f[2]
-      deps[id]  = substr(f[3], 6)
+      deps[id]  = dp
       title[id] = t
       last = id
       if (marker !~ /^[ ~x!^-]$/)                         bad(id ": unknown marker [" marker "]")
@@ -223,7 +230,11 @@ report() {
         stillopen = (m == " " || m == "~" || m == "!")
         nd = split(deps[id], d, ",")
         for (j = 1; j <= nd; j++) {
-          if (d[j] == id)          bad(id ": depends on itself")
+          # Name the real fault. A token that is not a T-ID is a grammar error in the
+          # deps field itself; reporting it as an unknown task sends the reader hunting
+          # for a task that was never written.
+          if (d[j] !~ /^T[0-9]+$/) bad(id ": deps: expected \047-\047 or T-IDs, got \047" d[j] "\047")
+          else if (d[j] == id)     bad(id ": depends on itself")
           else if (!(d[j] in mark)) bad(id ": depends on unknown " d[j])
           else if (!stillopen) continue
           else if (mark[d[j]] == "-") bad(id ": depends on dropped " d[j] " — re-plan or drop it too")
@@ -335,8 +346,41 @@ cmd_init() {
   echo "next: paste the directive verbatim, resolve the roster, then decompose."
 }
 
-# cmd_check -- LAYOUT constraints. Rule IDs are stable and citable; see
-# references/constraints.md. This owns the shapes orchestrate defines (workflow,
+# substrate_hits <dir> <extended-regex> -- one summary line for a citation scan across a
+# bound repo, or nothing when there are no hits. It reports the TOTAL number of citations
+# and the worst few files, never one line per hit: a repo with hundreds of them turns an
+# enumeration into noise nobody reads. The count is textual -- a match is not verified to
+# be a real citation -- so the message says so and the reader checks before editing.
+substrate_hits() {
+  local dir="$1" pat="$2" out
+  out="$(grep -rIcE "$pat" \
+          --exclude-dir=.git --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=build \
+          --exclude='*.lock' --exclude='*lock.json' --exclude='*lock.yaml' --exclude='*lock.yml' \
+          -- "$dir" 2>/dev/null | grep -v ':0$')" || return 0
+  [ -n "$out" ] || return 0
+  printf '%s\n' "$out" | awk -v d="$dir/" '
+    {
+      i = length($0)
+      while (i > 0 && substr($0, i, 1) != ":") i--
+      n = substr($0, i + 1) + 0
+      f = substr($0, 1, i - 1)
+      if (substr(f, 1, length(d)) == d) f = substr(f, length(d) + 1)
+      tot += n; nf++; cnt[f] = n
+    }
+    END {
+      for (k = 0; k < 3; k++) {
+        best = ""; bn = -1
+        for (f in cnt) if (cnt[f] > bn) { bn = cnt[f]; best = f }
+        if (best == "") break
+        top = top (top == "" ? "" : ", ") best " (" bn ")"
+        delete cnt[best]
+      }
+      printf "%d citing line%s across %d file%s; worst: %s", tot, (tot == 1 ? "" : "s"), nf, (nf == 1 ? "" : "s"), top
+    }'
+}
+
+# cmd_check -- LAYOUT, TASK, and SUBSTRATE constraints. Rule IDs are stable and citable;
+# see references/constraints.md. This owns the shapes orchestrate defines (workflow,
 # application, session) and nothing else -- other tools own theirs.
 cmd_check() {
   local nv=0 wdir adir sdir wf app sess
@@ -385,8 +429,7 @@ cmd_check() {
           *) v "LAYOUT-006 session $wf/$app/$sess is not named <date>-<slug>" ;;
         esac
         # The harvest law: a session that is exhausted AND harvested must be deleted, not
-        # left on disk. Nothing checked this, and the template itself violated it for ten
-        # versions.
+        # left on disk.
         if report "$sdir/tasks.md" status >/dev/null 2>&1; then
           v "LAYOUT-007 session $wf/$app/$sess is exhausted and harvested but still on disk — delete it; git log is the archive"
         fi
@@ -409,6 +452,36 @@ cmd_check() {
     done <<< "$out"
   done
 
+  # SUBSTRATE-* -- session identifiers that escaped into substrate. A task ID and a
+  # session path are session-local: the session directory is deleted at close, so a
+  # citation of either inside a bound repo is a dead reference by construction. Scanned
+  # only for binds this workflow stewards or co-changes -- you do not audit a repo you
+  # only read. No binds.yaml, or no yq, means nothing to scan: skip, never fail.
+  local binds="$ROOT/binds.yaml" base_raw base repo dir hits
+  if [ -f "$binds" ] && command -v yq >/dev/null 2>&1; then
+    # Same `base` resolution as sync-binds.sh: absolute/home-relative as written,
+    # anything else relative to this workflow repo's root.
+    base_raw="$(yq -r '.base // "./workspace"' "$binds" 2>/dev/null || echo ./workspace)"
+    case "$base_raw" in
+      /*)  base="$base_raw" ;;
+      \~*) base="${base_raw/#\~/$HOME}" ;;
+      *)   base="$ROOT/${base_raw#./}" ;;
+    esac
+    while IFS= read -r repo; do
+      [ -n "$repo" ] || continue
+      dir="$base/$repo"
+      [ -d "$dir" ] || continue
+      hits="$(substrate_hits "$dir" '(\.workflow/|workflows/[^/[:space:]]+/[^/[:space:]]+/[^/[:space:]]+/)')"
+      if [ -n "$hits" ]; then
+        v "SUBSTRATE-001 $repo cites workflow-repo session paths — $hits. The session directory is deleted at close; substrate cites its own repo's paths only."
+      fi
+      hits="$(substrate_hits "$dir" '\bT[0-9]{3,}\b')"
+      if [ -n "$hits" ]; then
+        v "SUBSTRATE-001 $repo cites session task IDs (T###) — $hits. A task ID is session-local. This is a textual citation count, not a verified one: a hash or a fixture can match, so read each site before editing."
+      fi
+    done < <(yq -r '.standing[]? | select(.kind == "stewarded" or .kind == "co-change") | .repo' "$binds" 2>/dev/null || true)
+  fi
+
   if [ "$nv" -eq 0 ]; then echo "layout     all conforming"; return 0; fi
   echo "layout     $nv violation$([ "$nv" -eq 1 ] || echo s)"
   return 2
@@ -416,18 +489,15 @@ cmd_check() {
 
 # close — the only supported way a session ends.
 #
-# Deletion used to be a manual `git rm`, and the record of the run went with it: harvest
-# names WHERE output landed but nothing recorded THAT the session ran, against what, or
-# with what result. So the answer to "what has been done to this app?" was `git log` and
-# nothing else -- retained, but not readable by anyone who did not already know to look.
+# Harvest names WHERE the output landed; the ledger records THAT the session ran, against
+# what, and with what result. It sits at the APPLICATION level, which is where a reader
+# stands when asking what has been done to this thing: one line per session, permanent,
+# next to the carried work it produced. Dispatch mechanics do not survive -- tier, agent,
+# ordering, the dependency graph are how the work was organized, not a fact about the
+# application (AGENTS.CORE.md "Harvest law").
 #
-# The ledger fixes that at the APPLICATION level, which is where a reader stands. One
-# line per session, permanent, next to the carried work it produced. Dispatch mechanics
-# still do not survive -- tier, agent, ordering, the dependency graph are how the work was
-# organized, not a fact about the application (AGENTS.CORE.md "Harvest law").
-#
-# Ledger and deletion are one command precisely because they were two steps before, and
-# the second one is the step nobody forgets.
+# Ledger and deletion are one command. As two, the deletion is the step that always
+# happens and the ledger line is the step that does not.
 cmd_close() {
   resolve_session "${1:-}"
   # RESOLVED_PATH is the task FILE (collect_sessions), so the session directory is its

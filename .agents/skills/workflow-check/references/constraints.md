@@ -45,7 +45,7 @@ Directory shape for workflow, application, and session. Reported by `orchestrate
 | `LAYOUT-004` | Every application has `tasks.md` | Carried work has nowhere to land when a session closes |
 | `LAYOUT-005` | Every application has `profile.md` | The operational picture is otherwise unrecorded and gets re-derived every session |
 | `LAYOUT-006` | Every session is named `<date>-<slug>` | A bare date says nothing about what the session was, and two in one day collide |
-| `LAYOUT-007` | No session that is exhausted **and** harvested remains on disk | The harvest law: `git log` is the archive. This is the graveyard rule, and the template itself broke it for ten versions before anything checked |
+| `LAYOUT-007` | No session that is exhausted **and** harvested remains on disk | The harvest law: `git log` is the archive. A session kept after harvest is a graveyard directory nothing will ever prune |
 | `LAYOUT-008` | Every application `tasks.md` has both `## Open` and `## History` | The two things that outlive a session need a home before the session ends. `close` creates `## History` if it must; nothing creates `## Open`, so carried work promoted at the last moment is lost silently |
 
 ## TASK-* — `/workflow-orchestrate`
@@ -60,6 +60,17 @@ Task grammar and anti-cheat, inside each session. Reported by `orchestrate.sh ch
 
 **An open session is not a violation.** Work in progress is the normal state. Only a
 malformed or self-contradicting list is.
+
+## SUBSTRATE-* — `/workflow-orchestrate`
+
+Session identifiers escaping into bound substrate. Reported by `orchestrate.sh check`,
+which scans standing binds whose `kind:` is `stewarded` or `co-change` and that are
+present on disk under `binds.yaml`'s `base`. Skipped silently when `binds.yaml` or `yq` is
+absent — a repo with no binds is complete, not degraded.
+
+| ID | Constraint | Why it matters |
+|----|------------|----------------|
+| `SUBSTRATE-001` | A bound repo cites no session identifier: no task ID (`T` + 3 or more digits, word-bounded) and no workflow-repo session path (`.workflow/`, or `workflows/<workflow>/<app>/<session>/`) | The session directory is deleted at close, so every such citation is a dead reference by construction. Substrate cites its own repo's paths and facts. Reported as a summarized count with the worst files, never one line per hit; the count is textual and unverified, so a hash or a fixture can match — read each site before editing |
 
 ## TEMPLATE-* — `/workflow-template-sync`
 
@@ -82,15 +93,20 @@ contacted, so it stays cheap and works with no network.
 | `PACK-002` | Every path a pack's `packs.lock` entry claims is present in the repo |
 | `PACK-003` | Declaration and installation agree: nothing installed that `packs.yaml` does not declare, nothing declared that was never installed |
 | `PACK-004` | Every installed pack's `requires_core:` is still satisfied by this repo's core version |
+| `PACK-005` | Every pack declared in `packs.yaml` has its overlay directory `.agents/<pack-name>/` |
 
-**Why these four.** A collision (`PACK-001`) makes the winner depend on copy order,
+**Why these five.** A collision (`PACK-001`) makes the winner depend on copy order,
 which nobody can see or predict — it is the failure mode that sinks plugin systems, so it
 is refused at install time *and* re-checked here in case a manifest changed under a repo.
 `PACK-002` catches a half-applied update. `PACK-003` catches a hand-edited `packs.yaml`,
 where files sit in the repo that nothing claims and nothing will ever update. `PACK-004`
 catches the case `add` cannot: the requirement held at install time and stopped holding
 afterwards, because the core was pinned or rolled back. A pack whose core requirement is
-unmet does not fail loudly — it half-works, which is worse.
+unmet does not fail loudly — it half-works, which is worse. `PACK-005` catches a pack
+installed with no overlay directory: an overlay is the derivation's only answer to a
+pack, and with nowhere to write one, the opinion that should have been overridden is
+instead worked around inside a bound repo's own `AGENTS.md` — legal under bind law,
+invisible to every other application, and never seen again.
 
 **What is checked at install and not here.** `add` also runs
 `/workflow-template-sync scan`, which refuses a pack claiming paths outside the four

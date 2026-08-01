@@ -2,9 +2,9 @@
 name: workflow-agents-sync
 description: >-
   Enforce the canonical file-format invariant: AGENTS.md (and .agents/ rules) are the
-  canonical sources; every CLAUDE.md is at most a header bridge importing @AGENTS.md
-  (root also imports @AGENTS.CORE.md and @VOICE.md). Also enforces the proxy rule for
-  skills —
+  canonical sources; every CLAUDE.md, root included, is at most a header bridge importing
+  @AGENTS.md alone, and composition lives on the AGENTS side. Also enforces the proxy rule
+  for skills —
   .claude/skills/<name>/SKILL.md must be a stub pointing at its canonical
   .agents/skills/<name>/SKILL.md. Scans this workflow's root and every standing bind
   from binds.yaml. Use when asked to run /workflow-agents-sync, after adding a standing
@@ -24,9 +24,10 @@ description: >-
   canonical shared rules.
 - At this repo's root specifically, `AGENTS.CORE.md` (the managed constitution) is
   canonical too, alongside `AGENTS.md` (this workflow's own doctrine).
-- `CLAUDE.md` is a **header at most**: the managed comment + import(s), ≤8 lines, no
-  content of its own. At root: `@AGENTS.CORE.md`, `@VOICE.md`, then `@AGENTS.md`.
-  Everywhere else: `@AGENTS.md` alone.
+- `CLAUDE.md` is a **header at most**: the managed comment + one import of `@AGENTS.md`,
+  ≤8 lines, no content of its own. One form everywhere, root included; a `CLAUDE.md` that
+  also imports `@AGENTS.CORE.md` or `@VOICE.md` is drift. The rule and its reason live in
+  `AGENTS.CORE.md` "Canonical file format".
 - **The proxy rule for skills** (AGENTS.CORE.md): `.claude` is a proxy for `.agents`.
   Every `.claude/skills/<name>/SKILL.md` must be a thin stub — discovery frontmatter
   (verbatim from the canonical file) plus a short pointer body (≤6 non-blank lines,
@@ -45,6 +46,9 @@ description: >-
   CLAUDE-only content into the sibling AGENTS.md (merge carefully — AGENTS.md is
   canonical, don't duplicate), replace the CLAUDE.md with the standard bridge, then
   re-run to confirm. Never delete content; relocate it.
+- `DRIFT ... CLAUDE.md composes` — the bridge imports `@AGENTS.CORE.md` or `@VOICE.md`.
+  Cut those imports; keep the single `@AGENTS.md`. Confirm the AGENTS chain carries them:
+  `AGENTS.md` imports `@AGENTS.CORE.md`, which imports `@VOICE.md`.
 - `MISSING ... SKILL.md stub missing` — run with `--fix` (duplicates the canonical
   file's frontmatter and writes the pointer body).
 - `DRIFT ... has no canonical counterpart` — either the `.agents/skills/<name>/`
@@ -62,7 +66,7 @@ description: >-
   `/workflow-init`.
 
 ## Scope
-1. This repo's own root (`AGENTS.CORE.md` + `VOICE.md` + `AGENTS.md` + the three-import
+1. This repo's own root (`AGENTS.CORE.md` + `VOICE.md` + `AGENTS.md` + the single-import
    `CLAUDE.md`, plus every `.claude/skills/*/SKILL.md` stub found here).
 2. Every standing bind declared in `binds.yaml` that is present on disk under `base`
    (absent repos are `/workflow-manage`'s `sync-binds.sh` concern, not format drift).

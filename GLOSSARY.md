@@ -26,8 +26,8 @@ applied to a workflow repo".
 A thing a workflow acts on, with particulars of its own. Durable: it outlives every
 session run against it. Its operational picture is `workflows/<workflow>/<app>/profile.md`.
 
-**Is not:** a *session*. Conflating the two was a real defect — the two-level layout made
-the application disposable, so unfinished work had nowhere to survive.
+**Is not:** a *session*. A session is disposable and an application is not: an application
+made disposable leaves unfinished work nowhere to survive.
 
 ### Bind
 
@@ -140,9 +140,9 @@ One discrete instantiation of a workflow against an application. Temporal, and d
 once harvested. Lives at `workflows/<workflow>/<app>/<session>/`. Ends with
 `orchestrate.sh close`, which leaves one *ledger* line behind and deletes the directory.
 
-**Is not:** a *workflow*. A workflow is timeless and knows nothing about when it runs.
-Naming session directories after the workflow concept is the mistake that produced this
-glossary.
+**Is not:** a *workflow*. A workflow is timeless and knows nothing about when it runs. Do
+not name a session directory after the workflow concept; name it for what the session is
+for.
 
 ### Substrate
 

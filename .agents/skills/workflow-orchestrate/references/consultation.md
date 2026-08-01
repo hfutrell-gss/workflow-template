@@ -7,8 +7,8 @@ flagship consultant → ask the user.** Climb only when the tier below genuinely
 
 Decide anything derivable from the directive, the substrate, the bound repos' law, and
 conventional defaults. A choice with an obvious conventional answer is not a fork: pick it,
-record it in the task line or the journal, move on. Escalating a decision you are equipped to
-make is not caution, it is latency.
+record it in the task line or the session's `## Log`, move on. Escalating a decision you are
+equipped to make is not caution, it is latency.
 
 ## Tier 2 — the consultant (`flagship` tier)
 
@@ -38,8 +38,10 @@ Four legitimate uses:
 
 ### Rules
 
-- The consultant's answer is **advice**. You decide, and you record why in the task list or the
-  journal — an unrecorded decision gets re-litigated on the next cold tick.
+- The consultant's answer is **advice**. You decide, and you record why — an unrecorded
+  decision gets re-litigated on the next cold tick. While the run is live, that record is the
+  task line or the session's `## Log`. At harvest it goes where the outcome belongs: the
+  stewarded repo's own docs, or `<app>/profile.md`, named in the task's `landed:`.
 - **Never route work to the consultant.** A `flagship` model executing a `fleet` task is the
   most expensive possible way to do it, and it starves the tier of the judgment you actually
   need from it.

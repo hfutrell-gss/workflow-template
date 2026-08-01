@@ -106,15 +106,16 @@ Load a `references/` file when you reach the step that needs it. Keep this page 
    application ledger (`<app>/tasks.md` `## History`) — directive, counts by disposition, where
    the harvest landed — and deletes the session directory. Commit the ledger line and the
    deletion together, then report and stop the loop. **Do not delete a session by hand**: the
-   ledger line is what remains of the run, and a manual `git rm` is exactly how this system
-   spent ten versions with no answer to *what has been done to this app?*.
+   ledger line is what remains of the run, and a manual `git rm` removes the directory without
+   writing it — leaving the application with no answer to *what has been done to this app?*.
 
 ## Continuation
 
 - **Background subagents are the primary wake signal.** They re-invoke you when they finish.
   Never poll a dispatched worker.
 - **`/loop` self-paced** is the fallback heartbeat when work must keep ticking on its own
-  cadence. Stop it (`ScheduleWakeup stop: true`) only after `status` reports `EXHAUSTED`.
+  cadence. Let it run until `status` reports `EXHAUSTED`, then stop it — a heartbeat that
+  keeps ticking past the DoD is a run that never ends.
 - **Cold ticks reconstruct from files**, never from memory: task list, then roster, then
   re-validate stale `[~]` claims. Procedure in `references/tasklist.md`.
 - Heavy many-agent fan-out (the Workflow tool) is **out of scope** unless the user has
