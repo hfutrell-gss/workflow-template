@@ -212,19 +212,52 @@ operations on the shapes *it* introduces, by the same rule.
 set is entirely the derivation's, ejectable any time (delete `.template.lock`);
 `pinned: true` freezes updates without ejecting.
 
-**Overlay slots** are how managed content stays configurable without forking it. A pack
-reads an unmanaged, derivation-owned file and lets it win:
+**Overlay slots** are how installed content stays configurable without forking it. The
+convention, not a list: a pack that ships an opinion reads an unmanaged file the
+derivation owns, under **`.agents/<pack-name>/`**, and lets it win. The core's own slots
+follow the same convention:
 
 | Slot | Overrides |
 |---|---|
-| `.agents/code-craft/<skill-name>.local.md` | a `code-craft-*` skill's defaults (full name: `code-craft-tdd.local.md`) |
 | `.agents/orchestrate/roster.local.yaml` | tier→lane preference, role→tier |
 | `.agents/orchestrate/orchestrate.local.md` | orchestration doctrine |
 | `.agents/init/tools.local.d/<tool>.sh` | adds a tool to init |
 | `GLOSSARY.local.md` | the derivation's own terms |
 
+**Each pack documents its own slots; the core does not enumerate them** — a list here
+would go stale the moment a pack is added, and the core knowing a pack's paths is the
+dependency backwards. Run `/workflow-template-sync list`, then read that pack.
+
 The ladder everywhere: **a bound repo's own law → the derivation's overlay → the pack's
-defaults**, which apply in full force only where the first two are silent.
+defaults**, which apply in full force only where the first two are silent. An overlay is
+the derivation's answer to a pack, so **a pack may never claim its own overlay path** —
+that would remove the only override the repo has — and `remove` never deletes one.
+
+**What a pack may claim.** Exactly four shapes, enforced at install:
+
+| Allowed | |
+|---|---|
+| `.agents/skills/<name>/**` | a skill body |
+| `.claude/skills/<name>/SKILL.md` | its discovery stub |
+| `workflows/<name>/SKILL.md` | a workflow's TIMELESS half |
+| `workflows/<name>/references/**` | and its depth material |
+
+**A pack may ship a workflow**, not only skills — the TTPs of a nature of work are as
+generalizable as a test protocol. What it may never claim is `workflows/<name>/<app>/**`:
+the applications, their carried work, and their sessions are the derivation's record of
+its own work, and a pack able to overwrite them could erase a year of it on an update.
+Root law, `.claude/settings*`, hooks, `.mcp.json`, and overlay slots are refused for the
+same reason in reverse — they execute or apply without anyone invoking them.
+
+**Packs are a supply-chain path, and the control is social.** `add` copies executable
+scripts and always-loaded doctrine into a repo you then run agents inside.
+`/workflow-template-sync scan` runs before every install and refuses on findings until
+`--reviewed` is passed; it checks the claimed paths against the table above and greps the
+files for credential reads, egress, pipe-to-shell, destructive writes, and obfuscation.
+**It is a heuristic, not a boundary** — it catches carelessness and the obvious, and it
+will not catch a competent attacker. Install packs you wrote, or packs whose maintainer
+you would already trust with a commit bit on this repo. Nothing at this scale substitutes
+for that.
 
 ## Tiers (RBAC)
 

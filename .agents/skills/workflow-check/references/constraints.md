@@ -79,12 +79,23 @@ contacted, so it stays cheap and works with no network.
 | `PACK-001` | One owner per path. No path is claimed by both the core and a pack, or by two packs |
 | `PACK-002` | Every path a pack's `packs.lock` entry claims is present in the repo |
 | `PACK-003` | Declaration and installation agree: nothing installed that `packs.yaml` does not declare, nothing declared that was never installed |
+| `PACK-004` | Every installed pack's `requires_core:` is still satisfied by this repo's core version |
 
-**Why these three.** A collision (`PACK-001`) makes the winner depend on copy order,
+**Why these four.** A collision (`PACK-001`) makes the winner depend on copy order,
 which nobody can see or predict — it is the failure mode that sinks plugin systems, so it
 is refused at install time *and* re-checked here in case a manifest changed under a repo.
 `PACK-002` catches a half-applied update. `PACK-003` catches a hand-edited `packs.yaml`,
-where files sit in the repo that nothing claims and nothing will ever update.
+where files sit in the repo that nothing claims and nothing will ever update. `PACK-004`
+catches the case `add` cannot: the requirement held at install time and stopped holding
+afterwards, because the core was pinned or rolled back. A pack whose core requirement is
+unmet does not fail loudly — it half-works, which is worse.
+
+**What is checked at install and not here.** `add` also runs
+`/workflow-template-sync scan`, which refuses a pack claiming paths outside the four
+allowed shapes, or containing credential reads, egress, pipe-to-shell, destructive
+writes, or obfuscation. That is a gate, not a constraint: it runs once, on a pack that is
+not yet part of the repo, and `--reviewed` waives it deliberately. Re-run it any time
+with `scan <pack>`.
 
 ## Adding a constraint
 

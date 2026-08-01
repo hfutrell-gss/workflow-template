@@ -17,7 +17,8 @@ description: >-
 ```sh
 S=.agents/skills/workflow-template-sync/template-sync.sh
 $S derive [--upstream PATH]      # in a fresh copy/clone of the core
-$S add <url-or-path> [--name N]  # install a pack
+$S add <url-or-path> [--name N] [--reviewed]   # install a pack
+$S scan <url-or-path-or-name>    # what would it install, and does it look wrong
 $S remove <pack>                 # uninstall a pack and delete its paths
 $S update [<pack>]               # pull the core and every pack forward
 $S list                          # what is installed, from where, what version
@@ -70,17 +71,44 @@ Asks nothing interactively.
 ### `add` — install a pack
 ```sh
 $S add git@host:org/pack-code-craft
-$S add ../pack-code-craft --name craft
+$S add ../pack-code-craft --name code-craft
+$S add <url> --reviewed          # proceed despite scan findings you have read
 ```
-Refuses anything without a `pack.yaml` at its root, a name already declared, and the
-reserved core name `workflow-core`. On success: appends to `packs.yaml` (created if
-absent), copies the pack's `provides:` paths in, and records version + paths in
-`packs.lock`. A collision with the core or another pack aborts before any write.
+Order of refusal, all before any write:
+1. no `pack.yaml` at the root, a name already declared, or the reserved core name.
+2. **`requires_core:` unmet** — the pack states the minimum core it was written against.
+3. **`scan` findings** — waived only by `--reviewed`.
+4. **path collision** with the core or another pack — never waivable; two owners for one
+   path is broken whoever reviewed it.
+
+On success: appends to `packs.yaml` (created if absent), copies the `provides:` paths in,
+records version + paths in `packs.lock`.
+
+### `scan` — read a pack before trusting it
+Takes a URL, a path, or the name of an already-declared pack. Two passes:
+
+- **Shape.** A pack may claim exactly four things: `.agents/skills/<name>/**`,
+  `.claude/skills/<name>/SKILL.md`, `workflows/<name>/SKILL.md`,
+  `workflows/<name>/references/**`. Anything else is a finding, with the reason —
+  `workflows/<name>/<app>/**` is the repo's record of its own work; `.claude/settings*`,
+  hooks and `.mcp.json` execute without anyone invoking them; root law is always loaded;
+  an overlay slot is the repo's answer to the pack, so a pack must not write its own.
+- **Content**, over the claimed files only: credential reads, egress, pipe-to-shell,
+  destructive writes outside the repo, obfuscation. Every executable file is listed.
+
+**It is a heuristic, not a security boundary.** It catches carelessness and the obvious.
+It will not catch a competent attacker, and nothing this size could. The real control is
+social: install packs you wrote, or packs whose maintainer you would already trust with a
+commit bit on this repo.
 
 ### `remove` — uninstall a pack
 Deletes exactly the paths `packs.lock` records for that pack, prunes emptied parent
 directories, and drops it from both `packs.yaml` and `packs.lock`. The core cannot be
 removed — eject instead, by deleting `.template.lock`.
+
+**Overlays survive.** `.agents/<pack-name>/` holds this repo's answers to that pack, not
+the pack's property, so nothing deletes them. `remove` says so rather than leaving a
+directory whose reason for existing has quietly gone.
 
 ### `update` — pull everything forward
 With no argument: the core, then every declared pack. With a pack name (or
@@ -136,16 +164,23 @@ A pack is an ordinary repo with `pack.yaml` at its root:
 ```yaml
 name: code-craft
 version: 1
+requires_core: 30          # optional; the minimum core this pack was written against
 provides:
   - .agents/skills/code-craft-tdd/**
   - .claude/skills/code-craft-tdd/SKILL.md
 ```
 
+A pack may ship **skills or workflows** — the TTPs of a nature of work generalize as
+readily as a test protocol does.
+
 Rules that keep a pack composable:
-- **Claim only what you own.** Never list a path the core claims, or one another pack is
-  likely to want. Prefer a namespace: a skill prefix, a directory of your own.
-- **Read overlay slots; never write them.** A pack that needs to be configurable declares
-  an unmanaged `*.local.*` path and lets the repo's copy win.
+- **Claim only the four allowed shapes.** `scan` enforces it; see above for each reason.
+- **Read overlay slots; never write them.** A configurable pack reads an unmanaged
+  `.agents/<pack-name>/*.local.*` and lets the repo's copy win. Claiming that path takes
+  away the repo's only override, and is refused.
+- **State `requires_core:`** if you rely on anything the core added. Checked at `add`, at
+  `update`, and again as `PACK-004` — a core pinned or rolled back afterwards breaks the
+  assumption silently otherwise.
 - **Bump `version:` on every change.** It is the only signal an installed repo has.
 - **Never depend on another pack.** Degrade instead: keep the duty, lose the guidance.
 

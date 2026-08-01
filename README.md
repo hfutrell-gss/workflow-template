@@ -102,17 +102,36 @@ the `code-craft` pack. A workflow repo with no packs is complete, not degraded.
 Three invariants, enforced rather than advised: **one owner per path** (a collision is an
 error, refused before any write), **a dropped path is removed** (retiring a skill
 upstream retires it everywhere), and **no inter-pack dependencies** (no resolver, no
-ordering, no version solving). `--audit` re-checks all three offline as `PACK-001..003`.
+ordering, no version solving). A pack *may* state `requires_core:` — the core is the
+platform, not a peer. `--audit` re-checks it all offline as `PACK-001..004`.
+
+### What a pack may claim, and the trust model
+
+A pack claims exactly four shapes — a skill body, its stub, a workflow's timeless half,
+that workflow's `references/`. It may ship **workflows as well as skills**. It may never
+claim `workflows/<name>/<app>/**` (the repo's record of its own work), root law,
+`.claude/settings*`, hooks, `.mcp.json`, or an overlay slot — those apply or execute
+without anyone invoking them.
+
+`add` runs `template-sync.sh scan` first and refuses on findings until `--reviewed` is
+passed: it checks the claimed paths against those shapes and greps the files for
+credential reads, egress, pipe-to-shell, destructive writes, and obfuscation.
+**It is a heuristic, not a security boundary** — it catches carelessness and the obvious,
+never a competent attacker. Installing a pack copies executable scripts and always-loaded
+doctrine into a repo you then run agents inside. Install packs you wrote, or packs whose
+maintainer you would already trust with a commit bit here.
 
 ### Overlay slots
 
 A pack ships opinion into repos whose area of work it cannot know, so every one declares
 a precedence ladder: **a bound repo's own law wins inside its boundaries → then this
 workflow's overlay → then the pack's defaults.** To change a default, write the overlay:
-`.agents/code-craft/<skill-name>.local.md` — the skill's full name, prefix included, so
-`/code-craft-quality` overlays at `.agents/code-craft/code-craft-quality.local.md`. Unmanaged,
-so `update` never touches it, and where it conflicts with the skill it wins. No pinning,
-no ejecting, no drift.
+`.agents/<pack-name>/<skill-name>.local.md` — the skill's full name, prefix included, so
+`/code-craft-quality` overlays at `.agents/code-craft/code-craft-quality.local.md`.
+Unmanaged, so `update` never touches it and `remove` never deletes it, and where it
+conflicts with the skill it wins. No pinning, no ejecting, no drift. Each pack documents
+its own slots; the core does not keep a list, because that list goes stale the moment a
+pack is added.
 
 The same mechanism serves the core's `/workflow-orchestrate` outside `.agents/code-craft/`: put tier→lane
 preference and role→tier overrides in `.agents/orchestrate/roster.local.yaml`, further

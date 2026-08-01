@@ -11,7 +11,9 @@
 #   template-sync.sh derive [--upstream PATH]   # in a fresh copy/clone of the core:
 #                                               # turn it into a derivation
 #   template-sync.sh update [<pack>]            # pull the core and every pack forward
-#   template-sync.sh add <url-or-path> [--name N]   # install an additional pack
+#   template-sync.sh add <url-or-path> [--name N] [--reviewed]  # install a pack
+#   template-sync.sh scan <url-or-path>         # what would this pack install, and
+#                                               # does anything in it look wrong
 #   template-sync.sh remove <pack>              # uninstall a pack and its paths
 #   template-sync.sh list                       # what is installed, from where, what version
 #   template-sync.sh --check                    # report versions; exit 1 if anything is behind
@@ -177,6 +179,28 @@ pack_version_at() { # pack_version_at <pack-root>
 pack_name_at() { # pack_name_at <pack-root>
   local mf; mf="$(manifest_file "$1")"
   [ -n "$mf" ] && yq -r '.name // ""' "$mf" | grep -v '^null$' || true
+}
+
+pack_requires_core() { # pack_requires_core <pack-root> -> minimum core version, or empty
+  local mf; mf="$(manifest_file "$1")"
+  [ -n "$mf" ] && yq -r '.requires_core // ""' "$mf" | grep -v '^null$' || true
+}
+
+# Packs do not depend on each other -- but every pack depends on the CORE, which is the
+# platform, not a peer. A pack written against the overlay convention or the proxy rule
+# half-works against a core that predates them, and half-working is worse than refused:
+# nothing reports it.
+assert_core_satisfies() { # assert_core_satisfies <pack-name> <pack-root>
+  local name="$1" root="$2" need have
+  need="$(pack_requires_core "$root")"
+  [ -n "$need" ] || return 0
+  have="$(lock_get template_version)"
+  [ -n "$have" ] || return 0
+  if [ "$(printf '%s\n%s\n' "$need" "$have" | sort -n | tail -1)" != "$have" ]; then
+    echo "error: pack '$name' requires core version >= $need; this repo is on $have." >&2
+    echo "       Run 'template-sync.sh update $CORE_NAME' first." >&2
+    exit 1
+  fi
 }
 
 # --- installed-path bookkeeping ----------------------------------------------
@@ -456,6 +480,7 @@ update_pack() { # update_pack <name>
   mf="$(manifest_file "$root")"
   [ -n "$mf" ] || { echo "error: '$upstream' has no pack.yaml — not a pack" >&2; exit 1; }
   version="$(pack_version_at "$root")"
+  assert_core_satisfies "$name" "$root"
 
   if [ "$pinned" = "true" ]; then
     echo "$name: pinned — not updating. installed=${installed:-<none>}, available=$version"
@@ -497,10 +522,11 @@ cmd_update() {
 }
 
 cmd_add() {
-  local upstream="" name="" root
+  local upstream="" name="" root reviewed=0
   while [ "$#" -gt 0 ]; do
     case "$1" in
       --name) name="$2"; shift 2 ;;
+      --reviewed) reviewed=1; shift ;;
       -*) echo "error: unknown add argument '$1'" >&2; exit 1 ;;
       *) upstream="$1"; shift ;;
     esac
@@ -515,11 +541,31 @@ cmd_add() {
   [ "$name" = "$CORE_NAME" ] && { echo "error: '$CORE_NAME' is the core — tracked in .template.lock, not packs.yaml" >&2; exit 1; }
   declared_packs | grep -qxF "$name" && { echo "error: pack '$name' is already declared — use 'update $name'" >&2; exit 1; }
 
+  assert_core_satisfies "$name" "$root"
+
   # Check the collision BEFORE declaring, and undo the declaration if anything later
   # fails: a refused `add` must leave packs.yaml exactly as it found it, or the next
   # command reads a pack that was never installed.
   local paths; paths="$(mktemp)"
   manifest_paths "$(manifest_file "$root")" | sort > "$paths"
+  # Scan BEFORE the collision check: a pack claiming CLAUDE.md collides with the core,
+  # but "already owned by workflow-core" is the wrong lesson. The scan says what is
+  # actually wrong with the shape of the claim. Installing copies executable scripts and
+  # always-loaded doctrine into a repo agents then run inside; --reviewed is how a human
+  # takes responsibility for what a heuristic could not decide.
+  echo "scanning pack '$name'..."
+  if ! bash "$HERE/pack-scan.sh" "$root" "$paths"; then
+    if [ "$reviewed" -eq 1 ]; then
+      echo "proceeding: --reviewed given. You own this decision." >&2
+    else
+      rm -f "$paths"
+      echo "refusing to install '$name' — inspect the findings above, then re-run with --reviewed." >&2
+      exit 1
+    fi
+  fi
+
+  # Collision is checked after, and is NOT waivable by --reviewed: two owners for one
+  # path is broken whoever reviewed it.
   assert_no_collision "$name" "$paths"
   rm -f "$paths"
 
@@ -528,6 +574,20 @@ cmd_add() {
   update_pack "$name"
   trap - ERR EXIT
   echo "added pack '$name' from $upstream"
+}
+
+# Runs the scan against a pack without installing anything. Use it to read a pack before
+# deciding, and to re-read an installed one after it changes upstream.
+cmd_scan() {
+  local upstream="${1:-}" root
+  [ -n "$upstream" ] || { echo "usage: template-sync.sh scan <url-or-path>" >&2; exit 1; }
+  # An already-declared pack may be named instead of located.
+  if declared_packs | grep -qxF "$upstream"; then
+    upstream="$(declared_field "$upstream" upstream)"
+  fi
+  root="$(resolve_upstream_root "$upstream")"
+  [ -f "$root/pack.yaml" ] || { echo "error: '$upstream' has no pack.yaml at its root — not a pack" >&2; exit 1; }
+  bash "$HERE/pack-scan.sh" "$root"
 }
 
 cmd_remove() {
@@ -545,6 +605,16 @@ cmd_remove() {
   lock_drop_pack "$name"
   undeclare_pack "$name"
   echo "removed pack '$name'"
+
+  # An overlay is the repo's answer to a pack, not the pack's property -- so removing the
+  # pack never deletes it. Say so, because a silent leftover is indistinguishable from a
+  # bug the next time somebody reads the tree.
+  local orphan
+  for orphan in "$ROOT/.agents/$name"; do
+    [ -d "$orphan" ] || continue
+    echo "note: ${orphan#"$ROOT"/} still holds this repo's overlays for '$name'. They are yours, so"
+    echo "      nothing deleted them. Remove the directory if the pack is gone for good."
+  done
 }
 
 cmd_list() {
@@ -630,6 +700,22 @@ cmd_audit() {
     done < <(locked_paths "$p")
   done
 
+  # PACK-004 -- every installed pack's requires_core is still satisfied. Offline: the
+  # requirement is read from the pack's manifest as recorded, not from upstream. A core
+  # pinned or rolled back after a pack was installed breaks this silently otherwise.
+  local need have; have="$(lock_get template_version)"
+  for p in $(declared_packs); do
+    local p_up p_root
+    p_up="$(declared_field "$p" upstream)"
+    [ -n "$p_up" ] || continue
+    case "$p_up" in /*) p_root="$p_up" ;; *) p_root="$ROOT/$p_up" ;; esac
+    [ -d "$p_root" ] || continue          # remote-only: --check contacts it, --audit does not
+    need="$(pack_requires_core "$p_root")"
+    [ -n "$need" ] && [ -n "$have" ] || continue
+    [ "$(printf '%s\n%s\n' "$need" "$have" | sort -n | tail -1)" = "$have" ] \
+      || echo "DRIFT   PACK-004: pack '$p' requires core >= $need but this repo is on $have — update the core, or pin the pack"
+  done
+
   # PACK-003 -- declaration and installation agree.
   for p in $(locked_packs); do
     declared_packs | grep -qxF "$p" \
@@ -646,9 +732,10 @@ case "$MODE" in
   derive)   cmd_derive "$@" ;;
   update)   cmd_update "$@" ;;
   add)      cmd_add "$@" ;;
+  scan)     cmd_scan "$@" ;;
   remove)   cmd_remove "$@" ;;
   list)     cmd_list "$@" ;;
   --audit)  cmd_audit "$@" ;;
   --check)  cmd_check "$@" ;;
-  *) echo "usage: template-sync.sh derive [--upstream PATH] | update [<pack>] | add <url> [--name N] | remove <pack> | list | --audit | --check" >&2; exit 1 ;;
+  *) echo "usage: template-sync.sh derive [--upstream PATH] | update [<pack>] | add <url> [--name N] [--reviewed] | scan <url> | remove <pack> | list | --audit | --check" >&2; exit 1 ;;
 esac
