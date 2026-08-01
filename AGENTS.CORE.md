@@ -131,6 +131,7 @@ session directory:
 | understanding of an application | that repo's own docs, or `<app>/profile.md` |
 | **a decision to refuse or de-scope work** | **the same place, with its sign-off** |
 | work not finished, still wanted | `<app>/tasks.md` `## Open` — carried, not lost |
+| a carried thread this session **resolved** | `<app>/tasks.md` `## Closed` — moved out of `## Open`, with what the resolution found |
 | that the session ran at all, and with what result | `<app>/tasks.md` `## History` — **written by `close`, not by hand** |
 | a decision about this workflow repo itself | `journal/` |
 

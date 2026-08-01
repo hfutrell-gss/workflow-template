@@ -14,7 +14,7 @@
 # This file is itself managed, which is what lets a future core version add or retire a
 # managed path everywhere.
 
-version: 39  # mirrors this repo's VERSION at the time this manifest last changed
+version: 40  # mirrors this repo's VERSION at the time this manifest last changed
              # VERSION is a plain integer; comparison uses sort -n.
 
 managed:

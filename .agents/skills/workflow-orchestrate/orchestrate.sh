@@ -412,6 +412,8 @@ cmd_check() {
         # to prevent.
         grep -q '^## Open' "$adir/tasks.md" \
           || v "LAYOUT-008 workflows/$wf/$app/tasks.md has no '## Open' section — carried work promoted out of a closing session has nowhere to land"
+        grep -q '^## Closed' "$adir/tasks.md" \
+          || v "LAYOUT-008 workflows/$wf/$app/tasks.md has no '## Closed' section — a carried thread this session resolved has nowhere to move to, so it gets deleted instead and what closing it found is lost"
         grep -q '^## History' "$adir/tasks.md" \
           || v "LAYOUT-008 workflows/$wf/$app/tasks.md has no '## History' section — the record that a session ran against this application has nowhere to land (orchestrate.sh close writes it)"
       else
