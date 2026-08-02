@@ -5,7 +5,7 @@ description: >-
   it into a committed task list at workflows/<workflow>/<app>/<session>/tasks.md, reorganize that into
   a streamlined flow, dispatch each task to the fitting tier (flagship consultant · workhorse
   orchestrator · fleet workers) resolved from a lane roster, and loop until the list is
-  exhausted AND its durable output harvested out of the run directory. Use when asked to
+  exhausted AND its durable output reaped out of the run directory. Use when asked to
   orchestrate or coordinate a multi-task job, when a directive needs decomposing into tasks,
   when resuming a prior run's task list, or when work must survive across sessions and cold
   /loop ticks.

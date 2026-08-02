@@ -45,7 +45,7 @@ Directory shape for workflow, application, and session. Reported by `orchestrate
 | `LAYOUT-004` | Every application has `tasks.md` | Carried work has nowhere to land when a session closes |
 | `LAYOUT-005` | Every application has `profile.md` | The operational picture is otherwise unrecorded and gets re-derived every session |
 | `LAYOUT-006` | Every session is named `<date>-<slug>` | A bare date says nothing about what the session was, and two in one day collide |
-| `LAYOUT-007` | No session that is exhausted **and** harvested remains on disk | The harvest law: `git log` is the archive. A session kept after harvest is a graveyard directory nothing will ever prune |
+| `LAYOUT-007` | No session that is exhausted **and** reaped remains on disk | The reaping law: `git log` is the archive. A session kept after reaping is a graveyard directory nothing will ever prune |
 | `LAYOUT-008` | Every application `tasks.md` has `## Open`, `## Closed`, and `## History` | Three things outlive a session and each needs a home before it ends: what is still wanted, what a thread resolved to, and that the session ran. `close` creates `## History` if it must; nothing creates the other two, so work promoted or resolved at the last moment is lost silently |
 
 ## TASK-* — `/workflow-orchestrate`
@@ -55,8 +55,8 @@ Task grammar and anti-cheat, inside each session. Reported by `orchestrate.sh ch
 
 | ID | Constraint |
 |----|------------|
-| `TASK-001` | Every grammar and anti-cheat rule in `workflow-orchestrate/references/tasklist.md`: `accept:` on every task, `evidence:` for `[x]`, `agent:` for `[~]`, `blocked:` for `[!]`, `carried:` for `[^]`, `why:` **and** `signoff:` for `[-]`, no duplicate or malformed IDs, no dependency cycles, no task line outside `## Tasks`, a captured directive, and the harvest gate |
-| `TASK-002` | At harvest, every `[-]` and `[^]` carries `landed:` — where the decision's rationale went. A refusal with a sign-off is a fact about the application; without a destination it dies with the session directory and the next session re-opens a settled question |
+| `TASK-001` | Every grammar and anti-cheat rule in `workflow-orchestrate/references/tasklist.md`: `accept:` on every task, `evidence:` for `[x]`, `agent:` for `[~]`, `blocked:` for `[!]`, `carried:` for `[^]`, `why:` **and** `signoff:` for `[-]`, no duplicate or malformed IDs, no dependency cycles, no task line outside `## Tasks`, a captured directive, and the reaping gate |
+| `TASK-002` | At reaping, every `[-]` and `[^]` carries `landed:` — where the decision's rationale went. A refusal with a sign-off is a fact about the application; without a destination it dies with the session directory and the next session re-opens a settled question |
 
 **An open session is not a violation.** Work in progress is the normal state. Only a
 malformed or self-contradicting list is.

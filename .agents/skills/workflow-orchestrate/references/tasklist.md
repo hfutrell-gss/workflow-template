@@ -13,7 +13,7 @@ workflows/<workflow>/SKILL.md                     # TIMELESS — the TTPs. Never
 workflows/<workflow>/references/                  # depth for those TTPs
 workflows/<workflow>/<app>/profile.md             # DURABLE — that application's particulars
 workflows/<workflow>/<app>/tasks.md               # CARRIED — epics, deferred work. Crosses sessions.
-workflows/<workflow>/<app>/<session>/tasks.md     # SESSION — one run. Deleted after harvest.
+workflows/<workflow>/<app>/<session>/tasks.md     # SESSION — one run. Deleted after reaping.
 workflows/<workflow>/<app>/<session>/roster.md    # the tiers this session resolved
 workflows/<workflow>/<app>/<session>/notes/       # worker artifacts, evidence too big for one line
 ```
@@ -29,20 +29,20 @@ Four levels, four lifetimes (`AGENTS.CORE.md` "The shapes"):
   any one session. `orchestrate.sh` never reads it as a session list. It is the reason the
   application level exists.
 - **`<session>`** is one discrete instantiation, named `<date>-<slug>`. **Everything under it
-  is disposable after harvest, by definition.**
+  is disposable after reaping, by definition.**
 
   The slug carries the name and the date carries the order, and both are needed. A bare date
   says nothing about what the session was, and two sessions in one day collide. A bare slug
   loses the ordering that makes a directory listing readable and makes a second session on
   the same subject impossible to name. `init` takes the slug and adds the date, and refuses a
   bare date outright. Anything there that is not disposable has one of
-  three other homes, and harvest is the gate that moves it.
+  three other homes, and reaping is the gate that moves it.
 
 - **Every level at the workflow repo root** — never inside bound substrate. Session state
   belongs to the workflow that owns the session; the substrate only receives the work.
 - **Committed, not gitignored**, at every level. That is the entire point: a continuation on
   another machine, or after a compaction, resumes from the commit. (Contrast `workspace/`,
-  which is per-machine and never committed.) A harvested session directory is **deleted
+  which is per-machine and never committed.) A reaped session directory is **deleted
   outright** — `git log` is the archive; no graveyard directory is kept.
 - **One session directory per (workflow, app, session).** `orchestrate.sh init <workflow> <app> <slug>` refuses if
   `tasks.md` already exists there. It never overwrites `<app>/tasks.md` or `<app>/profile.md`:
@@ -64,7 +64,7 @@ machinery name — both namespaces reach the Skill tool.
 ## Legacy layout
 
 Sessions created before this layout live at `.workflow/<slug>/tasklist.md` (one flat, dated
-directory — no workflow/app split, no harvest gate). `orchestrate.sh status`, `ready`, and
+directory — no workflow/app split, no reaping gate). `orchestrate.sh status`, `ready`, and
 `list` **keep resolving that path for one version**, so an in-flight legacy session is not
 stranded. A resolved legacy session prints a `NOTE:` naming the path; that is the migration
 reminder, not noise to silence. **This fallback is scheduled for removal in a future
@@ -110,8 +110,8 @@ check` reports escaped identifiers as `SUBSTRATE-001`.
 | `[^]` | carried | `carried:` — its entry in `<app>/tasks.md`, and why it could not finish here |
 | `[-]` | dropped | `why:` **and** `signoff:` — who authorized it, when |
 
-`[-]` and `[^]` take one more field **at harvest**: `landed:` — where the decision's
-rationale went. See the harvest gate below.
+`[-]` and `[^]` take one more field **at reaping**: `landed:` — where the decision's
+rationale went. See the reaping gate below.
 
 Every task carries `accept:` from the moment it is created — the acceptance test it will be
 judged against. A task without one is a wish, and `status` reports it as a violation.
@@ -137,11 +137,11 @@ judged against. A task without one is a wish, and `status` reports it as a viola
 
 ## Exhaustion
 
-**DoD = exhaustion + harvest**, and that is exactly:
+**DoD = exhaustion + reaping**, and that is exactly:
 
 - no `[ ]`, no `[~]`, no `[!]` remains,
 - `orchestrate.sh status` reports **zero violations**, **and**
-- `## Harvest` reads `harvest: done <where it went>` — see "Harvest" below.
+- `## Reaping` reads `reaping: done <where it went>` — see "Reaping" below.
 
 `orchestrate.sh status` decides this, not you. It exits `0` when all three hold, `2` when they
 do not (an ordinary state, not a failure), `1` on a real error.
@@ -161,11 +161,11 @@ finished. All are mechanically checked:
   work never blocks a session forever.**
 - **`[-]` requires `why:` and `signoff:`** — you cannot drop your way to exhaustion. Dropping a
   task is the user's call, and the signoff records that they made it.
-- **`[-]` and `[^]` require `landed:` at harvest** — a decision to refuse work is a fact about
+- **`[-]` and `[^]` require `landed:` at reaping** — a decision to refuse work is a fact about
   the application, and it is the fact most easily lost. Name the destination: the stewarded
   repo's own docs (`workspace/<app>/docs/...`) when the workflow stewards it,
   `<app>/profile.md` otherwise, or `disposable — <reason>` when the rationale genuinely adds
-  nothing. Checked only once `harvest:` says done, so it is never noise on work in flight.
+  nothing. Checked only once `reaping:` says done, so it is never noise on work in flight.
   Without it, an application's status section reading *not built* cannot be told apart from a
   gap awaiting closure, and the next session re-opens a settled question.
 
@@ -186,12 +186,12 @@ finished. All are mechanically checked:
   task is dropped with a signoff, not erased.
 - **A cycle in `deps:` is a violation**, not a puzzle — it deadlocks the loop. `status` detects
   cycles; break them in the reorganize step.
-- **`harvest:` bare `done` (no destination) is a violation.** Exhausting the task list is not
-  harvest; you must say where the durable output went. `pending` is always valid — it is the
+- **`reaping:` bare `done` (no destination) is a violation.** Exhausting the task list is not
+  reaping; you must say where the durable output went. `pending` is always valid — it is the
   honest default — but any other value that isn't `done <where>` is flagged immediately, not
   only at closing time.
 
-## Harvest
+## Reaping
 
 Exhaustion alone is not DoD: a run can finish every task and still leave its durable output
 stranded in a directory that a later prune deletes. **A run is not done until its durable
@@ -204,7 +204,7 @@ Before closing a run:
    if the knowledge belongs to the target repo, (c) `<app>/tasks.md` `## Open` if it is work
    still wanted, (d) `journal/` **only** if it is a decision about this workflow repo itself
    that would not survive in a diff.
-2. Record where, in `## Harvest`: `harvest: done <destination(s), briefly>`.
+2. Record where, in `## Reaping`: `reaping: done <destination(s), briefly>`.
 3. Then run `orchestrate.sh close`. It re-checks the DoD, writes the ledger line, and deletes
    the directory in one step.
 
@@ -213,8 +213,8 @@ result is the ledger's job — `close` derives that line from the task list itse
 flatter the run. A hand-written account of the same session in `journal/` is a second record
 that will drift from `git log` and from the ledger both.
 
-Mechanism: the `## Harvest` section's `harvest:` field. It defaults to `pending` when the
-section or the field is absent, so a run that omits it is reported as un-harvested rather
+Mechanism: the `## Reaping` section's `reaping:` field. It defaults to `pending` when the
+section or the field is absent, so a run that omits it is reported as un-reaped rather
 than passed. It lives in the one file `status` already parses — no second place to check,
 and nothing that can disagree with the task list about whether the run is done.
 
@@ -222,7 +222,7 @@ and nothing that can disagree with the task list about whether the run is done.
 
 A fresh tick has no memory of the run. Reconstruct in this order:
 
-1. `orchestrate.sh list` — find runs that are not done (unexhausted, violating, or harvest
+1. `orchestrate.sh list` — find runs that are not done (unexhausted, violating, or reaping
    still pending). Includes legacy `.workflow/<slug>/` runs, each flagged with a NOTE.
 2. Read `tasks.md`'s header: the **verbatim directive** and the DoD. Do not re-derive the
    goal from the task titles.
@@ -232,8 +232,8 @@ A fresh tick has no memory of the run. Reconstruct in this order:
    evidence is not on disk is a stale claim → reset it to `[ ]` and note the retry. Leaving
    stale claims is how a run stalls while appearing busy.
 5. `orchestrate.sh ready` → dispatch. Resume the loop at step 5; do not re-decompose a list
-   that already exists. If tasks are exhausted but `status` still reports `harvest pending`,
-   resume at "Harvest" above instead — the loop is not the gap, the sweep is.
+   that already exists. If tasks are exhausted but `status` still reports `reaping pending`,
+   resume at "Reaping" above instead — the loop is not the gap, the sweep is.
 
 ## Git discipline
 

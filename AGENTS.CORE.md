@@ -80,7 +80,7 @@ application level exists: delete a session and its unfinished work must survive,
 next session starts blind.
 
 These four are defined again in `GLOSSARY.md`, with every other term this system uses —
-bind, substrate, derivation, harvest, tier, lane, overlay, promotion. Look a term up
+bind, substrate, derivation, reaping, tier, lane, overlay, promotion. Look a term up
 there rather than re-deriving it.
 
 Six kinds of thing live here; one home each:
@@ -97,7 +97,7 @@ Six kinds of thing live here; one home each:
 **Where the record of a run lives, and why it is not the journal.** Orchestration is
 task-based, so the durable record of a run is task-shaped: `orchestrate.sh close` writes
 one line per session into `<app>/tasks.md` under `## History` — directive, counts by
-disposition, where the harvest landed — and then deletes the session directory. That line
+disposition, where the reaping landed — and then deletes the session directory. That line
 sits at the application, which is where a reader stands when asking *what has been done to
 this thing?*. The journal answers a different question — *why is the system built this
 way?* — and it is about the workflow repo, never about a run against an application. A
@@ -122,7 +122,7 @@ finding a generalizable concept in a derivation and promoting it upstream. Its
 application is `self`. Managed workflows are listed in `template-manifest.yaml`; a
 derivation must not create a workflow with a managed name.
 
-**Harvest law:** a session is done only when its durable output has **left** the
+**Reaping law:** a session is done only when its durable output has **left** the
 session directory:
 
 | Output | Goes to |
@@ -145,7 +145,7 @@ bookkeeping into a repo you do not steward.
 off" is the fact most easily lost and most expensive to lose. Without it a status section
 reading *not built* is indistinguishable from a gap awaiting closure, and the next session
 re-opens a question that was already answered. `orchestrate.sh` refuses to call a session
-harvested until every `[-]` and `[^]` names where its rationale went.
+reaped until every `[-]` and `[^]` names where its rationale went.
 
 **What does NOT leave the session.** Dispatch bookkeeping — tier, agent, order, the
 dependency graph. That is how the work was organized, not a fact about the application,
@@ -351,7 +351,7 @@ workflow repo:
 - `/workflow-manage` — bind registry, workspace assembly.
 - `/workflow-bind` — attach standing binds to a session.
 - `/workflow-orchestrate` — directive → task list → tiered dispatch → loop; DoD is
-  exhaustion **plus** harvest, decided by `orchestrate.sh status`.
+  exhaustion **plus** reaping, decided by `orchestrate.sh status`.
 
 Skills that arrive from a pack are not listed here — read `packs.yaml`, or run
 `/workflow-template-sync list`. The one this system publishes:

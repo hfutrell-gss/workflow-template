@@ -2,12 +2,12 @@
 
 Two questions, one answer.
 
-**"We harvested a session and I see nothing."** True. Harvest recorded *where output
+**"We reaped a session and I see nothing."** True. Reaping recorded *where output
 landed*. Nothing recorded *that the session ran*, against what, or with what result. The
 session directory was deleted by hand and took the only account of the run with it.
 
 **"What is the journal for?"** It had two jobs and they contradicted. `AGENTS.CORE.md`
-called it "what happened on a given day"; the harvest law routed "what merely happened"
+called it "what happened on a given day"; the reaping law routed "what merely happened"
 there. Evidence from the two repos that use it:
 
 | Repo | Entries | Kind |
@@ -30,10 +30,10 @@ The line is derived from the task list, never written by hand:
 
 ```
 - **2026-08-01-gate** — Do the thing.
-  1 done · 1 dropped · 1 carried · 0 blocked. Harvest: workspace/app/docs/
+  1 done · 1 dropped · 1 carried · 0 blocked. Reaping: workspace/app/docs/
 ```
 
-Directive verbatim, counts by disposition, harvest destination. It cannot flatter the run
+Directive verbatim, counts by disposition, reaping destination. It cannot flatter the run
 because nothing in it is prose anyone chose at closing time.
 
 **The journal is now one thing:** a decision about *this workflow repo*, written when the

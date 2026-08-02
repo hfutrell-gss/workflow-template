@@ -8,7 +8,7 @@
 #                                                         ledger of sessions closed.
 #                                                         Crosses sessions. Never a
 #                                                         session list.
-#   workflows/<workflow>/<app>/<session>/tasks.md  SESSION — one run. Deleted after harvest.
+#   workflows/<workflow>/<app>/<session>/tasks.md  SESSION — one run. Deleted after reaping.
 #
 # A session tasks.md (grammar + anti-cheat rules: references/tasklist.md) is the durable
 # state of that session for as long as it is open. This script only scaffolds and
@@ -29,7 +29,7 @@
 #                                             scaffold workflows/<workflow>/<app>/<date>-<slug>/
 #                                             <slug> says what the session is FOR; the date is
 #                                             added for you. A bare date is refused.
-#   orchestrate.sh status [<key>]             counts, violations, harvest, DoD verdict
+#   orchestrate.sh status [<key>]             counts, violations, reaping, DoD verdict
 #   orchestrate.sh ready  [<key>]             tasks whose deps are all done
 #   orchestrate.sh list                       every session with its verdict
 #   orchestrate.sh check                      LAYOUT, TASK, and SUBSTRATE constraints
@@ -44,7 +44,7 @@
 # .workflow/<slug>/ path. Omit it to resolve the only session present, or the only one
 # still open.
 #
-# Exit codes (status/ready/list): 0 = exhausted, clean, and harvested; 2 = NOT done (an
+# Exit codes (status/ready/list): 0 = exhausted, clean, and reaped; 2 = NOT done (an
 # ordinary state, not a failure); 1 = usage or IO error.
 # END-USAGE
 set -euo pipefail
@@ -141,17 +141,17 @@ report() {
     function has(id, key) { return ((id SUBSEP key) in field) }
     function bad(msg)     { viol[++nv] = msg }
 
-    /^## Directive/        { in_dir = 1; in_tasks = 0; in_harv = 0; next }
-    /^## Tasks/            { in_tasks = 1; in_dir = 0; in_harv = 0; next }
-    /^## Harvest/          { in_harv = 1; in_tasks = 0; in_dir = 0; next }
-    /^## /                 { in_tasks = 0; in_dir = 0; in_harv = 0 }
+    /^## Directive/        { in_dir = 1; in_tasks = 0; in_reap = 0; next }
+    /^## Tasks/            { in_tasks = 1; in_dir = 0; in_reap = 0; next }
+    /^## Reaping/          { in_reap = 1; in_tasks = 0; in_dir = 0; next }
+    /^## /                 { in_tasks = 0; in_dir = 0; in_reap = 0 }
     { if (/<!--/) gc = 1 }                                  # HTML comments are never content
     gc                     { if (/-->/) gc = 0; next }
     in_dir                 { if ($0 !~ /^[ \t]*$/) ndir++; next }
-    in_harv {
-      if ($0 ~ /^harvest:/) {
-        v = $0; sub(/^harvest:[ \t]*/, "", v); gsub(/[ \t]+$/, "", v)
-        if (v != "") harvest_val = v
+    in_reap {
+      if ($0 ~ /^reaping:/) {
+        v = $0; sub(/^reaping:[ \t]*/, "", v); gsub(/[ \t]+$/, "", v)
+        if (v != "") reaping_val = v
       }
       next
     }
@@ -202,16 +202,16 @@ report() {
       if (nt == 0)   bad("no tasks — decompose the directive first")
       if (ndir == 0) bad("## Directive is empty — capture the directive verbatim")
 
-      # Harvest gate: a run is not done until its durable output has left the run
+      # Reaping gate: a run is not done until its durable output has left the run
       # directory. Absent section/field defaults to "pending" — so a run written before
       # this gate existed (or one that forgot it) is reported honestly, not silently
       # grandfathered in. "done" alone (no destination) is a violation, always: this is
-      # the anti-cheat rule for the harvest gate and it must be checkable the same way
+      # the anti-cheat rule for the reaping gate and it must be checkable the same way
       # every other marker is.
-      if (harvest_val == "") harvest_val = "pending"
-      harvested = (harvest_val ~ /^done[ \t]+[^ \t]/)
-      if (harvest_val != "pending" && !harvested)
-        bad("harvest: \"" harvest_val "\" is not \"pending\" or \"done <where it went>\"")
+      if (reaping_val == "") reaping_val = "pending"
+      reaped = (reaping_val ~ /^done[ \t]+[^ \t]/)
+      if (reaping_val != "pending" && !reaped)
+        bad("reaping: \"" reaping_val "\" is not \"pending\" or \"done <where it went>\"")
 
       for (i = 1; i <= nt; i++) {
         id = order[i]; m = mark[id]
@@ -241,18 +241,18 @@ report() {
           else if (mark[d[j]] == "^") bad(id ": depends on carried " d[j] " — carry this one too, or it can never start")
         }
       }
-      # Harvest completeness. A decision to NOT do work is a fact about the application,
+      # Reaping completeness. A decision to NOT do work is a fact about the application,
       # and it is the fact most likely to be lost: de-scoping five tasks with a sign-off
       # tells the next reader why a "gap" is not a gap, and it dies with this directory
-      # unless something names where it went. Checked only once harvest says done --
+      # unless something names where it went. Checked only once reaping says done --
       # requiring it mid-run would be noise on work still in flight.
       # "landed: disposable — <reason>" is a legitimate answer. Silence is not.
-      if (harvested)
+      if (reaped)
         for (i = 1; i <= nt; i++) {
           id = order[i]; m = mark[id]
           if (m != "-" && m != "^") continue
           if (!has(id, "landed"))
-            bad(id ": [" m "] without landed: — at harvest, a dropped or carried decision must name where its rationale went (a stewarded repo\047s own docs, <app>/profile.md, or \047disposable — <reason>\047)")
+            bad(id ": [" m "] without landed: — at reaping, a dropped or carried decision must name where its rationale went (a stewarded repo\047s own docs, <app>/profile.md, or \047disposable — <reason>\047)")
         }
 
       # Kahn: unknown deps count as satisfied (already reported), so what is left is a cycle.
@@ -291,15 +291,15 @@ report() {
         printf "tasks       %d\n", nt
         printf "  pending   %d\n  in flight %d\n  done      %d\n  blocked   %d\n  carried   %d\n  dropped   %d\n", \
                count[" "], count["~"], count["x"], count["!"], count["^"], count["-"]
-        printf "harvest     %s\n", harvest_val
+        printf "reaping     %s\n", reaping_val
         if (nr > 0) { printf "ready      "; for (i = 1; i <= nr; i++) printf "%s%s", ready[i], (i < nr ? " " : "\n") }
         if (nv > 0) { print  "violations " nv; for (i = 1; i <= nv; i++) print "  ! " viol[i] }
-        if (exhausted && harvested)       print "DoD: EXHAUSTED"
-        else if (exhausted && !harvested) print "DoD: NOT EXHAUSTED (harvest pending)"
+        if (exhausted && reaped)       print "DoD: EXHAUSTED"
+        else if (exhausted && !reaped) print "DoD: NOT EXHAUSTED (reaping pending)"
         else if (nv > 0)                  printf "DoD: NOT EXHAUSTED (%d open, %d violation%s)\n", open, nv, (nv == 1 ? "" : "s")
         else                               printf "DoD: NOT EXHAUSTED (%d open)\n", open
       }
-      exit (exhausted && harvested) ? 0 : 2
+      exit (exhausted && reaped) ? 0 : 2
     }
   ' "$1"
 }
@@ -430,10 +430,10 @@ cmd_check() {
           [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]-?*) ;;
           *) v "LAYOUT-006 session $wf/$app/$sess is not named <date>-<slug>" ;;
         esac
-        # The harvest law: a session that is exhausted AND harvested must be deleted, not
+        # The reaping law: a session that is exhausted AND reaped must be deleted, not
         # left on disk.
         if report "$sdir/tasks.md" status >/dev/null 2>&1; then
-          v "LAYOUT-007 session $wf/$app/$sess is exhausted and harvested but still on disk — delete it; git log is the archive"
+          v "LAYOUT-007 session $wf/$app/$sess is exhausted and reaped but still on disk — delete it; git log is the archive"
         fi
       done
     done
@@ -491,12 +491,12 @@ cmd_check() {
 
 # close — the only supported way a session ends.
 #
-# Harvest names WHERE the output landed; the ledger records THAT the session ran, against
+# Reaping names WHERE the output landed; the ledger records THAT the session ran, against
 # what, and with what result. It sits at the APPLICATION level, which is where a reader
 # stands when asking what has been done to this thing: one line per session, permanent,
 # next to the carried work it produced. Dispatch mechanics do not survive -- tier, agent,
 # ordering, the dependency graph are how the work was organized, not a fact about the
-# application (AGENTS.CORE.md "Harvest law").
+# application (AGENTS.CORE.md "Reaping law").
 #
 # Ledger and deletion are one command. As two, the deletion is the step that always
 # happens and the ledger line is the step that does not.
@@ -509,7 +509,7 @@ cmd_close() {
   dir="$(dirname "$tasks")"
   app_dir="$(dirname "$dir")"
 
-  # DoD first: exhausted, harvested, no violations. report exits 2 when not done.
+  # DoD first: exhausted, reaped, no violations. report exits 2 when not done.
   local out
   if ! out="$(report "$tasks" status 2>&1)"; then
     echo "$out"
@@ -524,7 +524,7 @@ cmd_close() {
   [ -f "$ledger" ] || die "no application ledger at ${ledger#"$ROOT"/} — every application has a tasks.md (LAYOUT-004)"
 
   # One line, built from the list itself so it cannot flatter the run.
-  local done_n drop_n carry_n block_n directive harvest_line
+  local done_n drop_n carry_n block_n directive reaping_line
   done_n="$(grep -cE '^- \[x\] ' "$tasks" || true)"
   drop_n="$(grep -cE '^- \[-\] ' "$tasks" || true)"
   carry_n="$(grep -cE '^- \[\^\] ' "$tasks" || true)"
@@ -532,13 +532,13 @@ cmd_close() {
   # The directive is captured as a blockquote, so strip the leading '> ' — the marker is
   # how it is quoted, not part of what was asked.
   directive="$(awk '/^## Directive/{f=1;next} /^## /{f=0} f && NF && $0 !~ /^<!--/ {sub(/^[[:space:]]*>[[:space:]]?/,""); print; exit}' "$tasks" | cut -c1-140)"
-  harvest_line="$(awk '/^harvest:/{sub(/^harvest:[ \t]*done[ \t]*(—|--)?[ \t]*/,""); print; exit}' "$tasks" | cut -c1-160)"
+  reaping_line="$(awk '/^reaping:/{sub(/^reaping:[ \t]*done[ \t]*(—|--)?[ \t]*/,""); print; exit}' "$tasks" | cut -c1-160)"
 
   grep -q '^## History' "$ledger" || printf '\n## History\n\nOne line per session closed against this application, appended by `orchestrate.sh\nclose`. Permanent: the session directory is deleted, and this is what remains of it\nbesides `git log`. Do not hand-write entries here — a line nobody earned by passing\nthe DoD gate is a claim, not a record.\n' >> "$ledger"
 
-  printf -- '\n- **%s** — %s\n  %s done · %s dropped · %s carried · %s blocked. Harvest: %s\n' \
+  printf -- '\n- **%s** — %s\n  %s done · %s dropped · %s carried · %s blocked. Reaping: %s\n' \
     "$(basename "$dir")" "${directive:-<no directive captured>}" \
-    "$done_n" "$drop_n" "$carry_n" "$block_n" "${harvest_line:-<unrecorded>}" >> "$ledger"
+    "$done_n" "$drop_n" "$carry_n" "$block_n" "${reaping_line:-<unrecorded>}" >> "$ledger"
 
   echo "ledger: appended $(basename "$dir") to ${ledger#"$ROOT"/}"
 

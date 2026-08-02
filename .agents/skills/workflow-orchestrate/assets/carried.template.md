@@ -29,7 +29,7 @@ resolution found that the raising session did not know**. Moved here out of `## 
 and never deleted — a thread that merely vanishes reads as one still wanted.
 
 This is not a second `## History`. The two answer different questions at different
-grains: a History line is per **session** (its directive, its counts, where its harvest
+grains: a History line is per **session** (its directive, its counts, where its reaping
 landed) and cannot say what any one thread resolved to. That last part is the whole
 value — *the thread was under-counted when raised*, *this half was deliberately left
 unsettled* — and it exists in no other record.

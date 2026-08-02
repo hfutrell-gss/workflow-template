@@ -1,10 +1,10 @@
 # Session: __WORKFLOW__ · __APP__ · __SESSION__
 
-Opened __DATE__. Grammar, anti-cheat rules, and the harvest gate:
+Opened __DATE__. Grammar, anti-cheat rules, and the reaping gate:
 `.agents/skills/workflow-orchestrate/references/tasklist.md`.
 
-This directory is SESSION state — deleted after harvest, by definition. Anything here
-that should outlive this session has somewhere else to go. `AGENTS.CORE.md` "Harvest
+This directory is SESSION state — deleted after reaping, by definition. Anything here
+that should outlive this session has somewhere else to go. `AGENTS.CORE.md` "Reaping
 law" is the full list of destinations; read it there. Two apply while the run is live:
 
 - **Work not finished, still wanted** → `../tasks.md` `## Open`. Mark the task `[^]`
@@ -25,9 +25,9 @@ session can close with the work preserved.
 
 ## Definition of Done
 
-Task list exhaustion **and** harvest: no `[ ]`, `[~]`, or `[!]` remains,
-`orchestrate.sh status` reports zero violations, and `## Harvest` below reads
-`harvest: done <where it went>`. `[-]` requires `why:` and a user `signoff:`.
+Task list exhaustion **and** reaping: no `[ ]`, `[~]`, or `[!]` remains,
+`orchestrate.sh status` reports zero violations, and `## Reaping` below reads
+`reaping: done <where it went>`. `[-]` requires `why:` and a user `signoff:`.
 
 Closing is `orchestrate.sh close`. It re-checks this DoD, writes the ledger line into
 `../tasks.md` `## History`, and deletes this directory in one step.
@@ -42,25 +42,25 @@ Closing is `orchestrate.sh close`. It re-checks this DoD, writes the ledger line
            why:      <required for [-]>
            signoff:  <required for [-]>
            carried:  <required for [^] — names its entry in ../tasks.md ## Open>
-           landed:   <required for [-] and [^] once harvest reads done — where the
+           landed:   <required for [-] and [^] once reaping reads done — where the
                       rationale went: a stewarded repo's own docs, ../profile.md, or
                       "disposable — <reason>">
      Markers: [ ] pending · [~] in flight · [x] done · [!] blocked · [^] carried · [-] dropped
      Tiers:   flagship · workhorse · fleet   (never a model name) -->
 
-## Harvest
+## Reaping
 
 <!-- Required before this run can close. Sweep notes/ and decisions out to their
-     destinations per AGENTS.CORE.md "Harvest law": a way of working that stabilized to
+     destinations per AGENTS.CORE.md "Reaping law": a way of working that stabilized to
      workflows/__WORKFLOW__/, understanding of __APP__ to its own docs or ../profile.md,
      unfinished work still wanted to ../tasks.md ## Open, a refusal or de-scope to the
      stewarded repo's docs or ../profile.md with its signoff.
-     Then record where each output landed on the harvest: line below, and run
+     Then record where each output landed on the reaping: line below, and run
      `orchestrate.sh close`. It re-checks the DoD, writes the ledger line into
      ../tasks.md ## History, and deletes this directory in one step. Never delete a
      session directory by hand. -->
 
-harvest: pending
+reaping: pending
 
 ## Log
 
