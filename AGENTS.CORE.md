@@ -132,6 +132,7 @@ session directory:
 | **a decision to refuse or de-scope work** | **the same place, with its sign-off** |
 | work not finished, still wanted | `<app>/tasks.md` `## Open` — carried, not lost |
 | a carried thread this session **resolved** | `<app>/tasks.md` `## Closed` — moved out of `## Open`, with what the resolution found |
+| **exposure found, whether or not it was the subject** | **`<app>/tasks.md` `## Security` — with its evidence and what would settle it** |
 | that the session ran at all, and with what result | `<app>/tasks.md` `## History` — **written by `close`, not by hand** |
 | a decision about this workflow repo itself | `journal/` |
 
@@ -140,6 +141,13 @@ session directory:
 it explains, and be readable by someone bound only to that repo. For `reference`,
 `upstream`, or anything read-only, it goes in `<app>/profile.md`: you do not write
 bookkeeping into a repo you do not steward.
+
+**Why exposure gets its own row.** A security finding is usually a by-product — a probe
+answers that should not, a config read shows an unset default — so the session holding it
+has no reason of its own to keep it, and `## Open` would file it as work somebody may
+close rather than as a fact that stays true until the system changes. It is also the
+finding least likely to be rediscovered deliberately. `## Security` is where it is
+visible as a set; it leaves only as **fixed** or as **accepted with a sign-off**.
 
 **Why refusals get their own row.** "We decided not to build this, and here is who signed
 off" is the fact most easily lost and most expensive to lose. Without it a status section

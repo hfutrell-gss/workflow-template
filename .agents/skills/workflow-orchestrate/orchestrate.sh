@@ -353,8 +353,14 @@ cmd_init() {
 # be a real citation -- so the message says so and the reader checks before editing.
 substrate_hits() {
   local dir="$1" pat="$2" out
+  # Generated output is excluded, not counted. A build artifact or a test report
+  # embeds absolute paths and fixture data by the thousand, none of it written by
+  # anyone: it drowns the real citations it is listed beside. bin/ obj/ TestResults/
+  # target/ vendor/ join the original set for that reason, not for tidiness.
   out="$(grep -rIcE "$pat" \
           --exclude-dir=.git --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=build \
+          --exclude-dir=bin --exclude-dir=obj --exclude-dir=TestResults \
+          --exclude-dir=target --exclude-dir=vendor --exclude-dir=.venv \
           --exclude='*.lock' --exclude='*lock.json' --exclude='*lock.yaml' --exclude='*lock.yml' \
           -- "$dir" 2>/dev/null | grep -v ':0$')" || return 0
   [ -n "$out" ] || return 0
@@ -414,6 +420,8 @@ cmd_check() {
           || v "LAYOUT-008 workflows/$wf/$app/tasks.md has no '## Open' section — carried work promoted out of a closing session has nowhere to land"
         grep -q '^## Closed' "$adir/tasks.md" \
           || v "LAYOUT-008 workflows/$wf/$app/tasks.md has no '## Closed' section — a carried thread this session resolved has nowhere to move to, so it gets deleted instead and what closing it found is lost"
+        grep -q '^## Security' "$adir/tasks.md" \
+          || v "LAYOUT-008 workflows/$wf/$app/tasks.md has no '## Security' section — exposure found by a session not looking for it has nowhere to land, and the session that found it has no reason of its own to keep it"
         grep -q '^## History' "$adir/tasks.md" \
           || v "LAYOUT-008 workflows/$wf/$app/tasks.md has no '## History' section — the record that a session ran against this application has nowhere to land (orchestrate.sh close writes it)"
       else
@@ -473,7 +481,12 @@ cmd_check() {
       [ -n "$repo" ] || continue
       dir="$base/$repo"
       [ -d "$dir" ] || continue
-      hits="$(substrate_hits "$dir" '(\.workflow/|workflows/[^/[:space:]]+/[^/[:space:]]+/[^/[:space:]]+/)')"
+      # The session segment is anchored to <date>-<slug>, which LAYOUT-006 guarantees.
+      # An unanchored third segment matched the workspace's OWN path --
+      # workflows/<derivation>/workspace/<repo>/ -- so every absolute path inside a bound
+      # repo counted as a citation of itself. Measured once at 23,528 hits in one repo,
+      # 100% self-referential, which is enough noise to make the rule unreadable.
+      hits="$(substrate_hits "$dir" '(\.workflow/|workflows/[^/[:space:]]+/[^/[:space:]]+/[0-9]{4}-[0-9]{2}-[0-9]{2}-[^/[:space:]]+/)')"
       if [ -n "$hits" ]; then
         v "SUBSTRATE-001 $repo cites workflow-repo session paths — $hits. The session directory is deleted at close; substrate cites its own repo's paths only."
       fi

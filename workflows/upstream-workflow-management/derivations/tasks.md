@@ -11,6 +11,8 @@ What belongs here:
   session that raised it and why it could not finish there.
 - **Standing threads** — anything that must be picked up by whoever runs the next
   session against derivations.
+- **Security findings** — exposure this application carries, found by a session that was
+  not looking for it.
 - **Closed threads** — what each of the above resolved to, and what closing it found.
 - **History** — one line per closed session, written by `orchestrate.sh close`.
 
@@ -21,6 +23,32 @@ decision about this workflow repo itself (that is `journal/`).
 ## Open
 
 <!-- - **<short title>** — raised by <session>. <why it is still open, what unblocks it.> -->
+
+## Security
+
+Exposure this application carries: what is reachable, what is unencrypted, what is
+authorized more widely than intended. **Not work — a standing fact about the
+application**, which is why it does not live in `## Open`. Work in `## Open` reads as
+something a session may pick up and close; an exposure stays true until somebody changes
+the system, and a reader must be able to see all of it without inferring which open
+threads happen to be security.
+
+Most entries here are found by a session that was **not looking for them** — a by-product
+of a probe, a config read, a measurement. That is exactly why they need a home: the
+session that stumbles on one has no reason to keep it, and it is the finding least likely
+to be rediscovered on purpose.
+
+Each entry states **what is exposed**, **the evidence**, and **what would settle it** —
+never a guessed severity. An unverified default is recorded as unverified. Read-only
+discipline holds: reachability stops at a handshake, nothing is authenticated against,
+nothing is modified to prove a point.
+
+An entry leaves only two ways, and both go to `## Closed` — this is not a second ledger:
+**fixed**, with the change; or **accepted**, with the `signoff:` of whoever accepted the
+risk. Silence is neither, and an entry with neither stays here.
+
+<!-- - **<what is exposed>** — raised by <session>. <the evidence, exact. what would
+     settle it. read-only caveats if the finding came from a probe.> -->
 
 ## Closed
 

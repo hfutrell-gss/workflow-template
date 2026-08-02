@@ -46,7 +46,7 @@ Directory shape for workflow, application, and session. Reported by `orchestrate
 | `LAYOUT-005` | Every application has `profile.md` | The operational picture is otherwise unrecorded and gets re-derived every session |
 | `LAYOUT-006` | Every session is named `<date>-<slug>` | A bare date says nothing about what the session was, and two in one day collide |
 | `LAYOUT-007` | No session that is exhausted **and** harvested remains on disk | The harvest law: `git log` is the archive. A session kept after harvest is a graveyard directory nothing will ever prune |
-| `LAYOUT-008` | Every application `tasks.md` has `## Open`, `## Closed`, and `## History` | Three things outlive a session and each needs a home before it ends: what is still wanted, what a thread resolved to, and that the session ran. `close` creates `## History` if it must; nothing creates the other two, so work promoted or resolved at the last moment is lost silently |
+| `LAYOUT-008` | Every application `tasks.md` has `## Open`, `## Closed`, `## Security`, and `## History` | Four things outlive a session and each needs a home before it ends: what is still wanted, what a thread resolved to, what exposure the application carries, and that the session ran. `close` creates `## History` if it must; nothing creates the other three, so work promoted or resolved at the last moment is lost silently — and an exposure found by a session that was not looking for it is the least likely of all to be rediscovered |
 
 ## TASK-* — `/workflow-orchestrate`
 
