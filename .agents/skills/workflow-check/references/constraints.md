@@ -55,7 +55,7 @@ Task grammar and anti-cheat, inside each session. Reported by `orchestrate.sh ch
 
 | ID | Constraint |
 |----|------------|
-| `TASK-001` | Every grammar and anti-cheat rule in `workflow-orchestrate/references/tasklist.md`: `accept:` on every task, `evidence:` for `[x]`, `agent:` for `[~]`, `blocked:` for `[!]`, `carried:` for `[^]`, `why:` **and** `signoff:` for `[-]`, no duplicate or malformed IDs, no dependency cycles, no task line outside `## Tasks`, a captured directive, and the reaping gate |
+| `TASK-001` | Every grammar and anti-cheat rule in `workflow-orchestrate/references/tasklist.md`: `accept:` on every task, `evidence:` for `[x]`, `agent:` for `[~]`, `blocked:` for `[!]`, `carried:` for `[^]`, `why:` **and** `signoff:` for `[-]`, no duplicate or malformed IDs, no dependency cycles, no task line outside `## Tasks`, a captured directive, a `## Reaping` section present by that name, and the reaping gate |
 | `TASK-002` | At reaping, every `[-]` and `[^]` carries `landed:` — where the decision's rationale went. A refusal with a sign-off is a fact about the application; without a destination it dies with the session directory and the next session re-opens a settled question |
 
 **An open session is not a violation.** Work in progress is the normal state. Only a

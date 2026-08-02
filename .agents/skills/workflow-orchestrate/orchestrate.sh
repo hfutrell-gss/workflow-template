@@ -143,7 +143,7 @@ report() {
 
     /^## Directive/        { in_dir = 1; in_tasks = 0; in_reap = 0; next }
     /^## Tasks/            { in_tasks = 1; in_dir = 0; in_reap = 0; next }
-    /^## Reaping/          { in_reap = 1; in_tasks = 0; in_dir = 0; next }
+    /^## Reaping/          { in_reap = 1; in_tasks = 0; in_dir = 0; saw_reap = 1; next }
     /^## /                 { in_tasks = 0; in_dir = 0; in_reap = 0 }
     { if (/<!--/) gc = 1 }                                  # HTML comments are never content
     gc                     { if (/-->/) gc = 0; next }
@@ -209,6 +209,12 @@ report() {
       # the anti-cheat rule for the reaping gate and it must be checkable the same way
       # every other marker is.
       if (reaping_val == "") reaping_val = "pending"
+      # A missing section defaults to pending, which is honest but mute: the run can
+      # never reach done and the file does not say why. Name it. This also catches a
+      # session written against an older grammar, whose section heading no longer
+      # matches -- it reads as an ABSENT section, not as a different one.
+      if (nt > 0 && !saw_reap)
+        bad("no \"## Reaping\" section — the gate that closes a session. Add it, with \"reaping: pending\" until the output has left the session directory")
       reaped = (reaping_val ~ /^done[ \t]+[^ \t]/)
       if (reaping_val != "pending" && !reaped)
         bad("reaping: \"" reaping_val "\" is not \"pending\" or \"done <where it went>\"")

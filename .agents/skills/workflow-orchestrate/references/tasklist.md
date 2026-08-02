@@ -218,6 +218,12 @@ section or the field is absent, so a run that omits it is reported as un-reaped 
 than passed. It lives in the one file `status` already parses — no second place to check,
 and nothing that can disagree with the task list about whether the run is done.
 
+A *missing section* is also a violation in its own right, not only a `pending` default.
+Defaulting alone is honest but mute: the run can never reach done and the file does not
+say why. The violation names the section and the line to write. It is what catches a
+session written against an older grammar — a heading this parser no longer recognizes
+reads as an **absent** section, not as a different one.
+
 ## Resuming cold
 
 A fresh tick has no memory of the run. Reconstruct in this order:
