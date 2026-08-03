@@ -14,11 +14,17 @@
 # This file is itself managed, which is what lets a future core version add or retire a
 # managed path everywhere.
 
-version: 44  # mirrors this repo's VERSION at the time this manifest last changed
+version: 45  # mirrors this repo's VERSION at the time this manifest last changed
              # VERSION is a plain integer; comparison uses sort -n.
 
 managed:
   - AGENTS.CORE.md
+  # The operator's manual for the shared machinery: layout, skills, packs, overlay slots,
+  # tooling, binds, staying current. Managed so a derivation's own README covers only its
+  # area of work instead of re-documenting the core -- a hand-written copy drifts in the
+  # copy, never in the original. Human-facing and deliberately NOT in the AGENTS import
+  # chain, so it costs no session tokens.
+  - README.CORE.md
   # Managed workflows: the core ships workflows, not only skills
   # (AGENTS.CORE.md "The shapes"). Only the TIMELESS half is managed -- a derivation's
   # applications, carried work, and sessions under this workflow are its own data and
