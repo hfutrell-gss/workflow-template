@@ -73,7 +73,7 @@ Scaffold one, never by hand:
 | `binds.yaml` | Standing-bind registry (`kind` + `why`); `base` says where they live on disk | no |
 | `workspace/` | Per-machine substrate clones. Gitignored, never committed, never a personal checkout | no |
 | `workflows/` | Workflows and all their state (the four levels above). **Committed**, so a run resumes after a cold tick or on another machine | no |
-| `journal/` | One dated file per **decision about this repo**. Never a run narrative — that is the application ledger's line | no |
+| `docs/adrs/` | Architecture Decision Records — one file per **decision about this repo**. Never a run narrative; that is the application ledger's line. See "Decision records" below | **`0000-adr-template.md` only** |
 | `playbooks/` | Procedures as they stabilize | no |
 | `packs.yaml` / `packs.lock` | Which packs this repo composes, and what each installed | no |
 | `.template.lock` | Which core version, and its upstream. Delete to eject | no |
@@ -127,6 +127,32 @@ the session directory is not done. `orchestrate.sh close` is the one command tha
 session: it re-checks the DoD, writes the ledger line into `<app>/tasks.md` `## History`, and
 deletes the directory in the same step. Never delete a session by hand — the ledger line is
 what remains of the run.
+
+## Decision records
+
+A decision about **this repo's own shape** is an **ADR** in `docs/adrs/` — one file per
+decision, never a growing file. Write one when the system changes and the reason would not
+survive in a diff: a shape renamed, a constraint added and why, a mechanism rejected.
+
+Deliberately not a private convention. `docs/adrs/` is where every substrate repo in this
+estate already keeps them, an ADR should read the same here as it does there, and the full
+discipline — when a decision is system-level, status transitions, promotion, ADR-only
+delivery — is `architecture/AGENTS.md` §3.
+
+| | |
+|---|---|
+| Start from | `docs/adrs/0000-adr-template.md` — **managed**, identical in every derivation. Its trailing comment owns the conventions |
+| Filenames | `NNNN-kebab-title.md`, zero-padded to four digits. Numbers and filenames are immutable once committed |
+| Allocating | Take the next number immediately before commit, never on a long-lived branch — two ADRs claiming one number is the failure this prevents |
+| Abandoned | Land it as `Status: Rejected`. Never delete |
+| Superseding | Mark the original `Superseded by NNNN` and keep the file |
+| Index | `docs/adrs/README.md`, this repo's own. Add the row in the same commit as the ADR |
+
+**Scope, and what does not go here.** A decision constraining more than one repo is a
+*system-level* ADR and belongs in the `architecture` repo. A run against an application is
+not a decision about this repo — its record is the ledger line `close` writes, and a
+hand-written account of the same session is a second record that drifts from both `git log`
+and the ledger.
 
 ## Packs
 

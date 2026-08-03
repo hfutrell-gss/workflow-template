@@ -1,4 +1,16 @@
-# Craft Enforcement — pushing the rules into the build
+# ADR-0002: Craft enforcement: push the rules into the build
+
+**Status:** Accepted
+**Date:** 2026-07-29
+**Authors:** henning
+**Deciders:** henning
+
+**Scope (repos affected):**
+
+- `workflow-template` — the core itself
+- every derivation — receives this through the managed set
+
+---
 
 Added `references/enforcement.md` and `assets/arch-tests/` to `craft-code-quality`, plus a
 matching machine-enforceability section in `craft-tdd`.

@@ -113,7 +113,7 @@ Typical opt-in flow for a recommended tool:
   shell. Installs the static binary from GitHub releases into `~/.local/bin` if missing.
 
 **Recommended (decision-gated):**
-- **Obsidian** — the vault lens over this repo's `journal/` and doctrine. Installs
+- **Obsidian** — the vault lens over this repo's ADRs and doctrine. Installs
   the AppImage into `~/.local/opt/obsidian` with the WSLg `--disable-gpu` wrapper at
   `~/.local/bin/obsidian`.
 - **codegraph** — defaults to the official install method from

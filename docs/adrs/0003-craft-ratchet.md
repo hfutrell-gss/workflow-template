@@ -1,4 +1,16 @@
-# Craft Ratchet — a path from non-compliant substrate to the mandates
+# ADR-0003: Craft ratchet: a path from non-compliant substrate to the mandates
+
+**Status:** Accepted
+**Date:** 2026-07-29
+**Authors:** henning
+**Deciders:** henning
+
+**Scope (repos affected):**
+
+- `workflow-template` — the core itself
+- every derivation — receives this through the managed set
+
+---
 
 Added a ratcheting strategy to `craft-code-quality` (body section + `references/ratchet.md`)
 and a matching "Legacy substrate" section to `craft-tdd`.

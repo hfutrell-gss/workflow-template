@@ -202,15 +202,15 @@ Before closing a run:
 1. Sweep `notes/` and the `## Log` decisions into (a) `workflows/<workflow>/` if a
    way-of-working stabilized enough to write down, (b) `<app>`'s own docs or `<app>/profile.md`
    if the knowledge belongs to the target repo, (c) `<app>/tasks.md` `## Open` if it is work
-   still wanted, (d) `journal/` **only** if it is a decision about this workflow repo itself
-   that would not survive in a diff.
+   still wanted, (d) a new ADR in `docs/adrs/` **only** if it is a decision about this
+   workflow repo itself that would not survive in a diff.
 2. Record where, in `## Reaping`: `reaping: done <destination(s), briefly>`.
 3. Then run `orchestrate.sh close`. It re-checks the DoD, writes the ledger line, and deletes
    the directory in one step.
 
 **Nothing here is a narrative of the run.** That the session ran, against what, and with what
 result is the ledger's job — `close` derives that line from the task list itself, so it cannot
-flatter the run. A hand-written account of the same session in `journal/` is a second record
+flatter the run. A hand-written account of the same session as an ADR is a second record
 that will drift from `git log` and from the ledger both.
 
 Mechanism: the `## Reaping` section's `reaping:` field. It defaults to `pending` when the
@@ -250,9 +250,9 @@ A fresh tick has no memory of the run. Reconstruct in this order:
   T002,T004 done; T007 blocked on staging creds`.
 - The instance directory is committed to the workflow repo. Work products go to the substrate
   repo, on its own branch, under its own law — two separate commit streams; never mix them.
-- **Do not open a journal entry for the run.** `journal/` holds decisions about this workflow
+- **Do not write an ADR for the run.** `docs/adrs/` holds decisions about this workflow
   repo, not accounts of sessions. The run's permanent record is the ledger line `close`
-  writes; its detail is `git log`. Write a journal entry only if the run changed the *system*
-  — a shape renamed, a constraint added — and the reason would not survive in a diff.
+  writes; its detail is `git log`. Write an ADR only if the run changed the *system* — a
+  shape renamed, a constraint added — and the reason would not survive in a diff.
 - The closing commit carries the ledger line and the session deletion together, so a reader
   hitting the deletion in `git log` finds the line that replaced it in the same commit.

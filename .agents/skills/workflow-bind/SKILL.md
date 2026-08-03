@@ -40,9 +40,9 @@ session itself (`/add-dir`), which a helper process can't do on your behalf.
    inside that repo's own boundaries.
 5. **Record it where the work is.** Note which repos got session-bound, and why, in the
    session's own task list (`workflows/<workflow>/<app>/<session>/tasks.md`, `## Log`).
-   Session binds are run state, not a decision about this repo, so they do **not** go in
-   `journal/`. Write a journal entry only if the bind *registry* changed — a new standing
-   bind, a `kind:` reclassified — and say why.
+   Session binds are run state, not a decision about this repo, so they do **not** get an
+   ADR. Write one only if the bind *registry* changed — a new standing bind, a `kind:`
+   reclassified — and say why.
 
 ## Notes
 - Standing binds are declarative only — being listed in `binds.yaml` (even with

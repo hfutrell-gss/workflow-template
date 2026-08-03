@@ -1,4 +1,16 @@
-# orchestrate: split procedure from run, add the reaping gate
+# ADR-0008: Split procedure from run, and add the reaping gate
+
+**Status:** Accepted
+**Date:** 2026-07-31
+**Authors:** henning
+**Deciders:** henning
+
+**Scope (repos affected):**
+
+- `workflow-template` — the core itself
+- every derivation — receives this through the managed set
+
+---
 
 VERSION 20. `.workflow/<session-slug>/` conflated two things "workflow" was supposed to keep
 apart: the reusable procedure for a kind of work, and one dated run of it. `playbooks/` — the

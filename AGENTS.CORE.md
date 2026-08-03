@@ -92,17 +92,17 @@ Six kinds of thing live here; one home each:
 | **Workflow** | the TTPs of a nature of work | `workflows/<workflow>/SKILL.md` | **lazily, by the Skill tool** |
 | **Knowledge** | what is true, and why | substrate repo's docs; `<app>/profile.md` for operational particulars | index line, then on demand |
 | **Session** | one run's task list and notes | `workflows/<workflow>/<app>/<session>/` | only the session that owns it |
-| **Narrative** | a decision about **this workflow repo** — why the system is shaped as it is | `journal/` | humans, archaeology |
+| **Decision** | a decision about **this workflow repo** — why the system is shaped as it is | `docs/adrs/NNNN-slug.md` | humans, archaeology |
 
-**Where the record of a run lives, and why it is not the journal.** Orchestration is
+**Where the record of a run lives, and why it is not an ADR.** Orchestration is
 task-based, so the durable record of a run is task-shaped: `orchestrate.sh close` writes
 one line per session into `<app>/tasks.md` under `## History` — directive, counts by
 disposition, where the reaping landed — and then deletes the session directory. That line
 sits at the application, which is where a reader stands when asking *what has been done to
-this thing?*. The journal answers a different question — *why is the system built this
-way?* — and it is about the workflow repo, never about a run against an application. A
-session narrative in `journal/` is duplicated bookkeeping: `git log` already has it
-verbatim, and the ledger already has the part worth reading.
+this thing?*. An ADR answers a different question — *why is the system built this way?* —
+and it is about the workflow repo, never about a run against an application. A session
+narrative in `docs/adrs/` is duplicated bookkeeping: `git log` already has it verbatim, and
+the ledger already has the part worth reading.
 
 **A workflow is a skill with state.** Its body is the timeless part — frontmatter
 description, thin body, `references/` for depth, retrieved lazily. Its directory also
@@ -159,7 +159,7 @@ session directory:
 | a carried thread this session **resolved** | `<app>/tasks.md` `## Closed` — moved out of `## Open`, with what the resolution found |
 | **exposure found, whether or not it was the subject** | **`<app>/tasks.md` `## Security` — with its evidence and what would settle it** |
 | that the session ran at all, and with what result | `<app>/tasks.md` `## History` — **written by `close`, not by hand** |
-| a decision about this workflow repo itself | `journal/` |
+| a decision about this workflow repo itself | `docs/adrs/` — a new ADR |
 
 **Where a decision lands depends on the bind.** For a repo this workflow **stewards** (or
 `co-change`s), it goes in that repo's own docs — the reasoning must travel with the thing
@@ -219,15 +219,25 @@ What this asks of a derivation:
   a repo without that pack keeps the duty and loses only the guidance. It governs this
   repo as much as any application it stewards.
 
-## Journal, session state, git
+## ADRs, session state, git
 
-- **Journal** — one dated file per **decision about this workflow repo**
-  (`journal/YYYY-MM-DD-slug.md`), never one growing file. Write an entry when the *system*
-  changes and the reason would not survive in a diff: a shape renamed, a constraint added
-  and why, a mechanism rejected. Do **not** write one for a run against an application —
-  that is the ledger's job (`<app>/tasks.md` `## History`), and duplicating it produces
-  two records that drift. Test before writing: *would this still matter to someone who
-  never touched the application it came from?* If no, it is a ledger line.
+- **ADRs** — one file per **decision about this workflow repo**, in `docs/adrs/`, never one
+  growing file. Write one when the *system* changes and the reason would not survive in a
+  diff: a shape renamed, a constraint added and why, a mechanism rejected. Do **not** write
+  one for a run against an application — that is the ledger's job (`<app>/tasks.md`
+  `## History`), and duplicating it produces two records that drift. Test before writing:
+  *would this still matter to someone who never touched the application it came from?* If
+  no, it is a ledger line.
+
+  These are ordinary **Architecture Decision Records**, deliberately not a private
+  convention: `docs/adrs/` is where every substrate repo in this estate already keeps them,
+  and an ADR should read the same here as it does there. Start from
+  `docs/adrs/0000-adr-template.md` — managed, so it is identical in every derivation, and
+  its trailing comment owns the conventions (four-digit numbering, numbers immutable once
+  committed, `Proposed`/`Accepted`/`Superseded by NNNN`/`Rejected`/`Deferred`, allocate the
+  next number just before commit, index row in the same commit). A decision that constrains
+  more than one repo is a **system-level** ADR and belongs in the `architecture` repo
+  instead — that repo's `AGENTS.md` owns the boundary and the full discipline.
 - **Session state** — **committed** (unlike `workspace/`) so it survives compaction or
   a machine change. Sessions predating this layout resolve for one more version at
   `.workflow/<slug>/`. See

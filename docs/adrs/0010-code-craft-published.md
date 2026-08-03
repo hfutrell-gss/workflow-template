@@ -1,4 +1,16 @@
-# 2026-08-01 — the first pack, published (v32)
+# ADR-0010: The first pack, published
+
+**Status:** Accepted
+**Date:** 2026-08-01
+**Authors:** henning
+**Deciders:** henning
+
+**Scope (repos affected):**
+
+- `workflow-template` — the core itself
+- every derivation — receives this through the managed set
+
+---
 
 `pack-code-craft` is live at `git@github.com:henningfutrell/pack-code-craft` (branch
 `main`). It is the first thing to prove the pack mechanism end to end: authored outside

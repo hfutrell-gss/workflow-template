@@ -1,4 +1,16 @@
-# Gateway Claude Model Selection
+# ADR-0001: Gateway Claude model selection
+
+**Status:** Accepted
+**Date:** 2026-07-28
+**Authors:** henning
+**Deciders:** henning
+
+**Scope (repos affected):**
+
+- `workflow-template` — the core itself
+- every derivation — receives this through the managed set
+
+---
 
 Updated `workflow-gateway` so outer agents can launch Claude Code through OCX with explicit `--model` selection, streaming flags, and slash-command prompts via `claude-gw.sh`. Added `gateway.sh models` to print the routed Claude model IDs from Claude Code's gateway discovery cache, with a live gateway fallback.
 

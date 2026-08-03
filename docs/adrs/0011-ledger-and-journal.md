@@ -1,4 +1,16 @@
-# 2026-08-01 — the ledger, and what the journal is actually for (v35)
+# ADR-0011: The run ledger, and what the decision record is for
+
+**Status:** Accepted — the name it gave the decision record ("journal") is superseded by ADR-0013; the split it decided still holds
+**Date:** 2026-08-01
+**Authors:** henning
+**Deciders:** henning
+
+**Scope (repos affected):**
+
+- `workflow-template` — the core itself
+- every derivation — receives this through the managed set
+
+---
 
 Two questions, one answer.
 

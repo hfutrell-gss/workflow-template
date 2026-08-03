@@ -381,14 +381,39 @@ cmd_derive() {
   local template_version
   template_version="$(tr -d '[:space:]' < "$ROOT/VERSION")"
 
-  # Strip core-only identity: this workflow's own journal starts empty — any content
-  # here at derive time is the core's own example/test material, not this derivation's.
-  find "$ROOT/journal" -type f ! -name '.gitkeep' -delete 2>/dev/null || true
+  # Strip core-only identity: this workflow's own ADR set starts empty -- every record here
+  # at derive time is a decision the CORE made, not one this derivation made. Numbering
+  # restarts per repo, so the new repo's first ADR is 0001.
+  # 0000-adr-template.md is MANAGED and must survive: it is the starting point every
+  # derivation writes its own ADRs from. The index is reset to an empty table, not deleted.
+  find "$ROOT/docs/adrs" -type f -name '[0-9][0-9][0-9][0-9]-*.md' \
+       ! -name '0000-adr-template.md' -delete 2>/dev/null || true
+  if [ -f "$ROOT/docs/adrs/README.md" ]; then
+    cat > "$ROOT/docs/adrs/README.md" <<'ADRINDEX'
+# ADRs
+
+Architecture Decision Records for **this repo's own shape** — why it is built the way it is.
+One file per decision; never a growing file.
+
+A decision that constrains more than one repo belongs in the `architecture` repo's
+system-level set, not here.
+
+**Start from [`0000-adr-template.md`](0000-adr-template.md).** It is managed by the core, so
+it is identical in every derivation, and its trailing comment owns the conventions —
+four-digit numbering, numbers immutable once committed, status transitions, allocating the
+next number just before commit.
+
+Add a row below in the same commit as the ADR.
+
+| # | Title | Status | Date |
+|---|-------|--------|------|
+ADRINDEX
+  fi
 
   # Orchestration run state is identity too, and it is COMMITTED (unlike workspace/), so
   # a derive-by-clone carries the core's own in-flight runs into the new workflow —
   # task lists and notes for work that has nothing to do with it. Clear it for the same
-  # reason as journal/: a session belongs to the repo that performed it. Clear by level
+  # reason as docs/adrs/: a session belongs to the repo that performed it. Clear by level
   # (AGENTS.CORE.md "The shapes"): workflows/<workflow>/SKILL.md and its references/ are
   # TIMELESS and must survive derive, same as .agents/skills/ does. Everything else under
   # a workflow is an APPLICATION directory -- its profile, its carried work, its sessions

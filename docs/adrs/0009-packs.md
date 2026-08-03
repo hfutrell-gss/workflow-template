@@ -1,4 +1,16 @@
-# 2026-08-01 — composition: the core plus packs (v30)
+# ADR-0009: Composition: the core plus packs
+
+**Status:** Accepted
+**Date:** 2026-08-01
+**Authors:** henning
+**Deciders:** henning
+
+**Scope (repos affected):**
+
+- `workflow-template` — the core itself
+- every derivation — receives this through the managed set
+
+---
 
 ## What changed
 

@@ -21,6 +21,19 @@ that matter to it — and that belongs in `GLOSSARY.local.md` at the derivation 
 unmanaged, committed, yours. Same shape as the entries below. See `AGENTS.CORE.md` "DDD,
 applied to a workflow repo".
 
+### ADR
+
+Architecture Decision Record. `docs/adrs/NNNN-slug.md` — one file per **decision about
+this workflow repo**: why the system is shaped as it is, when the reason would not survive
+in a diff. Not this system's own invention: `docs/adrs/` is where every substrate repo in
+this estate keeps them, and the discipline (numbering, status, promotion) is
+`architecture/AGENTS.md` §3. Start from the managed `docs/adrs/0000-adr-template.md`.
+
+**Is not:** a record of a run. That is the *ledger*. An ADR answers "why is the system
+built this way?"; a ledger line answers "what has been done to this application?".
+**Also not** a *system-level* ADR — a decision constraining more than one repo lives in
+the `architecture` repo instead.
+
 ### Application
 
 A thing a workflow acts on, with particulars of its own. Durable: it outlives every
@@ -58,14 +71,6 @@ into, and every operation on them. Declared in `.template.lock`. This repo is it
 
 A workflow repo created from the core, tracking it through `.template.lock`. Owns
 everything outside the managed set. May pin, or eject entirely.
-
-### Journal
-
-`journal/YYYY-MM-DD-slug.md` — one dated file per **decision about this workflow repo**:
-why the system is shaped as it is, when the reason would not survive in a diff.
-
-**Is not:** a record of a run. That is the *ledger*. A journal entry answers "why is the
-system built this way?"; a ledger line answers "what has been done to this application?".
 
 ### Lane
 
@@ -177,7 +182,7 @@ The techniques, tactics, and procedures of one nature of work — `extract-callw
 body is `workflows/<workflow>/SKILL.md`, its directory holds the applications it acts on.
 Named for the change it makes, so the name answers *what kind of work is this?*
 
-**Is not:** a session, a run log, or a journal. **Also not** a *skill* — a generalized
+**Is not:** a session, a run log, or an ADR. **Also not** a *skill* — a generalized
 tactic every workflow reaches for is stateless technique, not a nature of work
 (`AGENTS.CORE.md`, "A generalized tactic is a skill"). **Also not** a thing: a subsystem,
 a repo, or an engine is what a workflow acts on or with. **Also not** the `workflow-*`

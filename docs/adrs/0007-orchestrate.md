@@ -1,4 +1,16 @@
-# workflow-orchestrate — task-based orchestration bound to tiers, not model names
+# ADR-0007: Task-based orchestration bound to tiers, not model names
+
+**Status:** Accepted
+**Date:** 2026-07-30
+**Authors:** henning
+**Deciders:** henning
+
+**Scope (repos affected):**
+
+- `workflow-template` — the core itself
+- every derivation — receives this through the managed set
+
+---
 
 Added `/workflow-orchestrate` to the managed set (v17). Prior art was a personal skill,
 `~/.claude/skills/orchestrate/` — the same coordinate → delegate → synthesize shape, with two

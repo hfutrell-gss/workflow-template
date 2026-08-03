@@ -49,7 +49,8 @@ Three invariants, all enforced by the script:
 Run this **inside a fresh copy or clone of the core** — nothing else. It:
 1. Refuses if `.template.lock` already exists (already derived) or `VERSION` is missing
    (doesn't look like a core checkout).
-2. Clears core-only identity: example content out of `journal/`, every application
+2. Clears core-only identity: the core's own ADRs out of `docs/adrs/` (the managed
+   `0000-adr-template.md` survives, and the index is reset to an empty table), every application
    directory under `workflows/<workflow>/` (profiles, carried work, sessions — the
    workflow's own `SKILL.md` and `references/` survive, being TIMELESS), and any legacy
    run state under `.workflow/`. All of it is **committed** (unlike `workspace/`), so a
@@ -121,7 +122,7 @@ With no argument: the core, then every declared pack. With a pack name (or
   then copies the current manifest's paths in. Directory entries (`.../**`) are replaced
   wholesale, so deletions inside them propagate too.
 - Everything outside every manifest — `AGENTS.md`, `binds.yaml`, this repo's own
-  workflows, `journal/`, the overlay slots — is never touched, by construction: the copy
+  workflows, its own ADRs, the overlay slots — is never touched, by construction: the copy
   step only ever reads paths a manifest names.
 - A pack present in `packs.lock` but absent from `packs.yaml` prints a WARNING. `update`
   never deletes files for an undeclared pack; run `remove` deliberately.

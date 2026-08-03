@@ -1,4 +1,16 @@
-# Craft Skills — Code Quality and TDD Doctrine
+# ADR-0004: Craft skills: code quality and TDD doctrine
+
+**Status:** Accepted
+**Date:** 2026-07-29
+**Authors:** henning
+**Deciders:** henning
+
+**Scope (repos affected):**
+
+- `workflow-template` — the core itself
+- every derivation — receives this through the managed set
+
+---
 
 Ported the two strongest doctrine files from the `workbench` corpus into template-managed
 skills: `/craft-tdd` and `/craft-code-quality`. Sources were

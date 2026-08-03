@@ -1,4 +1,16 @@
-# Journal — craft-covenants orchestration
+# ADR-0005: Craft covenants
+
+**Status:** Accepted
+**Date:** 2026-07-30
+**Authors:** henning
+**Deciders:** henning
+
+**Scope (repos affected):**
+
+- `workflow-template` — the core itself
+- every derivation — receives this through the managed set
+
+---
 
 Session: [.workflow/2026-07-30-craft-covenants/](../.workflow/2026-07-30-craft-covenants/)
 

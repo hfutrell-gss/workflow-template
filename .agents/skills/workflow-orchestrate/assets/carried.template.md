@@ -18,7 +18,7 @@ What belongs here:
 
 What does not belong here: the application's operational particulars (that is
 `profile.md`), a way of working (that is `workflows/__WORKFLOW__/SKILL.md`), or a
-decision about this workflow repo itself (that is `journal/`).
+decision about this workflow repo itself (that is an ADR, in `docs/adrs/`).
 
 ## Open
 

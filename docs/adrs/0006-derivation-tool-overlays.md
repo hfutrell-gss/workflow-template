@@ -1,4 +1,16 @@
-# 2026-07-30 — derivation-owned tool overlays for `/workflow-init`
+# ADR-0006: Derivation-owned tool overlays for workflow-init
+
+**Status:** Accepted
+**Date:** 2026-07-30
+**Authors:** henning
+**Deciders:** henning
+
+**Scope (repos affected):**
+
+- `workflow-template` — the core itself
+- every derivation — receives this through the managed set
+
+---
 
 Template v18 → v19. `workflow-init` VERSION 4 → 5.
 

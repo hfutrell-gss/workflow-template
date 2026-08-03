@@ -17,7 +17,7 @@ work. Code repos are **substrate** — operated *on*, not *in*.
 
 **The template facilitates, never constrains.** A derivation owns everything outside the
 managed set (`template-manifest.yaml` is the exact list): its own doctrine, its `README.md`,
-its `binds.yaml`, its workflows, its own skills, its `journal/`, anything it adds later.
+its `binds.yaml`, its workflows, its own skills, its ADRs, anything it adds later.
 
 It can pin its core (`pinned: true` in `.template.lock`) to freeze it, or eject entirely
 (delete `.template.lock`). Either is supported for the full lifetime of the project it belongs
@@ -46,7 +46,8 @@ Then, in order:
 2. Rewrite `README.md` as that repo's own front door — its area of work, not the mechanics
    (`README.CORE.md` already carries those).
 3. Populate `binds.yaml` as real substrate appears. An empty registry is a complete repo.
-4. Add `playbooks/` and start `journal/` as procedures and decisions stabilize.
+4. Add `playbooks/` as procedures stabilize, and write ADRs into `docs/adrs/` as decisions
+   get made — starting from the managed `0000-adr-template.md`, numbered from `0001`.
 
 Workflows come later, one per campaign, when a campaign is about to run.
 

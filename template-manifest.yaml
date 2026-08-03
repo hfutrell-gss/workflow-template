@@ -14,7 +14,7 @@
 # This file is itself managed, which is what lets a future core version add or retire a
 # managed path everywhere.
 
-version: 45  # mirrors this repo's VERSION at the time this manifest last changed
+version: 46  # mirrors this repo's VERSION at the time this manifest last changed
              # VERSION is a plain integer; comparison uses sort -n.
 
 managed:
@@ -25,6 +25,12 @@ managed:
   # copy, never in the original. Human-facing and deliberately NOT in the AGENTS import
   # chain, so it costs no session tokens.
   - README.CORE.md
+  # The ADR starting point (ADR-0013). Managed so a decision record reads the same in every
+  # workflow repo as it does in every substrate repo -- the house convention is
+  # architecture/AGENTS.md section 3, and a per-repo copy of a template drifts in the copy.
+  # ONLY 0000-adr-template.md is managed: NNNN-*.md and README.md (the index) are each
+  # repo's own record of its own decisions, and `update` must never touch them.
+  - docs/adrs/0000-adr-template.md
   # Managed workflows: the core ships workflows, not only skills
   # (AGENTS.CORE.md "The shapes"). Only the TIMELESS half is managed -- a derivation's
   # applications, carried work, and sessions under this workflow are its own data and
