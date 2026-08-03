@@ -25,6 +25,14 @@ contributes only its data and its judgment about it, never hand-rolled tooling.
    workflow names; `new-workflow.sh` is the one tool for it.
 
 ## Scaffold a workflow
+
+**Before scaffolding, settle that it is a workflow at all.** `AGENTS.CORE.md` owns both
+tests — "Naming a workflow" (a nature of work, named for the change it makes; not a
+subsystem, repo, engine, or calendar phase) and "A generalized tactic is a skill" (would
+every workflow here reach for it? then it is a skill, and this scaffolder is the wrong
+tool). A tactic scaffolded as a workflow grows applications and sessions it has no
+business owning, and unwinding that later means moving committed state.
+
 ```sh
 .agents/skills/workflow-manage/new-workflow.sh <name>
 ```

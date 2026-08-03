@@ -144,6 +144,19 @@ once reaped. Lives at `workflows/<workflow>/<app>/<session>/`. Ends with
 not name a session directory after the workflow concept; name it for what the session is
 for.
 
+### Skill
+
+A generalized tactic, invoked from inside whichever workflow is running and owned by none
+of them. Body at `.agents/skills/<name>/SKILL.md`, discovery stub at
+`.claude/skills/<name>/`. Three kinds live there: the core's `workflow-*` machinery, a
+pack's, and **the derivation's own** — a tactic that is this area of work's standing
+expectation but no wider concern (static analysis over a codebase is the type case).
+
+**Is not:** a *workflow*. The test is in `AGENTS.CORE.md`, "A generalized tactic is a
+skill": would every workflow here reach for it? Yes → skill. Only one → that workflow's
+own TTPs. A skill has no applications, no carried work, and no sessions — it is stateless
+technique.
+
 ### Substrate
 
 A repo a workflow operates *on*, rather than *in*. Cloned into `workspace/`. Its own law
@@ -159,13 +172,17 @@ machine where that model is unavailable.
 
 ### Workflow
 
-The techniques, tactics, and procedures of one nature of work — `web-app-development`,
-`refactor`, `upstream-workflow-management`. Timeless. A skill with state: its body is
-`workflows/<workflow>/SKILL.md`, its directory holds the applications it acts on.
+The techniques, tactics, and procedures of one nature of work — `extract-callwrappers`,
+`decompose-to-api`, `web-app-development`, `refactor`. Timeless. A skill with state: its
+body is `workflows/<workflow>/SKILL.md`, its directory holds the applications it acts on.
+Named for the change it makes, so the name answers *what kind of work is this?*
 
-**Is not:** a session, a run log, or a journal. **Also not** the `workflow-*` skill
-prefix, which is an ownership marker on template machinery and describes nothing about
-the skill's subject.
+**Is not:** a session, a run log, or a journal. **Also not** a *skill* — a generalized
+tactic every workflow reaches for is stateless technique, not a nature of work
+(`AGENTS.CORE.md`, "A generalized tactic is a skill"). **Also not** a thing: a subsystem,
+a repo, or an engine is what a workflow acts on or with. **Also not** the `workflow-*`
+skill prefix, which is an ownership marker on template machinery and describes nothing
+about the skill's subject.
 
 ### Workflow repo
 

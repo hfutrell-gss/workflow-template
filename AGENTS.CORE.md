@@ -112,9 +112,34 @@ scaffolds both halves and the `.claude/skills/<name>/` discovery stub.
 
 **The proxy rule applies unchanged.** `.claude/skills/<name>/SKILL.md` is a stub that
 points at the canonical body. For a workflow the canonical body is
-`workflows/<name>/SKILL.md`, not `.agents/skills/`. `.agents/skills/` holds skill bodies
-only: the core's `workflow-*` machinery, plus whatever a pack installs there. Both
+`workflows/<name>/SKILL.md`, not `.agents/skills/`, which holds skill bodies only. Both
 namespaces reach the Skill tool, so a workflow must not take a skill's name.
+
+**Naming a workflow: it is a nature of work, not a thing or a tool.** A workflow is named
+for the change it makes — `extract-callwrappers`, `decompose-to-api`, `refactor-to-mvp`,
+`incident-response`. Read the name as the answer to *what kind of work is this?* A
+subsystem, a repo, an engine, or a phase of the calendar is **not** a nature of work:
+those are what a workflow acts *on*, or what it acts *with*. A workflow repo whose
+`workflows/` is empty is not misconfigured — a campaign earns a workflow when it is about
+to run, and the repo's job before then is to make the next one cheap to start and
+correctly shaped.
+
+**A generalized tactic is a skill, not a workflow.** The test: *would every workflow in
+this repo reach for it?* Yes → a **skill**, owned by no single workflow and invoked from
+inside whichever one is running. Only one → part of that workflow's own TTPs, in its
+`SKILL.md` or `references/`. Static analysis, a test protocol, and code review are the
+recurring cases: each is an expectation of any campaign, which is exactly why none of them
+is a campaign. Getting this backwards puts a tactic in `workflows/` where it will grow
+applications and sessions it has no business owning.
+
+**A derivation owns skills, not only workflows.** `.agents/skills/` holds three kinds of
+body: the core's `workflow-*` machinery, whatever a pack installs, **and the derivation's
+own generalized tactics** — a tactic that is this area of work's standing expectation but
+no wider concern. That third kind is correct there and belongs upstream in neither the
+core nor a pack; the covenant already says everything outside the managed set is the
+derivation's. Name it outside `workflow-*` (the core's prefix) and outside any installed
+pack's prefix, or a future `update` clobbers it — `/workflow-manage` refuses the collision
+when it can see it.
 
 **Managed workflows.** The template ships workflows too, not only skills.
 `upstream-workflow-management` is one, present in every derivation: the TTPs for
