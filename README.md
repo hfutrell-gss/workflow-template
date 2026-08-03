@@ -51,7 +51,7 @@ To pull forward later improvements to the managed set:
 | `packs.yaml` / `packs.lock` | The additional packs a workflow repo composes in, and what each one installed. Derivation-owned; edited through `/workflow-template-sync add`/`remove` (absent in this repo — the core is not composed into itself) |
 | `VERSION` | This template's own version (absent in a derivation — see `.template.lock` there instead) |
 | `journal/` | One dated file per **decision about this repo** — why the system is shaped as it is. Never a run narrative: a closed session leaves one line in `<app>/tasks.md` `## History`, written by `orchestrate.sh close` |
-| `workflows/` | Workflows and their state, four levels: `<workflow>/SKILL.md` is TIMELESS (the TTPs, never pruned), `<app>/profile.md` is that application's DURABLE particulars, `<app>/tasks.md` is CARRIED work crossing sessions, `<app>/<session>/` is one SESSION, deleted after harvest. **Committed**, so a session resumes after a cold tick or on another machine. See `/workflow-orchestrate` |
+| `workflows/` | Workflows and their state, four levels: `<workflow>/SKILL.md` is TIMELESS (the TTPs, never pruned), `<app>/profile.md` is that application's DURABLE particulars, `<app>/tasks.md` is CARRIED work crossing sessions, `<app>/<session>/` is one SESSION, deleted after reaping. **Committed**, so a session resumes after a cold tick or on another machine. See `/workflow-orchestrate` |
 | `.workflow/` | Legacy (pre-stratification) run state — `<slug>/tasklist.md`. Resolved for one version only; new runs never use it |
 | `.agents/skills/` | Canonical skill bodies + scripts. The core ships `workflow-*` machinery only; `code-craft-*` engineering doctrine arrives from the optional `code-craft` pack |
 | `.agents/code-craft/` | Optional, derivation-owned overlays (`<skill>.local.md`) that override `code-craft-*` defaults — unmanaged, never touched by `update` |
@@ -74,7 +74,7 @@ thin stub Claude Code needs for discovery.
 | `/workflow-template-sync` | Composition: `derive` a new workflow repo, `add`/`remove` a pack, `update` the core and every pack, `list`, `--audit` composition integrity, `--check` version drift |
 | `/workflow-manage` | Administer this workflow: add/remove/edit standing binds, assemble/refresh the substrate (`sync-binds.sh`) |
 | `/workflow-bind` | Bind a session: attach default standing binds (and anything else asked for) via `/add-dir` |
-| `/workflow-orchestrate` | Task-based orchestration: directive → committed task list (`workflows/<workflow>/<app>/<session>/tasks.md`) → dispatch per model **tier** (`flagship` · `workhorse` · `fleet`, resolved from a lane roster, never a hardcoded model name) → loop until the list is exhausted AND its durable output harvested out of the session directory |
+| `/workflow-orchestrate` | Task-based orchestration: directive → committed task list (`workflows/<workflow>/<app>/<session>/tasks.md`) → dispatch per model **tier** (`flagship` · `workhorse` · `fleet`, resolved from a lane roster, never a hardcoded model name) → loop until the list is exhausted AND its durable output reaped out of the session directory |
 One prefix is reserved by the core: **`workflow-*`** (machinery that operates on the
 shapes). A pack owns whatever prefix it ships — `code-craft-*` for the `code-craft` pack.
 Name local skills outside every installed prefix, or an `update` may clobber them;

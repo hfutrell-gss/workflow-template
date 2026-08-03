@@ -59,13 +59,6 @@ into, and every operation on them. Declared in `.template.lock`. This repo is it
 A workflow repo created from the core, tracking it through `.template.lock`. Owns
 everything outside the managed set. May pin, or eject entirely.
 
-### Harvest
-
-The gate that closes a session: its durable output must leave the session directory
-before the session may be deleted. See `AGENTS.CORE.md` "Harvest law".
-
-**Is not:** archiving. Nothing is kept. `git log` is the archive.
-
 ### Journal
 
 `journal/YYYY-MM-DD-slug.md` — one dated file per **decision about this workflow repo**:
@@ -84,7 +77,7 @@ retried.
 
 The `## History` section of `workflows/<workflow>/<app>/tasks.md`. One permanent line per
 session closed against that application — directive, counts by disposition, where the
-harvest landed. Written only by `orchestrate.sh close`, derived from the session's own
+reaping landed. Written only by `orchestrate.sh close`, derived from the session's own
 task list.
 
 **Is not:** hand-written, and not a narrative. A line nobody earned by passing the DoD
@@ -134,10 +127,17 @@ Two senses, both real, distinguished by what moves:
 pointing at a canonical body: `.agents/skills/<name>/` for machinery,
 `workflows/<name>/` for a workflow. Nothing executable under `.claude`.
 
+### Reaping
+
+The gate that closes a session: its durable output must leave the session directory
+before the session may be deleted. See `AGENTS.CORE.md` "Reaping law".
+
+**Is not:** archiving. Nothing is kept. `git log` is the archive.
+
 ### Session
 
 One discrete instantiation of a workflow against an application. Temporal, and disposable
-once harvested. Lives at `workflows/<workflow>/<app>/<session>/`. Ends with
+once reaped. Lives at `workflows/<workflow>/<app>/<session>/`. Ends with
 `orchestrate.sh close`, which leaves one *ledger* line behind and deletes the directory.
 
 **Is not:** a *workflow*. A workflow is timeless and knows nothing about when it runs. Do

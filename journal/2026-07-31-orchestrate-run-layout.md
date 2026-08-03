@@ -1,4 +1,4 @@
-# orchestrate: split procedure from run, add the harvest gate
+# orchestrate: split procedure from run, add the reaping gate
 
 VERSION 20. `.workflow/<session-slug>/` conflated two things "workflow" was supposed to keep
 apart: the reusable procedure for a kind of work, and one dated run of it. `playbooks/` — the
@@ -9,31 +9,31 @@ notes and decisions lived and died inside its own dated directory instead.
 
 ```
 workflows/<workflow>/                    DURABLE — the procedure. Never pruned.
-workflows/<workflow>/<target>/tasks.md   INSTANCE — one run. Disposable after harvest.
+workflows/<workflow>/<target>/tasks.md   INSTANCE — one run. Disposable after reaping.
 ```
 
 `<workflow>` names a way-of-working (`refactor`, `create-web-app`, `onboard-app`).
 `<target>` is the repo the work lands in, not a date — a long-lived task set per
 (workflow, target) pair, reopened across sessions rather than recreated daily. The rule
 that keeps the conflation from re-forming: **everything under `<target>/` is disposable
-after harvest, by definition.** Anything not disposable belongs one level up, in the
+after reaping, by definition.** Anything not disposable belongs one level up, in the
 target's own docs, or in the journal.
 
-## Harvest is now part of DoD
+## Reaping is now part of DoD
 
 Exhaustion alone let a run finish every task and still leave its durable output
 stranded in a directory a later prune deletes. `orchestrate.sh status` now also reads a
-`## Harvest` section's `harvest:` field — `pending` (the default, including for files
+`## Reaping` section's `reaping:` field — `pending` (the default, including for files
 that predate this gate) or `done <where it went>`. Bare `done` with no destination is a
 violation, same tier as `[x]` without `evidence:`. Chose a field in the file `status`
-already parses over a separate `HARVESTED` marker file — one place to check, no risk of
+already parses over a separate `REAPED` marker file — one place to check, no risk of
 the marker and the task list disagreeing.
 
 Confirmed against the actual craft-covenants run
 (`.workflow/2026-07-30-craft-covenants/`): before the gate it reported `EXHAUSTED`; after,
-correctly `NOT EXHAUSTED (harvest pending)` — its output had genuinely shipped (VERSION
+correctly `NOT EXHAUSTED (reaping pending)` — its output had genuinely shipped (VERSION
 18's managed craft assets) but nothing said so in the file. Added a retroactive
-`harvest: done ...` line recording that; verdict returns to `EXHAUSTED`.
+`reaping: done ...` line recording that; verdict returns to `EXHAUSTED`.
 
 ## Backward compatibility
 

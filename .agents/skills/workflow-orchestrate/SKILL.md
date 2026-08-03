@@ -5,7 +5,7 @@ description: >-
   it into a committed task list at workflows/<workflow>/<app>/<session>/tasks.md, reorganize that into
   a streamlined flow, dispatch each task to the fitting tier (flagship consultant · workhorse
   orchestrator · fleet workers) resolved from a lane roster, and loop until the list is
-  exhausted AND its durable output harvested out of the run directory. Use when asked to
+  exhausted AND its durable output reaped out of the run directory. Use when asked to
   orchestrate or coordinate a multi-task job, when a directive needs decomposing into tasks,
   when resuming a prior run's task list, or when work must survive across sessions and cold
   /loop ticks.
@@ -37,10 +37,10 @@ cold tick, a compaction, or a different machine resumes the same run.
 acts on; `<session>` is this one instantiation. `workflows/<workflow>/` is TIMELESS and never
 pruned; `<app>/` is DURABLE (its `profile.md` and its carried `tasks.md`);
 `<app>/<session>/` is disposable — but only
-*after* its output is harvested out. Full stratification rule, the legacy-path fallback, and
-the harvest gate: `references/tasklist.md`.
+*after* its output is reaped out. Full stratification rule, the legacy-path fallback, and
+the reaping gate: `references/tasklist.md`.
 
-**Definition of Done: task list exhaustion, plus harvest.** Nothing else. Not "enough
+**Definition of Done: task list exhaustion, plus reaping.** Nothing else. Not "enough
 progress", not "the interesting part is finished", and not "every task is `[x]`" while the
 run's own notes and decisions are still stranded in its instance directory. See
 `references/tasklist.md` for what both mean and why you cannot assert either —
@@ -97,14 +97,14 @@ Load a `references/` file when you reach the step that needs it. Keep this page 
    partial work goes back to `[ ]` or `[!]`. Never `[x]` on a worker's word alone.
 
 7. **Check DoD.** Run `orchestrate.sh status`. Not done → return to the step that owns the gap
-   (new work found → 3; ordering wrong → 4; tasks ready → 5; tasks exhausted but `harvest
+   (new work found → 3; ordering wrong → 4; tasks ready → 5; tasks exhausted but `reaping
    pending` → sweep `notes/` and the `## Log` into the workflow's own `SKILL.md`, the target's
-   docs, or `<app>/profile.md`, then record `harvest: done <where>`). Exhausted, clean, and
-   harvested → step 8.
+   docs, or `<app>/profile.md`, then record `reaping: done <where>`). Exhausted, clean, and
+   reaped → step 8.
 
 8. **Close.** Run `orchestrate.sh close`. It re-checks the DoD, appends one line to the
    application ledger (`<app>/tasks.md` `## History`) — directive, counts by disposition, where
-   the harvest landed — and deletes the session directory. Commit the ledger line and the
+   the reaping landed — and deletes the session directory. Commit the ledger line and the
    deletion together, then report and stop the loop. **Do not delete a session by hand**: the
    ledger line is what remains of the run, and a manual `git rm` removes the directory without
    writing it — leaving the application with no answer to *what has been done to this app?*.
@@ -143,7 +143,7 @@ the two writes, and they are the start and the end of a session's life.
 
 ```sh
 .agents/skills/workflow-orchestrate/orchestrate.sh init <workflow> <app> <slug>  # scaffold <date>-<slug>
-.agents/skills/workflow-orchestrate/orchestrate.sh status [<key>]   # counts, violations, harvest, DoD verdict
+.agents/skills/workflow-orchestrate/orchestrate.sh status [<key>]   # counts, violations, reaping, DoD verdict
 .agents/skills/workflow-orchestrate/orchestrate.sh ready  [<key>]   # tasks whose deps are all done
 .agents/skills/workflow-orchestrate/orchestrate.sh list             # every run + its verdict
 .agents/skills/workflow-orchestrate/orchestrate.sh check            # LAYOUT constraints

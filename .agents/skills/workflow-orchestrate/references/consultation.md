@@ -40,7 +40,7 @@ Four legitimate uses:
 
 - The consultant's answer is **advice**. You decide, and you record why — an unrecorded
   decision gets re-litigated on the next cold tick. While the run is live, that record is the
-  task line or the session's `## Log`. At harvest it goes where the outcome belongs: the
+  task line or the session's `## Log`. At reaping it goes where the outcome belongs: the
   stewarded repo's own docs, or `<app>/profile.md`, named in the task's `landed:`.
 - **Never route work to the consultant.** A `flagship` model executing a `fleet` task is the
   most expensive possible way to do it, and it starves the tier of the judgment you actually

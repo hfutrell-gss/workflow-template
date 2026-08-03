@@ -43,8 +43,8 @@ ID — `LAYOUT-007`, `AGENTS-003` — and a reader can look up exactly what was 
 ## When to run it
 
 - **After any restructuring.** This is the pass that catches what the change forgot.
-- **When a session closes.** `LAYOUT-007` is the harvest law made mechanical: a session
-  that is exhausted and harvested must not still be on disk.
+- **When a session closes.** `LAYOUT-007` is the reaping law made mechanical: a session
+  that is exhausted and reaped must not still be on disk.
 - **Before promoting anything upstream.** `/upstream-workflow-management` step 4.
 - **On a cold start in an unfamiliar derivation**, to learn its state in one command.
 
