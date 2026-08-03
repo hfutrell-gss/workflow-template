@@ -267,7 +267,7 @@ Not done here — it is per-session judgment, and the fallback buys one more ver
    their names. Session directory name becomes `<date>-<slug>`, which the existing slugs already are.
 4. **Re-validate against the v37 grammar.** `orchestrate.sh check` applies TASK rules to the new
    path that the legacy fallback does not enforce: `[^]` needs `carried:` naming an entry in
-   `<app>/tasks.md`; `[-]`/`[^]` need `landed:` at harvest. Some existing `accept-partial` /
+   `<app>/tasks.md`; `[-]`/`[^]` need `landed:` at reaping. Some existing `accept-partial` /
    `blocked-on-owner` fields will need re-expressing.
 5. **`.workflow/` must end up empty and deleted** — `LAYOUT-001` fires while it exists, and it is
    currently one of the six LAYOUT violations below.

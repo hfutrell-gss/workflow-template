@@ -1,10 +1,10 @@
 # Session: upstream-workflow-management · derivations · 2026-08-01-v37-adoption
 
-Opened 2026-08-01. Grammar, anti-cheat rules, and the harvest gate:
+Opened 2026-08-01. Grammar, anti-cheat rules, and the reaping gate:
 `.agents/skills/workflow-orchestrate/references/tasklist.md`.
 
-This directory is SESSION state — deleted after harvest, by definition. Anything here
-that should outlive this session has somewhere else to go. `AGENTS.CORE.md` "Harvest
+This directory is SESSION state — deleted after reaping, by definition. Anything here
+that should outlive this session has somewhere else to go. `AGENTS.CORE.md` "Reaping
 law" is the full list of destinations; read it there. Two apply while the run is live:
 
 - **Work not finished, still wanted** → `../tasks.md` `## Open`. Mark the task `[^]`
@@ -37,9 +37,9 @@ and pushing derivations to their remotes (user's call, raised at close).
 
 ## Definition of Done
 
-Task list exhaustion **and** harvest: no `[ ]`, `[~]`, or `[!]` remains,
-`orchestrate.sh status` reports zero violations, and `## Harvest` below reads
-`harvest: done <where it went>`. `[-]` requires `why:` and a user `signoff:`.
+Task list exhaustion **and** reaping: no `[ ]`, `[~]`, or `[!]` remains,
+`orchestrate.sh status` reports zero violations, and `## Reaping` below reads
+`reaping: done <where it went>`. `[-]` requires `why:` and a user `signoff:`.
 
 Closing is `orchestrate.sh close`. It re-checks this DoD, writes the ledger line into
 `../tasks.md` `## History`, and deletes this directory in one step.
@@ -153,7 +153,7 @@ Closing is `orchestrate.sh close`. It re-checks this DoD, writes the ledger line
               task. Wrong scope, corrected before dispatch: naming the workflow and app for four
               in-flight sessions holding 44 open tasks is per-session judgment and the user's
               call, not a side effect of a core bump. Migration is carried out to ../tasks.md at
-              harvest rather than done here.
+              reaping rather than done here.
 - [x] T007 · fleet · deps:T003,T004 · Converge sandbox to v37
       evidence: notes/T007-sandbox-converge.md; commit 235ce48 "chore: converge template core
                 from v13 to v37". Orchestrator re-ran the checks rather than accepting the
@@ -304,19 +304,19 @@ Closing is `orchestrate.sh close`. It re-checks this DoD, writes the ledger line
               packs installed, what it stewards — and every claim that can decay carries the
               trigger that invalidates it, per the profile template's own rule.
 
-## Harvest
+## Reaping
 
 <!-- Required before this run can close. Sweep notes/ and decisions out to their
-     destinations per AGENTS.CORE.md "Harvest law": a way of working that stabilized to
+     destinations per AGENTS.CORE.md "Reaping law": a way of working that stabilized to
      workflows/upstream-workflow-management/, understanding of derivations to its own docs or ../profile.md,
      unfinished work still wanted to ../tasks.md ## Open, a refusal or de-scope to the
      stewarded repo's docs or ../profile.md with its signoff.
-     Then record where each output landed on the harvest: line below, and run
+     Then record where each output landed on the reaping: line below, and run
      `orchestrate.sh close`. It re-checks the DoD, writes the ledger line into
      ../tasks.md ## History, and deletes this directory in one step. Never delete a
      session directory by hand. -->
 
-harvest: pending
+reaping: pending
 
 ## Log
 
@@ -326,7 +326,7 @@ harvest: pending
   workflow. Rejected alternative: a new workflow (`derivation-convergence`) — `derive` keeps
   `workflows/<workflow>/SKILL.md` as TIMELESS, so a new workflow in the core ships into every
   future derivation while sitting in no manifest, i.e. inherited and unmaintained. If the
-  `self`-only wording in that skill is wrong, it is a promotion candidate at harvest.
+  `self`-only wording in that skill is wrong, it is a promotion candidate at reaping.
 - **Core moved twice mid-run.** Local `main` was fast-forwarded v19→v36 and pushed to
   `origin`; `personal/main` had already advanced to v37 (`c53f201`) by the time that push
   landed, so it was fast-forwarded again and re-pushed. `origin` and `personal` are both at

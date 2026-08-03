@@ -209,4 +209,4 @@ Not pushed; the orchestrator pushes.
 - T014 is serialized behind this task for the shared `VERSION` / manifest bump. That bump
   is done and committed; T014 starts from 41 and releases 42.
 - No journal entry written, per the task. Whether the rejected-alternatives reasoning
-  qualifies for `journal/` is the harvest decision; the commit body carries it either way.
+  qualifies for `journal/` is the reaping decision; the commit body carries it either way.
